@@ -2,8 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { uploadImage } from '@/lib/cloudinary'
-import { analyzeImage, detectTextInImage } from '@/lib/vision'
-import { findCodeInDetectedText } from '@/lib/verification'
+
+// Dynamic import for vision to avoid issues if credentials aren't set
+async function getVisionModule() {
+  try {
+    return await import('@/lib/vision')
+  } catch (error) {
+    console.error('Failed to load vision module:', error)
+    return null
+  }
+}
+
+async function getVerificationModule() {
+  try {
+    return await import('@/lib/verification')
+  } catch (error) {
+    console.error('Failed to load verification module:', error)
+    return null
+  }
+}
+
+// Helper to run a promise with a timeout
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+  ])
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,45 +54,81 @@ export async function POST(request: NextRequest) {
     // Determine folder based on type
     const uploadFolder = folder || (type === 'verification' ? 'gadgetswap/verification' : 'gadgetswap/listings')
 
+    console.log('Starting upload to Cloudinary...')
+
     // Upload to Cloudinary
     const uploadResult = await uploadImage(image, {
       folder: uploadFolder,
       tags: [type || 'listing', session.user.email || 'unknown'],
     })
 
+    console.log('Cloudinary upload complete:', uploadResult.url)
+
     // Run AI analysis and code verification for verification photos
     let aiAnalysis = null
     let codeVerification = null
 
-    if (type === 'verification') {
-      // Run AI analysis (spoof detection, manipulation detection)
-      try {
-        aiAnalysis = await analyzeImage(uploadResult.url)
-      } catch (error) {
-        console.error('AI analysis failed:', error)
-      }
+    // Check if Google Vision credentials are configured
+    const hasVisionCredentials = !!process.env.GOOGLE_CLOUD_CREDENTIALS
 
-      // Run OCR to find verification code in the photo
-      if (verificationCode) {
+    if (type === 'verification' && hasVisionCredentials) {
+      console.log('Running verification analysis...')
+
+      const visionModule = await getVisionModule()
+      const verificationModule = await getVerificationModule()
+
+      if (visionModule) {
+        // Run AI analysis with 15 second timeout (spoof detection, manipulation detection)
         try {
-          const detectedTexts = await detectTextInImage(uploadResult.url)
-          const codeResult = findCodeInDetectedText(verificationCode, detectedTexts)
-
-          codeVerification = {
-            codeFound: codeResult.found,
-            confidence: codeResult.confidence,
-            matchedText: codeResult.matchedText,
-            allDetectedText: detectedTexts.slice(0, 10), // Return first 10 text blocks for debugging
-          }
+          console.log('Starting AI analysis...')
+          aiAnalysis = await withTimeout(
+            visionModule.analyzeImage(uploadResult.url),
+            15000,
+            null
+          )
+          console.log('AI analysis complete:', aiAnalysis ? 'success' : 'timeout')
         } catch (error) {
-          console.error('OCR verification failed:', error)
-          codeVerification = {
-            codeFound: false,
-            confidence: 0,
-            error: 'OCR analysis failed',
+          console.error('AI analysis failed:', error)
+        }
+
+        // Run OCR to find verification code in the photo (8 second timeout)
+        if (verificationCode && verificationModule) {
+          try {
+            console.log('Starting OCR detection...')
+            const detectedTexts = await withTimeout(
+              visionModule.detectTextInImage(uploadResult.url),
+              8000,
+              [] as string[]
+            )
+
+            if (detectedTexts.length > 0) {
+              const codeResult = verificationModule.findCodeInDetectedText(verificationCode, detectedTexts)
+              codeVerification = {
+                codeFound: codeResult.found,
+                confidence: codeResult.confidence,
+                matchedText: codeResult.matchedText,
+                allDetectedText: detectedTexts.slice(0, 10),
+              }
+            } else {
+              codeVerification = {
+                codeFound: false,
+                confidence: 0,
+                error: 'No text detected or OCR timed out',
+              }
+            }
+            console.log('OCR complete:', codeVerification)
+          } catch (error) {
+            console.error('OCR verification failed:', error)
+            codeVerification = {
+              codeFound: false,
+              confidence: 0,
+              error: 'OCR analysis failed',
+            }
           }
         }
       }
+    } else if (type === 'verification' && !hasVisionCredentials) {
+      console.log('Google Vision credentials not configured, skipping AI analysis')
     }
 
     // Determine overall verification status
@@ -142,6 +203,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log('Upload complete, returning response')
+
     return NextResponse.json({
       url: uploadResult.url,
       publicId: uploadResult.publicId,
@@ -165,7 +228,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Upload failed:', error)
     return NextResponse.json(
-      { error: 'Failed to upload image' },
+      { error: 'Failed to upload image', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
