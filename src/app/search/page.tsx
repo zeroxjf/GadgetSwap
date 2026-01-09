@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { ListingCard } from '@/components/listings/ListingCard'
 import { SearchFilters } from '@/components/search/SearchFilters'
+import { getDeviceTypeLabel, getConditionLabel, getJailbreakStatusLabel } from '@/lib/device-data'
 
 const sortOptions = [
   { value: 'newest', label: 'Newest First' },
@@ -73,10 +74,10 @@ function SearchContent() {
 
   // Active filters for display
   const activeFilters = [
-    deviceType && { key: 'deviceType', label: `Type: ${deviceType}` },
+    deviceType && { key: 'deviceType', label: `Type: ${getDeviceTypeLabel(deviceType)}` },
     osVersion && { key: 'osVersion', label: `iOS: ${osVersion}` },
-    jailbreakStatus && { key: 'jailbreakStatus', label: jailbreakStatus.replace('_', ' ') },
-    condition && { key: 'condition', label: `Condition: ${condition}` },
+    jailbreakStatus && { key: 'jailbreakStatus', label: getJailbreakStatusLabel(jailbreakStatus) },
+    condition && { key: 'condition', label: `Condition: ${getConditionLabel(condition)}` },
     (priceMin || priceMax) && { key: 'price', label: `$${priceMin || '0'} - $${priceMax || '∞'}` },
   ].filter(Boolean)
 
