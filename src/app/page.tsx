@@ -30,6 +30,9 @@ async function getFeaturedListings() {
       where: {
         status: 'ACTIVE',
         reviewStatus: 'APPROVED',
+        seller: {
+          stripeOnboardingComplete: true,
+        },
       },
       include: {
         images: {
@@ -73,7 +76,13 @@ async function getListingCounts() {
   try {
     const counts = await prisma.listing.groupBy({
       by: ['deviceType'],
-      where: { status: 'ACTIVE', reviewStatus: 'APPROVED' },
+      where: {
+        status: 'ACTIVE',
+        reviewStatus: 'APPROVED',
+        seller: {
+          stripeOnboardingComplete: true,
+        },
+      },
       _count: { id: true },
     })
     return counts.reduce((acc, item) => {

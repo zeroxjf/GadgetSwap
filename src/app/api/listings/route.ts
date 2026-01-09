@@ -263,9 +263,12 @@ export async function GET(request: NextRequest) {
       where.sellerId = sellerId
       // Don't filter by status or reviewStatus - show all their listings
     } else {
-      // Public listings: must be ACTIVE and APPROVED
+      // Public listings: must be ACTIVE, APPROVED, and seller has completed Stripe onboarding
       where.status = 'ACTIVE'
       where.reviewStatus = 'APPROVED'
+      where.seller = {
+        stripeOnboardingComplete: true,
+      }
     }
 
     // Text search
