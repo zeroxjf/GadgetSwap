@@ -7,8 +7,6 @@ import { useRouter } from 'next/navigation'
 const deviceTypes = [
   { value: 'IPHONE', label: 'iPhone' },
   { value: 'IPAD', label: 'iPad' },
-  { value: 'MACBOOK', label: 'MacBook' },
-  { value: 'APPLE_WATCH', label: 'Apple Watch' },
 ]
 
 const popularVersions = [
