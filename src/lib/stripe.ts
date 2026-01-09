@@ -227,7 +227,7 @@ export async function checkConnectAccountStatus(accountId: string) {
 // =============================================================================
 
 /**
- * Parse a thin event from Stripe webhook
+ * Verify and parse a thin event from Stripe webhook
  *
  * V2 accounts use "thin" events which contain minimal data.
  * You must fetch the full event data using the event ID.
@@ -252,8 +252,21 @@ export function parseThinEvent(
   payload: string | Buffer,
   signature: string,
   webhookSecret: string
-) {
-  return stripeClient.parseThinEvent(payload, signature, webhookSecret)
+): { id: string; type: string; created: string; related_object?: { id: string; type: string } } {
+  // Verify the webhook signature using standard method
+  // Thin events have the same signature verification as regular events
+  const event = stripeClient.webhooks.constructEvent(payload, signature, webhookSecret)
+
+  // Return thin event structure
+  return {
+    id: event.id,
+    type: event.type,
+    created: new Date((event as any).created * 1000).toISOString(),
+    related_object: (event as any).data?.object ? {
+      id: (event as any).data.object.id || (event as any).data.object.account,
+      type: (event as any).data.object.object || 'account',
+    } : undefined,
+  }
 }
 
 /**
