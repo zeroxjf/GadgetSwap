@@ -26,6 +26,7 @@ import {
   Edit2,
   Wallet,
   ArrowRight,
+  Eye,
 } from 'lucide-react'
 
 interface Listing {
@@ -330,10 +331,16 @@ export default function ListingDetailPage() {
                   {listing.title}
                 </h1>
 
-                <div className="flex items-baseline gap-2 mb-4">
+                <div className="flex items-baseline gap-2 mb-2">
                   <span className="text-3xl font-bold text-gray-900 dark:text-white">
                     ${listing.price.toLocaleString()}
                   </span>
+                </div>
+
+                {/* View count */}
+                <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  <Eye className="w-4 h-4" />
+                  <span>{listing.views.toLocaleString()} view{listing.views !== 1 ? 's' : ''}</span>
                 </div>
 
                 {/* Quick badges */}

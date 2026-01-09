@@ -44,11 +44,16 @@ export async function GET(
       )
     }
 
-    // Increment view count
-    await prisma.listing.update({
-      where: { id },
-      data: { views: { increment: 1 } },
-    })
+    // Increment view count only if viewer is not the seller
+    const session = await getServerSession(authOptions)
+    const isOwnListing = session?.user?.id === listing.sellerId
+
+    if (!isOwnListing) {
+      await prisma.listing.update({
+        where: { id },
+        data: { views: { increment: 1 } },
+      })
+    }
 
     return NextResponse.json({ listing })
   } catch (error) {
