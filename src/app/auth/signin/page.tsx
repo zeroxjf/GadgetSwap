@@ -66,9 +66,7 @@ function SignInForm() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">G</span>
-            </div>
+            <img src="/logo.png" alt="GadgetSwap" className="w-12 h-12 rounded-xl" />
             <span className="text-2xl font-bold text-gray-900">GadgetSwap</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-6">Welcome back</h1>
