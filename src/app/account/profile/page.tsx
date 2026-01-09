@@ -55,12 +55,16 @@ export default function EditProfilePage() {
       const response = await fetch('/api/user/profile')
       if (response.ok) {
         const data = await response.json()
+        const user = data.user
         setFormData({
-          name: data.name || '',
-          username: data.username || '',
-          bio: data.bio || '',
-          location: data.location || '',
+          name: user.name || '',
+          username: user.username || '',
+          bio: user.bio || '',
+          location: user.location || '',
         })
+        if (user.image) {
+          setProfileImage(user.image)
+        }
       }
     } catch (error) {
       console.error('Failed to fetch profile:', error)
@@ -193,22 +197,22 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/account" className="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-flex items-center gap-1">
+          <Link href="/account" className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm mb-2 inline-flex items-center gap-1">
             <ChevronLeft className="w-4 h-4" />
             Back to Account
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mt-2">Edit Profile</h1>
-          <p className="text-gray-600">Update your personal information</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-2">Edit Profile</h1>
+          <p className="text-gray-600 dark:text-gray-400">Update your personal information</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Profile Photo */}
           <div className="card p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Profile Photo</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Profile Photo</h2>
             <div className="flex items-center gap-6">
               <div className="relative">
                 <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center overflow-hidden">
@@ -230,7 +234,7 @@ export default function EditProfilePage() {
                 </button>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-3">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                   Upload a profile picture. Recommended size is 400x400 pixels.
                 </p>
                 <div className="flex gap-2">
@@ -268,7 +272,7 @@ export default function EditProfilePage() {
 
           {/* Basic Info */}
           <div className="card p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Basic Information</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
             <div className="space-y-4">
               <div>
                 <label htmlFor="name" className="label mb-1 block">Display Name</label>
