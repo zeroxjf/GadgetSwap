@@ -38,10 +38,14 @@ const EMAIL_PATTERNS = [
 
 // Payment platform patterns
 const PAYMENT_PLATFORM_PATTERNS = [
-  /\b(?:venmo|paypal|cashapp|cash\s*app|zelle|apple\s*pay|google\s*pay|gpay)\b/gi,
+  /\b(?:venmo|paypal|cashapp|cash\s*app|zelle|apple\s*pay|google\s*pay|gpay|wise|western\s*union|money\s*gram|moneygram)\b/gi,
   /\$[A-Za-z][A-Za-z0-9_-]{2,}/g,                           // $cashtag format
   /\b(?:send|pay|transfer)\s*(?:me|to)?\s*(?:via|through|on|using)?\s*(?:venmo|paypal|cashapp|zelle)/gi,
   /\b(?:my|add\s*me\s*on)\s*(?:venmo|paypal|cashapp|zelle)\s*(?:is|:)?\s*@?[A-Za-z0-9_-]+/gi,
+  /\b(?:goods\s*(?:and|&)\s*services|g\s*&\s*s|g&s|f\s*&\s*f|f&f|friends\s*(?:and|&)\s*family)\b/gi,  // PayPal payment types
+  /\b(?:pp|paypal)\s*(?:me|g&s|f&f|goods|friends)\b/gi,     // PP shorthand
+  /\b(?:bank\s*transfer|wire\s*transfer|direct\s*deposit|ach|routing\s*number|account\s*number)\b/gi,
+  /\b(?:gift\s*card|prepaid\s*card|reload|green\s*dot)\b/gi,
 ]
 
 // Social media patterns
