@@ -93,7 +93,30 @@ function stringSimilarity(str1: string, str2: string): number {
 }
 
 /**
+ * Normalize text for comparison - handles common handwriting/OCR confusions
+ * Converts all ambiguous characters to a canonical form
+ */
+function normalizeForComparison(text: string): string {
+  return text
+    .toUpperCase()
+    .replace(/\s/g, '')
+    // Handle bidirectional substitutions - normalize to letters
+    .replace(/0/g, 'O')
+    .replace(/1/g, 'I')
+    .replace(/8/g, 'B')
+    .replace(/5/g, 'S')
+    .replace(/2/g, 'Z')
+    // Additional handwriting confusions
+    .replace(/6/g, 'G')
+    .replace(/9/g, 'G')
+    .replace(/4/g, 'A')
+    .replace(/\$/g, 'S')
+    .replace(/@/g, 'A')
+}
+
+/**
  * Check if the verification code is found in the OCR-detected text
+ * Enhanced for handwritten text detection
  * @param verificationCode - The expected verification code
  * @param detectedTexts - Array of text detected by OCR
  */
@@ -102,31 +125,34 @@ export function findCodeInDetectedText(
   detectedTexts: string[]
 ): { found: boolean; confidence: number; matchedText?: string } {
   const normalizedCode = verificationCode.toUpperCase().replace(/\s/g, '')
+  const fuzzyCode = normalizeForComparison(normalizedCode)
 
+  // First, try to find the code in the full concatenated text (first element is usually the full text)
+  const fullText = detectedTexts[0] || ''
+  const normalizedFullText = fullText.toUpperCase().replace(/\s/g, '')
+  const fuzzyFullText = normalizeForComparison(normalizedFullText)
+
+  // Exact match in full text
+  if (normalizedFullText.includes(normalizedCode)) {
+    return { found: true, confidence: 1.0, matchedText: normalizedCode }
+  }
+
+  // Fuzzy match in full text (handles OCR confusions)
+  if (fuzzyFullText.includes(fuzzyCode)) {
+    return { found: true, confidence: 0.95, matchedText: normalizedCode }
+  }
+
+  // Check each detected text block
   for (const text of detectedTexts) {
     const normalizedText = text.toUpperCase().replace(/\s/g, '')
+    const fuzzyText = normalizeForComparison(normalizedText)
 
     // Exact match
     if (normalizedText.includes(normalizedCode)) {
       return { found: true, confidence: 1.0, matchedText: text }
     }
 
-    // Check for the code as a substring with common OCR errors
-    // Common substitutions: 0↔O, 1↔I, 8↔B, 5↔S, 2↔Z
-    const fuzzyCode = normalizedCode
-      .replace(/O/g, '0')
-      .replace(/I/g, '1')
-      .replace(/B/g, '8')
-      .replace(/S/g, '5')
-      .replace(/Z/g, '2')
-
-    const fuzzyText = normalizedText
-      .replace(/O/g, '0')
-      .replace(/I/g, '1')
-      .replace(/B/g, '8')
-      .replace(/S/g, '5')
-      .replace(/Z/g, '2')
-
+    // Fuzzy match with OCR corrections
     if (fuzzyText.includes(fuzzyCode)) {
       return { found: true, confidence: 0.9, matchedText: text }
     }
@@ -134,22 +160,55 @@ export function findCodeInDetectedText(
 
   // Try fuzzy matching on each detected word/block
   for (const text of detectedTexts) {
-    const words = text.toUpperCase().replace(/\s+/g, ' ').split(' ')
+    // Split on spaces, newlines, and common delimiters
+    const words = text.toUpperCase().replace(/[\s\-_.,;:!?]+/g, ' ').split(' ').filter(w => w.length > 0)
 
     for (const word of words) {
-      // Only check words that are similar length to the code
-      if (Math.abs(word.length - normalizedCode.length) <= 2) {
-        const similarity = stringSimilarity(word, normalizedCode)
+      // Clean the word
+      const cleanWord = word.replace(/[^A-Z0-9]/g, '')
 
+      // Only check words that are similar length to the code (allow +/-2)
+      if (Math.abs(cleanWord.length - normalizedCode.length) <= 2) {
+        // Try exact match first
+        if (cleanWord === normalizedCode) {
+          return { found: true, confidence: 1.0, matchedText: word }
+        }
+
+        // Try fuzzy normalized match
+        const fuzzyWord = normalizeForComparison(cleanWord)
+        if (fuzzyWord === fuzzyCode) {
+          return { found: true, confidence: 0.9, matchedText: word }
+        }
+
+        // Calculate string similarity
+        const similarity = stringSimilarity(cleanWord, normalizedCode)
         if (similarity >= 0.8) {
-          return {
-            found: true,
-            confidence: similarity,
-            matchedText: word,
-          }
+          return { found: true, confidence: similarity, matchedText: word }
+        }
+
+        // Also check fuzzy similarity
+        const fuzzySimilarity = stringSimilarity(fuzzyWord, fuzzyCode)
+        if (fuzzySimilarity >= 0.85) {
+          return { found: true, confidence: fuzzySimilarity * 0.95, matchedText: word }
         }
       }
     }
+  }
+
+  // Last resort: Check if code characters appear consecutively anywhere
+  // This helps when spaces are inserted between characters in handwriting
+  const allTextCombined = detectedTexts.join('').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  const fuzzyAllText = normalizeForComparison(allTextCombined)
+
+  if (fuzzyAllText.includes(fuzzyCode)) {
+    return { found: true, confidence: 0.85, matchedText: verificationCode }
+  }
+
+  // Check for code with spaces between characters (e.g., "A B C D E F")
+  const codeWithSpaces = normalizedCode.split('').join('\\s*')
+  const spaceRegex = new RegExp(codeWithSpaces, 'i')
+  if (spaceRegex.test(fullText)) {
+    return { found: true, confidence: 0.85, matchedText: verificationCode }
   }
 
   return { found: false, confidence: 0 }

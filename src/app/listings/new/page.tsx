@@ -135,6 +135,7 @@ interface VerificationState {
   codeFound: boolean | null
   codeConfidence: number | null
   hasDevice: boolean | null
+  detectedTexts: string[] | null  // What OCR actually detected
   error: string | null
 }
 
@@ -213,6 +214,7 @@ function NewListingContent() {
     codeFound: null,
     codeConfidence: null,
     hasDevice: null,
+    detectedTexts: null,
     error: null,
   })
 
@@ -686,6 +688,7 @@ function NewListingContent() {
     codeFound?: boolean
     codeConfidence?: number
     hasDevice?: boolean
+    detectedTexts?: string[]
   } | null> => {
     try {
       const response = await fetch('/api/upload', {
@@ -715,6 +718,7 @@ function NewListingContent() {
         codeFound: data.codeVerification?.codeFound,
         codeConfidence: data.codeVerification?.confidence,
         hasDevice: data.aiAnalysis?.hasDevice,
+        detectedTexts: data.codeVerification?.allDetectedText,
       }
     } catch (error) {
       console.error('Upload error:', error)
@@ -759,6 +763,7 @@ function NewListingContent() {
           codeFound: result.codeFound ?? null,
           codeConfidence: result.codeConfidence ?? null,
           hasDevice: result.hasDevice ?? null,
+          detectedTexts: result.detectedTexts || null,
         }))
       }
       reader.onerror = () => {
@@ -986,6 +991,7 @@ function NewListingContent() {
                       codeFound: null,
                       codeConfidence: null,
                       hasDevice: null,
+                      detectedTexts: null,
                       error: null,
                     })
                     router.push('/listings/new?step=1', { scroll: false })
@@ -1913,6 +1919,7 @@ function NewListingContent() {
                                 codeFound: null,
                                 codeConfidence: null,
                                 hasDevice: null,
+                                detectedTexts: null,
                               }))
                             }
                             className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
@@ -1977,6 +1984,40 @@ function NewListingContent() {
                                     : 'Code detection pending'}
                                 </span>
                               </div>
+
+                              {/* Show detected text when code not found - helps user troubleshoot */}
+                              {verification.codeFound === false && verification.detectedTexts && verification.detectedTexts.length > 0 && (
+                                <div className="p-2 bg-gray-50 rounded text-xs text-gray-600">
+                                  <p className="font-medium mb-1">Text detected in photo:</p>
+                                  <p className="font-mono break-all">
+                                    {verification.detectedTexts.slice(0, 3).map((t, i) => (
+                                      <span key={i}>{i > 0 ? ', ' : ''}&quot;{t.slice(0, 50)}{t.length > 50 ? '...' : ''}&quot;</span>
+                                    ))}
+                                  </p>
+                                  <p className="mt-1 text-gray-500">
+                                    Expected: <span className="font-mono font-bold">{verification.code}</span>
+                                  </p>
+                                  <p className="mt-1 text-gray-500 italic">
+                                    Tip: Write the code larger and clearer, with good lighting
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Show message when no text detected at all */}
+                              {verification.codeFound === false && (!verification.detectedTexts || verification.detectedTexts.length === 0) && (
+                                <div className="p-2 bg-gray-50 rounded text-xs text-gray-600">
+                                  <p className="font-medium text-red-600">No text could be detected in the photo</p>
+                                  <p className="mt-1 text-gray-500">
+                                    Make sure the code <span className="font-mono font-bold">{verification.code}</span> is:
+                                  </p>
+                                  <ul className="mt-1 text-gray-500 list-disc list-inside">
+                                    <li>Written in large, clear letters</li>
+                                    <li>On white paper with dark ink</li>
+                                    <li>Well-lit and in focus</li>
+                                    <li>Visible in the photo (not cut off)</li>
+                                  </ul>
+                                </div>
+                              )}
 
                               {/* Device Detection */}
                               <div className={`flex items-center gap-2 p-2 rounded ${

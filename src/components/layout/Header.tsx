@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import {
   Search,
@@ -32,8 +32,31 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0)
 
   const isLoggedIn = !!session?.user
+
+  // Fetch unread message count
+  useEffect(() => {
+    if (!isLoggedIn) return
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/messages/unread-count')
+        if (response.ok) {
+          const data = await response.json()
+          setUnreadMessageCount(data.count)
+        }
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error)
+      }
+    }
+
+    fetchUnreadCount()
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [isLoggedIn])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,7 +128,9 @@ export function Header() {
                 </Link>
                 <Link href="/messages" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative">
                   <MessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  {unreadMessageCount > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
                 </Link>
                 <Link href="/notifications" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
                   <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -272,8 +297,11 @@ export function Header() {
                   Sell a Device
                 </Link>
                 <div className="grid grid-cols-4 gap-2">
-                  <Link href="/messages" className="btn-secondary justify-center p-2">
+                  <Link href="/messages" className="btn-secondary justify-center p-2 relative">
                     <MessageSquare className="w-5 h-5" />
+                    {unreadMessageCount > 0 && (
+                      <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    )}
                   </Link>
                   <Link href="/notifications" className="btn-secondary justify-center p-2">
                     <Bell className="w-5 h-5" />
