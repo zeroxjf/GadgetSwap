@@ -18,6 +18,7 @@ import {
   Info,
   FileEdit,
   ArrowRight,
+  Wallet,
 } from 'lucide-react'
 
 interface Listing {
@@ -43,6 +44,7 @@ export default function MyListingsPage() {
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<FilterType>('all')
+  const [payoutsSetup, setPayoutsSetup] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -53,6 +55,7 @@ export default function MyListingsPage() {
   useEffect(() => {
     if (session?.user) {
       fetchListings()
+      fetchPayoutStatus()
     }
   }, [session])
 
@@ -67,6 +70,18 @@ export default function MyListingsPage() {
       console.error('Failed to fetch listings:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchPayoutStatus = async () => {
+    try {
+      const response = await fetch('/api/payouts/info')
+      if (response.ok) {
+        const data = await response.json()
+        setPayoutsSetup(data.stripeOnboardingComplete)
+      }
+    } catch (error) {
+      console.error('Failed to fetch payout status:', error)
     }
   }
 
@@ -175,6 +190,26 @@ export default function MyListingsPage() {
             </Link>
           </div>
         </div>
+
+        {/* Payout setup warning */}
+        {payoutsSetup === false && listings.length > 0 && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+            <Wallet className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium text-yellow-800">Set up payouts to make your listings visible</p>
+              <p className="text-sm text-yellow-700 mt-1">
+                Your listings won't appear in search results or on the homepage until you connect your bank account for payouts.
+              </p>
+              <Link
+                href="/account/payouts"
+                className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900"
+              >
+                Set up payouts
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-6">
