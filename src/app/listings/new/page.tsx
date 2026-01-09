@@ -1023,11 +1023,11 @@ function NewListingContent() {
           </button>
 
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Step {step} of 5
+            Step {step} of 4
           </div>
 
           <button
-            onClick={() => step < 5 && canProceed() && setStep(step + 1)}
+            onClick={() => step < 4 && canProceed() && setStep(step + 1)}
             disabled={step === 4 || !canProceed()}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
               step === 4 || !canProceed()
@@ -2116,7 +2116,7 @@ function NewListingContent() {
               <div />
             )}
 
-            {step < 5 ? (
+            {step < 4 ? (
               <button
                 type="button"
                 onClick={() => setStep(step + 1)}
