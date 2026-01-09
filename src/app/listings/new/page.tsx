@@ -584,7 +584,7 @@ function NewListingContent() {
     setUploadedImageUrls((prev) => prev.filter((_, i) => i !== index))
   }
 
-  // Generate verification code when entering step 5
+  // Generate verification code when entering step 4 (Verification)
   const generateVerificationCode = async () => {
     setVerification((prev) => ({ ...prev, isGenerating: true, error: null }))
 
@@ -816,12 +816,13 @@ function NewListingContent() {
         const hasStorage = !needsStorage || formData.storageGB
         // IMEI verification required for iPhones and iPads
         const imeiValid = !requiresIMEI || imeiVerification.verified
-        return formData.title && formData.description && formData.price && hasStorage && !priceError && imeiValid
+        // iOS/macOS version required for Apple devices (except accessories)
+        const needsOsVersion = ['IPHONE', 'IPAD', 'MACBOOK', 'IMAC', 'MAC_MINI', 'MAC_PRO', 'MAC_STUDIO'].includes(formData.deviceType)
+        const hasOsVersion = !needsOsVersion || formData.osVersion
+        return formData.title && formData.description && formData.price && hasStorage && hasOsVersion && !priceError && imeiValid
       case 3:
-        return true // Optional step
+        return true // Photos optional
       case 4:
-        return true // Images optional
-      case 5:
         // Verification code and photo required
         return verification.code && verification.photoUrl && !verification.isUploading
       default:
@@ -829,9 +830,9 @@ function NewListingContent() {
     }
   }
 
-  // Generate verification code when entering step 5
+  // Generate verification code when entering step 4 (Verification)
   useEffect(() => {
-    if (step === 5 && !verification.code && !verification.isGenerating) {
+    if (step === 4 && !verification.code && !verification.isGenerating) {
       generateVerificationCode()
     }
   }, [step, verification.code, verification.isGenerating])
@@ -945,9 +946,9 @@ function NewListingContent() {
 
           <button
             onClick={() => step < 5 && canProceed() && setStep(step + 1)}
-            disabled={step === 5 || !canProceed()}
+            disabled={step === 4 || !canProceed()}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-              step === 5 || !canProceed()
+              step === 4 || !canProceed()
                 ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
@@ -962,9 +963,8 @@ function NewListingContent() {
             {[
               { num: 1, label: 'Device' },
               { num: 2, label: 'Details' },
-              { num: 3, label: 'Jailbreak' },
-              { num: 4, label: 'Photos' },
-              { num: 5, label: 'Verify' },
+              { num: 3, label: 'Photos' },
+              { num: 4, label: 'Verify' },
             ].map((s, i) => (
               <div key={s.num} className="flex items-center">
                 <div
@@ -983,7 +983,7 @@ function NewListingContent() {
                 >
                   {s.label}
                 </span>
-                {i < 4 && (
+                {i < 3 && (
                   <div
                     className={`w-8 h-0.5 mx-3 ${
                       step > s.num ? 'bg-primary-600' : 'bg-gray-200'
@@ -1000,9 +1000,8 @@ function NewListingContent() {
             {[
               { num: 1, label: 'Device' },
               { num: 2, label: 'Details' },
-              { num: 3, label: 'Jailbreak' },
-              { num: 4, label: 'Photos' },
-              { num: 5, label: 'Verify' },
+              { num: 3, label: 'Photos' },
+              { num: 4, label: 'Verify' },
             ].map((s, i) => (
               <div key={s.num} className="flex items-center">
                 <div
@@ -1021,7 +1020,7 @@ function NewListingContent() {
                 >
                   {s.label}
                 </span>
-                {i < 4 && (
+                {i < 3 && (
                   <div
                     className={`w-4 sm:w-8 h-0.5 mx-1 sm:mx-2 ${
                       step > s.num ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
@@ -1126,7 +1125,10 @@ function NewListingContent() {
           {/* Step 2: Listing Details */}
           {step === 2 && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold">Listing Details</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Listing Details</h2>
+                <span className="text-sm text-gray-500"><span className="text-red-500">*</span> Required fields</span>
+              </div>
 
               <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
                 {/* Left column - Title, Description, Specs */}
@@ -1134,7 +1136,7 @@ function NewListingContent() {
                   {/* Title */}
                   <div>
                     <label htmlFor="title" className="label mb-2 block">
-                      Title *
+                      Title <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="title"
@@ -1153,7 +1155,7 @@ function NewListingContent() {
                   {/* Description */}
                   <div>
                     <label htmlFor="description" className="label mb-2 block">
-                      Description *
+                      Description <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       id="description"
@@ -1168,10 +1170,10 @@ function NewListingContent() {
                     </p>
                   </div>
 
-                  {/* Storage, Color, Battery in a row */}
-                  <div className="grid grid-cols-3 gap-3">
+                  {/* Storage, Color, Battery, iOS Version in a row */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div>
-                      <label className="label mb-2 block text-sm">Storage *</label>
+                      <label className="label mb-2 block text-sm">Storage <span className="text-red-500">*</span></label>
                       <select
                         value={formData.storageGB}
                         onChange={(e) => updateFormData('storageGB', e.target.value)}
@@ -1208,7 +1210,7 @@ function NewListingContent() {
                     </div>
                     <div>
                       <label htmlFor="batteryHealth" className="label mb-2 block text-sm">
-                        Max Battery %
+                        Battery %
                       </label>
                       <input
                         id="batteryHealth"
@@ -1221,7 +1223,66 @@ function NewListingContent() {
                         max="100"
                       />
                     </div>
+                    {['IPHONE', 'IPAD', 'MACBOOK', 'IMAC', 'MAC_MINI', 'MAC_PRO', 'MAC_STUDIO'].includes(formData.deviceType) && (
+                      <div>
+                        <label htmlFor="osVersion" className="label mb-2 block text-sm">
+                          {['IPHONE', 'IPAD'].includes(formData.deviceType) ? 'iOS Version' : 'macOS Version'} <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="osVersion"
+                          type="text"
+                          value={formData.osVersion}
+                          onChange={(e) => updateFormData('osVersion', e.target.value)}
+                          placeholder={['IPHONE', 'IPAD'].includes(formData.deviceType) ? '16.1.2' : '14.2'}
+                          className="input text-sm"
+                        />
+                      </div>
+                    )}
                   </div>
+
+                  {/* Jailbreak Compatibility - shows for iPhone/iPad when iOS version entered */}
+                  {['IPHONE', 'IPAD'].includes(formData.deviceType) && formData.osVersion && (
+                    <div className={`p-4 rounded-lg border-2 ${
+                      jailbreakCompat?.canJailbreak
+                        ? 'border-green-500 bg-green-50'
+                        : jailbreakCompat?.status === 'NOT_JAILBROKEN'
+                        ? 'border-gray-300 bg-gray-50'
+                        : 'border-gray-300 bg-gray-50'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        {jailbreakCompat?.canJailbreak ? (
+                          <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <Info className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1">
+                          <h3 className={`font-medium text-sm ${
+                            jailbreakCompat?.canJailbreak ? 'text-green-900' : 'text-gray-700'
+                          }`}>
+                            {jailbreakCompat?.canJailbreak
+                              ? 'Jailbreakable - eligible for premium pricing!'
+                              : 'Stock iOS - not jailbreakable'}
+                          </h3>
+
+                          {jailbreakCompat?.canJailbreak && jailbreakCompat.tools.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {jailbreakCompat.tools.slice(0, 3).map((tool, i) => (
+                                <span
+                                  key={i}
+                                  className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-white border border-green-300 text-green-800"
+                                >
+                                  {tool.name}
+                                </span>
+                              ))}
+                              {jailbreakCompat.tools.length > 3 && (
+                                <span className="text-xs text-green-700">+{jailbreakCompat.tools.length - 3} more</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Carrier */}
                   {['IPHONE', 'IPAD'].includes(formData.deviceType) && (
@@ -1535,7 +1596,7 @@ function NewListingContent() {
                   {/* Price Input */}
                   <div>
                     <label htmlFor="price" className="label mb-2 block">
-                      Your Price *
+                      Your Price <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -1596,152 +1657,8 @@ function NewListingContent() {
             </div>
           )}
 
-          {/* Step 3: Jailbreak Info */}
+          {/* Step 3: Photos */}
           {step === 3 && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold">iOS Version & Jailbreak Info</h2>
-
-              <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
-                {/* Left column - iOS Version inputs */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="osVersion" className="label mb-2 block">
-                        iOS/macOS Version *
-                      </label>
-                      <input
-                        id="osVersion"
-                        type="text"
-                        value={formData.osVersion}
-                        onChange={(e) => updateFormData('osVersion', e.target.value)}
-                        placeholder="e.g., 16.1.2"
-                        className="input"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Settings → General → About
-                      </p>
-                    </div>
-                    <div>
-                      <label htmlFor="buildNumber" className="label mb-2 block">
-                        Build Number
-                      </label>
-                      <input
-                        id="buildNumber"
-                        type="text"
-                        value={formData.buildNumber}
-                        onChange={(e) => updateFormData('buildNumber', e.target.value)}
-                        placeholder="e.g., 20B110"
-                        className="input"
-                      />
-                    </div>
-                  </div>
-
-              {/* Auto-detected Jailbreak Compatibility */}
-              {['IPHONE', 'IPAD'].includes(formData.deviceType) && formData.osVersion && (
-                <div className={`p-4 rounded-lg border-2 ${
-                  jailbreakCompat?.canJailbreak
-                    ? 'border-green-500 bg-green-50'
-                    : jailbreakCompat?.status === 'NOT_JAILBROKEN'
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-300 bg-gray-50'
-                }`}>
-                  <div className="flex items-start gap-3">
-                    {jailbreakCompat?.canJailbreak ? (
-                      <Check className="w-6 h-6 text-green-600 flex-shrink-0" />
-                    ) : jailbreakCompat?.status === 'NOT_JAILBROKEN' ? (
-                      <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
-                    ) : (
-                      <Info className="w-6 h-6 text-gray-500 flex-shrink-0" />
-                    )}
-                    <div className="flex-1">
-                      <h3 className={`font-semibold ${
-                        jailbreakCompat?.canJailbreak ? 'text-green-900' :
-                        jailbreakCompat?.status === 'NOT_JAILBROKEN' ? 'text-red-900' :
-                        'text-gray-700'
-                      }`}>
-                        {jailbreakCompat?.canJailbreak
-                          ? 'This device is jailbreakable!'
-                          : jailbreakCompat?.status === 'NOT_JAILBROKEN'
-                          ? 'Not jailbreakable on this iOS version'
-                          : 'Checking compatibility...'}
-                      </h3>
-
-                      {jailbreakCompat?.canJailbreak && (
-                        <>
-                          <p className="text-sm text-green-700 mt-1">
-                            {formData.deviceModel} on iOS {formData.osVersion} can be jailbroken
-                          </p>
-
-                          {/* Available tools */}
-                          {jailbreakCompat.tools.length > 0 && (
-                            <div className="mt-3">
-                              <p className="text-sm font-medium text-green-800 mb-2">Available jailbreak tools:</p>
-                              <div className="flex flex-wrap gap-2">
-                                {jailbreakCompat.tools.map((tool, i) => (
-                                  <span
-                                    key={i}
-                                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white border border-green-300 text-green-800"
-                                  >
-                                    {tool.name}
-                                    <span className="ml-1 text-green-600 text-xs">({tool.type})</span>
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* checkm8 badge */}
-                          {jailbreakCompat.hasBootromExploit && (
-                            <div className="mt-3 inline-flex items-center gap-1 bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
-                              <Smartphone className="w-4 h-4" />
-                              checkm8 bootrom exploit available
-                            </div>
-                          )}
-                        </>
-                      )}
-
-                      {jailbreakCompat?.status === 'NOT_JAILBROKEN' && (
-                        <p className="text-sm text-red-700 mt-1">
-                          No jailbreak is currently available for {formData.deviceModel} on iOS {formData.osVersion}
-                        </p>
-                      )}
-
-                      <p className="text-xs text-gray-500 mt-2">
-                        Data from <a href="https://ios.cfw.guide" target="_blank" rel="noopener noreferrer" className="underline">ios.cfw.guide</a>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Non-iOS device message */}
-              {!['IPHONE', 'IPAD'].includes(formData.deviceType) && (
-                <div className="p-4 rounded-lg border border-gray-200 bg-gray-50">
-                  <p className="text-gray-600 text-sm">
-                    Jailbreak compatibility checking is only available for iPhone and iPad devices.
-                  </p>
-                </div>
-              )}
-
-                </div>
-
-                {/* Right column - Jailbreak info */}
-                <div className="space-y-4">
-                  {/* Jailbreak info box */}
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <h4 className="font-medium text-gray-900 mb-2 text-sm">Why iOS version matters</h4>
-                    <p className="text-sm text-gray-600">
-                      Buyers in the jailbreak community look for devices on specific iOS versions.
-                      Devices on jailbreakable firmware often sell for a premium.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Photos */}
-          {step === 4 && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -1802,8 +1719,8 @@ function NewListingContent() {
             </div>
           )}
 
-          {/* Step 5: Verification */}
-          {step === 5 && (
+          {/* Step 4: Verification */}
+          {step === 4 && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-lg font-semibold flex items-center gap-2">

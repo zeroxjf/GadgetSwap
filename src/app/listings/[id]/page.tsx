@@ -287,12 +287,6 @@ export default function ListingDetailPage() {
                         <span className="text-gray-600">iOS Version</span>
                         <span className="font-medium">{listing.osVersion}</span>
                       </div>
-                      {listing.buildNumber && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Build Number</span>
-                          <span className="font-medium">{listing.buildNumber}</span>
-                        </div>
-                      )}
                       <div className="flex justify-between">
                         <span className="text-gray-600">Status</span>
                         <span className={`badge ${
