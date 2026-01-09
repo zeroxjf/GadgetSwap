@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/check-deliveries",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/release-funds",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
