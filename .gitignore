@@ -52,3 +52,4 @@ coverage/
 *.pid
 *.seed
 .env*.local
+scripts/test-moderation.py
