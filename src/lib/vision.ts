@@ -153,11 +153,11 @@ export async function analyzeImage(imageUrl: string): Promise<AIDetectionResult>
       isLikelyAI: aiScore > 0.6,
       confidence: aiScore,
       safeSearch: {
-        adult: safeSearch.adult || 'UNKNOWN',
-        violence: safeSearch.violence || 'UNKNOWN',
-        medical: safeSearch.medical || 'UNKNOWN',
-        racy: safeSearch.racy || 'UNKNOWN',
-        spoof: safeSearch.spoof || 'UNKNOWN',
+        adult: String(safeSearch.adult || 'UNKNOWN'),
+        violence: String(safeSearch.violence || 'UNKNOWN'),
+        medical: String(safeSearch.medical || 'UNKNOWN'),
+        racy: String(safeSearch.racy || 'UNKNOWN'),
+        spoof: String(safeSearch.spoof || 'UNKNOWN'),
       },
       labels: labels.slice(0, 15), // Return top 15 labels
       hasDevice,
@@ -237,11 +237,11 @@ export async function checkSafeSearch(imageUrl: string): Promise<{
       safe: reasons.length === 0,
       reasons,
       results: {
-        adult: safeSearch.adult || 'UNKNOWN',
-        violence: safeSearch.violence || 'UNKNOWN',
-        medical: safeSearch.medical || 'UNKNOWN',
-        racy: safeSearch.racy || 'UNKNOWN',
-        spoof: safeSearch.spoof || 'UNKNOWN',
+        adult: String(safeSearch.adult || 'UNKNOWN'),
+        violence: String(safeSearch.violence || 'UNKNOWN'),
+        medical: String(safeSearch.medical || 'UNKNOWN'),
+        racy: String(safeSearch.racy || 'UNKNOWN'),
+        spoof: String(safeSearch.spoof || 'UNKNOWN'),
       },
     }
   } catch (error) {
