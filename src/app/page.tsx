@@ -188,8 +188,14 @@ export default async function HomePage() {
                 </Link>
               </div>
 
+              {/* Stripe badge */}
+              <div className="mt-6 flex items-center gap-2 text-sm text-primary-200/70">
+                <span>Payments secured by</span>
+                <span className="font-semibold text-white">Stripe</span>
+              </div>
+
               {/* Trust badges */}
-              <div className="mt-8">
+              <div className="mt-4">
                 <TrustBadges />
               </div>
             </div>
