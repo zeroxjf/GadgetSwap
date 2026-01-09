@@ -4,11 +4,9 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { issueRefund } from '@/lib/stripe'
 
-// Admin emails that can resolve disputes (add yours here)
+// Admin emails that can resolve disputes
 const ADMIN_EMAILS = [
-  'admin@gadgetswap.tech',
-  'support@gadgetswap.tech',
-  // Add more admin emails as needed
+  'jf.tech.team@gmail.com',
 ]
 
 /**
