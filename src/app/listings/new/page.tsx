@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Upload,
@@ -130,10 +130,31 @@ interface VerificationState {
   error: string | null
 }
 
-export default function NewListingPage() {
+function NewListingContent() {
   const router = useRouter()
-  const [step, setStep] = useState(1)
+  const searchParams = useSearchParams()
+
+  // Get step from URL, default to 1
+  const urlStep = parseInt(searchParams.get('step') || '1', 10)
+  const [step, setStepState] = useState(urlStep >= 1 && urlStep <= 5 ? urlStep : 1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Sync step with URL changes (browser back/forward)
+  useEffect(() => {
+    const newStep = parseInt(searchParams.get('step') || '1', 10)
+    if (newStep >= 1 && newStep <= 5 && newStep !== step) {
+      setStepState(newStep)
+    }
+  }, [searchParams])
+
+  // Navigate to a step and update URL
+  const setStep = useCallback((newStep: number) => {
+    if (newStep >= 1 && newStep <= 5) {
+      setStepState(newStep)
+      // Use router.push to add to history stack
+      router.push(`/listings/new?step=${newStep}`, { scroll: false })
+    }
+  }, [router])
   const [images, setImages] = useState<string[]>([])
 
   // Price validation state
@@ -1804,5 +1825,17 @@ export default function NewListingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function NewListingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-pulse text-gray-400">Loading...</div>
+      </div>
+    }>
+      <NewListingContent />
+    </Suspense>
   )
 }
