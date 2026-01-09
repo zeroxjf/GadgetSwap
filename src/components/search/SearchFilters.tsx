@@ -146,9 +146,8 @@ const conditions = [
 ]
 
 const jailbreakStatuses = [
-  { value: 'JAILBROKEN', label: 'Jailbroken' },
   { value: 'JAILBREAKABLE', label: 'Jailbreakable' },
-  { value: 'NOT_JAILBROKEN', label: 'Stock/Not JB' },
+  { value: 'NOT_JAILBROKEN', label: 'Stock (Not Jailbreakable)' },
 ]
 
 // Simplified iOS versions - major versions only

@@ -296,11 +296,13 @@ export default function ListingDetailPage() {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Status</span>
                         <span className={`badge ${
-                          listing.jailbreakStatus === 'JAILBROKEN' ? 'bg-green-100 text-green-800' :
-                          listing.jailbreakStatus === 'JAILBREAKABLE' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-600'
+                          ['JAILBROKEN', 'JAILBREAKABLE', 'ROOTLESS_JB', 'ROOTFUL_JB'].includes(listing.jailbreakStatus)
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-gray-100 text-gray-600'
                         }`}>
-                          {listing.jailbreakStatus.replace('_', ' ')}
+                          {['JAILBROKEN', 'JAILBREAKABLE', 'ROOTLESS_JB', 'ROOTFUL_JB'].includes(listing.jailbreakStatus)
+                            ? 'Jailbreakable'
+                            : 'Stock'}
                         </span>
                       </div>
                     </div>

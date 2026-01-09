@@ -54,9 +54,8 @@ const conditions = [
 ]
 
 const jailbreakStatuses = [
-  { value: 'NOT_JAILBROKEN', label: 'Not Jailbroken', description: 'Stock iOS, never jailbroken' },
+  { value: 'NOT_JAILBROKEN', label: 'Stock', description: 'Not on a jailbreakable iOS version' },
   { value: 'JAILBREAKABLE', label: 'Jailbreakable', description: 'On a jailbreakable iOS version' },
-  { value: 'JAILBROKEN', label: 'Currently Jailbroken', description: 'Actively jailbroken' },
   { value: 'UNKNOWN', label: 'Unknown', description: 'Not sure about jailbreak status' },
 ]
 
@@ -188,7 +187,6 @@ function NewListingContent() {
 
   // Auto-detected jailbreak compatibility
   const [jailbreakCompat, setJailbreakCompat] = useState<JailbreakResult | null>(null)
-  const [isCurrentlyJailbroken, setIsCurrentlyJailbroken] = useState(false)
 
   // IMEI verification state
   const [imeiVerification, setImeiVerification] = useState<IMEIVerification>({
@@ -275,9 +273,6 @@ function NewListingContent() {
         if (draft.images) {
           setImages(draft.images)
         }
-        if (draft.isCurrentlyJailbroken !== undefined) {
-          setIsCurrentlyJailbroken(draft.isCurrentlyJailbroken)
-        }
         if (draft.lastSaved) {
           setLastSaved(new Date(draft.lastSaved))
         }
@@ -294,7 +289,6 @@ function NewListingContent() {
       const draft = {
         formData,
         images: images.filter(img => !img.startsWith('blob:')), // Only save uploaded URLs
-        isCurrentlyJailbroken,
         lastSaved: new Date().toISOString(),
       }
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
@@ -304,7 +298,7 @@ function NewListingContent() {
       console.error('Failed to save draft:', e)
     }
     setIsSaving(false)
-  }, [formData, images, isCurrentlyJailbroken])
+  }, [formData, images])
 
   // Auto-save draft every 30 seconds if there are changes
   useEffect(() => {
@@ -570,22 +564,11 @@ function NewListingContent() {
 
     // Auto-update jailbreak status based on compatibility
     if (result.canJailbreak) {
-      if (!isCurrentlyJailbroken) {
-        updateFormData('jailbreakStatus', 'JAILBREAKABLE')
-      }
+      updateFormData('jailbreakStatus', 'JAILBREAKABLE')
     } else if (result.status === 'NOT_JAILBROKEN') {
       updateFormData('jailbreakStatus', 'NOT_JAILBROKEN')
     }
-  }, [formData.deviceModel, formData.osVersion, formData.deviceType, isCurrentlyJailbroken])
-
-  // Update jailbreak status when user toggles "currently jailbroken"
-  useEffect(() => {
-    if (isCurrentlyJailbroken && jailbreakCompat?.canJailbreak) {
-      updateFormData('jailbreakStatus', 'JAILBROKEN')
-    } else if (jailbreakCompat?.canJailbreak) {
-      updateFormData('jailbreakStatus', 'JAILBREAKABLE')
-    }
-  }, [isCurrentlyJailbroken, jailbreakCompat])
+  }, [formData.deviceModel, formData.osVersion, formData.deviceType])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -924,7 +907,6 @@ function NewListingContent() {
                       returnWindowDays: 14,
                     })
                     setImages([])
-                    setIsCurrentlyJailbroken(false)
                     router.push('/listings/new?step=1', { scroll: false })
                   }
                 }}
@@ -1743,26 +1725,8 @@ function NewListingContent() {
 
                 </div>
 
-                {/* Right column - Jailbreak toggle & info */}
+                {/* Right column - Jailbreak info */}
                 <div className="space-y-4">
-                  {/* Currently Jailbroken Toggle */}
-                  {jailbreakCompat?.canJailbreak && (
-                    <label className="flex items-center gap-3 cursor-pointer p-4 bg-purple-50 rounded-lg border border-purple-200">
-                      <input
-                        type="checkbox"
-                        checked={isCurrentlyJailbroken}
-                        onChange={(e) => setIsCurrentlyJailbroken(e.target.checked)}
-                        className="w-5 h-5 rounded border-gray-300 text-purple-600"
-                      />
-                      <div>
-                        <span className="font-medium text-purple-900">This device is currently jailbroken</span>
-                        <p className="text-sm text-purple-700">
-                          Check this if the device has an active jailbreak installed
-                        </p>
-                      </div>
-                    </label>
-                  )}
-
                   {/* Jailbreak info box */}
                   <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <h4 className="font-medium text-gray-900 mb-2 text-sm">Why iOS version matters</h4>
