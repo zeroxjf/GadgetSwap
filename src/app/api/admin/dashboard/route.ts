@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         take: 5,
         select: {
           id: true,
-          amount: true,
+          totalAmount: true,
           status: true,
           createdAt: true,
           buyer: { select: { name: true } },
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
       recentActivity.push({
         id: `tx-${tx.id}`,
         type: 'transaction',
-        message: `${tx.status}: $${tx.amount} for "${tx.listing.title}"`,
+        message: `${tx.status}: $${tx.totalAmount} for "${tx.listing.title}"`,
         time: formatTimeAgo(tx.createdAt),
         link: `/admin/transactions`,
       })
