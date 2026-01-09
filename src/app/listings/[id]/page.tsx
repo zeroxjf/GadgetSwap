@@ -267,7 +267,9 @@ export default function ListingDetailPage() {
                   <StatusItem label="IMEI Clean" status={listing.imeiClean} />
                   <StatusItem label="iCloud Unlocked" status={listing.icloudUnlocked} />
                   <StatusItem label="Original Parts" status={listing.originalParts} />
-                  <StatusItem label="Screen Replaced" status={!listing.screenReplaced} inverted />
+                  {listing.screenReplaced !== null && listing.screenReplaced !== undefined && (
+                    <StatusItem label="Screen Replaced" status={!listing.screenReplaced} inverted />
+                  )}
                 </div>
               </div>
             </div>

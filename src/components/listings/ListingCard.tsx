@@ -98,14 +98,17 @@ export function ListingCard({ listing }: ListingCardProps) {
       <div className="card overflow-hidden hover:shadow-lg transition-shadow">
         {/* Image */}
         <div className="relative aspect-square bg-gray-100">
-          {listing.images[0] ? (
-            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-              {/* Placeholder until real images are uploaded */}
-              <span className="text-gray-400 text-sm">{listing.deviceModel}</span>
-            </div>
+          {listing.images[0]?.url ? (
+            <Image
+              src={listing.images[0].url}
+              alt={listing.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            />
           ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400">No image</span>
+            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+              <span className="text-gray-400 text-sm">{listing.deviceModel}</span>
             </div>
           )}
 
