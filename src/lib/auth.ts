@@ -24,7 +24,7 @@ export const authOptions: NextAuthOptions = {
     AppleProvider({
       clientId: process.env.APPLE_ID!,
       clientSecret: process.env.APPLE_SECRET!,
-      checks: ["nonce"],
+      checks: [],
     }),
     CredentialsProvider({
       name: 'credentials',

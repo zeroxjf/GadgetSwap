@@ -274,7 +274,8 @@ export default function NewListingPage() {
     }, 500)
 
     return () => clearTimeout(debounceTimer)
-  }, [fetchPriceValidation, fetchLastSold])
+    // Depend on actual values, not function references
+  }, [formData.deviceType, formData.deviceModel, formData.storageGB, formData.jailbreakStatus])
 
   // Validate price against max price
   useEffect(() => {
