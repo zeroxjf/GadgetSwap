@@ -103,7 +103,7 @@ export default function NotificationsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-pulse text-gray-400">Loading...</div>
       </div>
     )
@@ -116,18 +116,18 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter(n => !n.read).length
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/account" className="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-flex items-center gap-1">
+          <Link href="/account" className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm mb-2 inline-flex items-center gap-1">
             <ChevronLeft className="w-4 h-4" />
             Back to Account
           </Link>
           <div className="flex items-center justify-between mt-2">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-              <p className="text-gray-600">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+              <p className="text-gray-600 dark:text-gray-400">
                 {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
               </p>
             </div>
@@ -144,13 +144,13 @@ export default function NotificationsPage() {
         {notifications.length === 0 ? (
           <div className="card p-12 text-center">
             <BellOff className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
-            <p className="text-gray-500">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No notifications</h3>
+            <p className="text-gray-500 dark:text-gray-400">
               You'll see notifications here when there's activity on your account.
             </p>
           </div>
         ) : (
-          <div className="card divide-y divide-gray-100">
+          <div className="card divide-y divide-gray-100 dark:divide-gray-700">
             {notifications.map((notification) => {
               const Icon = notificationIcons[notification.type] || Bell
               const colorClass = notificationColors[notification.type] || 'bg-gray-100 text-gray-600'
@@ -170,14 +170,14 @@ export default function NotificationsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
-                        <p className={`font-medium ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
+                        <p className={`font-medium ${!notification.read ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                           {notification.title}
                         </p>
                         {!notification.read && (
                           <span className="w-2 h-2 bg-primary-500 rounded-full flex-shrink-0 mt-2" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
                       <p className="text-xs text-gray-400 mt-2">
                         {new Date(notification.createdAt).toLocaleDateString('en-US', {
                           month: 'short',

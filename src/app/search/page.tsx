@@ -81,17 +81,17 @@ function SearchContent() {
   ].filter(Boolean)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Search header */}
-      <div className="bg-white border-b border-gray-200 sticky top-[108px] z-40">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-[108px] z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             {/* Results count */}
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {query ? `Results for "${query}"` : 'All Listings'}
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {loading ? 'Searching...' : `${total} devices found`}
               </p>
             </div>
@@ -126,18 +126,18 @@ function SearchContent() {
               </select>
 
               {/* View mode */}
-              <div className="hidden sm:flex items-center border border-gray-300 rounded-lg overflow-hidden">
+              <div className="hidden sm:flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+                  className={`p-2 ${viewMode === 'grid' ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                 >
-                  <Grid className="w-4 h-4 text-gray-600" />
+                  <Grid className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+                  className={`p-2 ${viewMode === 'list' ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                 >
-                  <List className="w-4 h-4 text-gray-600" />
+                  <List className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </button>
               </div>
             </div>
@@ -146,19 +146,19 @@ function SearchContent() {
           {/* Active filters */}
           {activeFilters.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <span className="text-sm text-gray-500">Active filters:</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">Active filters:</span>
               {activeFilters.map((filter: any) => (
                 <span
                   key={filter.key}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-sm"
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm"
                 >
                   {filter.label}
-                  <button className="hover:bg-primary-200 rounded-full p-0.5">
+                  <button className="hover:bg-primary-200 dark:hover:bg-primary-800 rounded-full p-0.5">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               ))}
-              <button className="text-sm text-gray-500 hover:text-gray-700 underline">
+              <button className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline">
                 Clear all
               </button>
             </div>
@@ -180,11 +180,11 @@ function SearchContent() {
           {showFilters && (
             <div className="fixed inset-0 z-50 lg:hidden">
               <div className="absolute inset-0 bg-black/50" onClick={() => setShowFilters(false)} />
-              <div className="absolute right-0 top-0 bottom-0 w-80 bg-white overflow-y-auto">
-                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                  <h2 className="font-semibold">Filters</h2>
+              <div className="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-800 overflow-y-auto">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <h2 className="font-semibold text-gray-900 dark:text-white">Filters</h2>
                   <button onClick={() => setShowFilters(false)}>
-                    <X className="w-5 h-5" />
+                    <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   </button>
                 </div>
                 <div className="p-4">
@@ -212,9 +212,9 @@ function SearchContent() {
               </div>
             ) : (
               <div className="text-center py-16">
-                <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No listings found</h3>
-                <p className="text-gray-500 mb-4">
+                <Search className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No listings found</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
                   {query || activeFilters.length > 0
                     ? 'Try adjusting your filters or search terms'
                     : 'Be the first to list a device!'
@@ -235,7 +235,7 @@ function SearchContent() {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
       </div>
     }>

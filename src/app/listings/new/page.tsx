@@ -717,16 +717,16 @@ export default function NewListingPage() {
   }, [step, verification.code, verification.isGenerating])
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-block">
+            <Link href="/" className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm mb-2 inline-block">
               ← Back to home
             </Link>
-            <h1 className="text-2xl font-bold">Create a Listing</h1>
-            <p className="text-gray-600">List your device in a few simple steps</p>
+            <h1 className="text-2xl font-bold dark:text-white">Create a Listing</h1>
+            <p className="text-gray-600 dark:text-gray-400">List your device in a few simple steps</p>
           </div>
           {/* Progress steps - horizontal on desktop */}
           <div className="hidden lg:flex items-center gap-2">
@@ -742,14 +742,14 @@ export default function NewListingPage() {
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     step >= s.num
                       ? 'bg-primary-600 text-white'
-                      : 'bg-gray-200 text-gray-500'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                   }`}
                 >
                   {step > s.num ? <Check className="w-4 h-4" /> : s.num}
                 </div>
                 <span
                   className={`ml-2 text-sm ${
-                    step >= s.num ? 'text-gray-900' : 'text-gray-400'
+                    step >= s.num ? 'text-gray-900 dark:text-white' : 'text-gray-400'
                   }`}
                 >
                   {s.label}
@@ -781,14 +781,14 @@ export default function NewListingPage() {
                   className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
                     step >= s.num
                       ? 'bg-primary-600 text-white'
-                      : 'bg-gray-200 text-gray-500'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                   }`}
                 >
                   {step > s.num ? <Check className="w-3 h-3 sm:w-4 sm:h-4" /> : s.num}
                 </div>
                 <span
                   className={`ml-1 sm:ml-2 text-xs sm:text-sm hidden sm:inline ${
-                    step >= s.num ? 'text-gray-900' : 'text-gray-400'
+                    step >= s.num ? 'text-gray-900 dark:text-white' : 'text-gray-400'
                   }`}
                 >
                   {s.label}
@@ -796,7 +796,7 @@ export default function NewListingPage() {
                 {i < 4 && (
                   <div
                     className={`w-4 sm:w-8 h-0.5 mx-1 sm:mx-2 ${
-                      step > s.num ? 'bg-primary-600' : 'bg-gray-200'
+                      step > s.num ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
                     }`}
                   />
                 )}
@@ -809,7 +809,7 @@ export default function NewListingPage() {
           {/* Step 1: Device Info */}
           {step === 1 && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold">What are you selling?</h2>
+              <h2 className="text-lg font-semibold dark:text-white">What are you selling?</h2>
 
               <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
                 {/* Left column - Device Type & Model */}

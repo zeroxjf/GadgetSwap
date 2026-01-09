@@ -359,12 +359,12 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Listings */}
-      <section className="py-12 bg-gray-50">
+      <section className="py-12 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Featured Listings</h2>
-              <p className="text-gray-600">Hand-picked deals from verified sellers</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Featured Listings</h2>
+              <p className="text-gray-600 dark:text-gray-400">Hand-picked deals from verified sellers</p>
             </div>
             <Link
               href="/search?featured=true"
@@ -381,8 +381,8 @@ export default async function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <p className="text-gray-500 mb-4">No listings yet. Be the first to list your device!</p>
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+              <p className="text-gray-500 dark:text-gray-400 mb-4">No listings yet. Be the first to list your device!</p>
               <Link href="/listings/new" className="btn-primary">
                 Create Listing
               </Link>
@@ -461,18 +461,18 @@ export default async function HomePage() {
       </section>
 
       {/* Device Alerts Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium mb-4">
+              <div className="inline-flex items-center gap-2 bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 px-3 py-1 rounded-full text-sm font-medium mb-4">
                 <Bell className="w-4 h-4" />
                 Never Miss a Deal
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
                 Device Alerts for Exact Specs
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Looking for an iPhone 14 Pro on iOS 16.1.2? Set up an alert and get
                 notified instantly when someone lists exactly what you're looking for.
                 No more constantly refreshing the search page.
@@ -480,55 +480,55 @@ export default async function HomePage() {
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Filter by device type, model, and storage</span>
+                  <span className="text-gray-700 dark:text-gray-300">Filter by device type, model, and storage</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Target specific iOS versions or ranges</span>
+                  <span className="text-gray-700 dark:text-gray-300">Target specific iOS versions or ranges</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Set jailbreak status requirements</span>
+                  <span className="text-gray-700 dark:text-gray-300">Set jailbreak status requirements</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Define your price range</span>
+                  <span className="text-gray-700 dark:text-gray-300">Define your price range</span>
                 </li>
               </ul>
               <div className="flex flex-wrap gap-4">
                 <Link href="/alerts" className="btn-primary">
                   Set Up Alerts
                 </Link>
-                <div className="text-sm text-gray-500 flex items-center">
-                  <span className="font-medium text-gray-700">Free:</span>&nbsp;1 alert&nbsp;
-                  <span className="text-gray-400">|</span>&nbsp;
-                  <span className="font-medium text-gray-700">Plus:</span>&nbsp;3 alerts&nbsp;
-                  <span className="text-gray-400">|</span>&nbsp;
-                  <span className="font-medium text-primary-600">Pro:</span>&nbsp;Unlimited
+                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Free:</span>&nbsp;1 alert&nbsp;
+                  <span className="text-gray-400 dark:text-gray-500">|</span>&nbsp;
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Plus:</span>&nbsp;3 alerts&nbsp;
+                  <span className="text-gray-400 dark:text-gray-500">|</span>&nbsp;
+                  <span className="font-medium text-primary-600 dark:text-primary-400">Pro:</span>&nbsp;Unlimited
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
-              <div className="text-sm font-medium text-gray-500 mb-4">Example Alert</div>
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Example Alert</div>
               <div className="space-y-4">
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-gray-900">iPhone 14 Pro - iOS 16.x</span>
+                    <span className="font-medium text-gray-900 dark:text-white">iPhone 14 Pro - iOS 16.x</span>
                     <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Active</span>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="bg-gray-100 px-2 py-1 rounded">iOS 16.0 - 16.1.2</span>
-                    <span className="bg-gray-100 px-2 py-1 rounded">256GB+</span>
-                    <span className="bg-gray-100 px-2 py-1 rounded">Under $900</span>
+                    <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">iOS 16.0 - 16.1.2</span>
+                    <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">256GB+</span>
+                    <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Under $900</span>
                     <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">Jailbreakable</span>
                   </div>
                 </div>
-                <div className="bg-primary-50 rounded-lg p-4 border border-primary-200">
-                  <div className="flex items-center gap-2 text-primary-700 text-sm font-medium mb-2">
+                <div className="bg-primary-50 dark:bg-primary-900/30 rounded-lg p-4 border border-primary-200 dark:border-primary-800">
+                  <div className="flex items-center gap-2 text-primary-700 dark:text-primary-300 text-sm font-medium mb-2">
                     <Bell className="w-4 h-4" />
                     New Match Found!
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     iPhone 14 Pro 256GB on iOS 16.1.2 just listed for $849
                   </p>
                   <Link href="#" className="text-primary-600 text-sm font-medium hover:underline mt-2 inline-block">
@@ -542,11 +542,11 @@ export default async function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Why GadgetSwap?</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Why GadgetSwap?</h2>
+            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               We built the marketplace we wished existed. Lower fees, better
               search, and features designed for Apple enthusiasts.
             </p>
@@ -555,11 +555,11 @@ export default async function HomePage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature) => (
               <div key={feature.title} className="text-center">
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
                   <feature.icon className="w-6 h-6 text-primary-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-600">{feature.description}</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
               </div>
             ))}
           </div>

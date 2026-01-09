@@ -121,7 +121,7 @@ export default function MessagesPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
       </div>
     )
@@ -132,18 +132,18 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto">
         <div className="flex h-[calc(100vh-64px)]">
           {/* Conversations sidebar */}
           <div
-            className={`w-full md:w-80 lg:w-96 bg-white border-r border-gray-200 flex flex-col ${
+            className={`w-full md:w-80 lg:w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col ${
               selectedConversation ? 'hidden md:flex' : 'flex'
             }`}
           >
             {/* Header */}
-            <div className="p-4 border-b border-gray-200">
-              <h1 className="text-xl font-bold mb-3">Messages</h1>
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h1 className="text-xl font-bold mb-3 dark:text-white">Messages</h1>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -159,7 +159,7 @@ export default function MessagesPage() {
             {/* Conversations list */}
             <div className="flex-1 overflow-y-auto">
               {conversations.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                   <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                   <p className="font-medium">No messages yet</p>
                   <p className="text-sm mt-1">
@@ -170,7 +170,7 @@ export default function MessagesPage() {
                   </Link>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {conversations
                     .filter((c) =>
                       searchQuery
@@ -182,8 +182,8 @@ export default function MessagesPage() {
                       <button
                         key={conversation.id}
                         onClick={() => setSelectedConversation(conversation.id)}
-                        className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
-                          selectedConversation === conversation.id ? 'bg-primary-50' : ''
+                        className={`w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                          selectedConversation === conversation.id ? 'bg-primary-50 dark:bg-primary-900/30' : ''
                         }`}
                       >
                         <div className="flex gap-3">
@@ -207,14 +207,14 @@ export default function MessagesPage() {
                           {/* Content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-medium text-gray-900 truncate">
+                              <span className="font-medium text-gray-900 dark:text-white truncate">
                                 {conversation.otherUser.name || conversation.otherUser.username || 'User'}
                               </span>
                               <span className="text-xs text-gray-400">
                                 {formatTime(conversation.lastMessage.timestamp)}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-500 truncate mb-1">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate mb-1">
                               {conversation.lastMessage.fromMe && 'You: '}
                               {conversation.lastMessage.content}
                             </p>
@@ -241,17 +241,17 @@ export default function MessagesPage() {
 
           {/* Chat area */}
           <div
-            className={`flex-1 flex flex-col bg-white ${
+            className={`flex-1 flex flex-col bg-white dark:bg-gray-800 ${
               selectedConversation ? 'flex' : 'hidden md:flex'
             }`}
           >
             {currentConversation ? (
               <>
                 {/* Chat header */}
-                <div className="p-4 border-b border-gray-200 flex items-center gap-4">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-4">
                   <button
                     onClick={() => setSelectedConversation(null)}
-                    className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
+                    className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
@@ -280,7 +280,7 @@ export default function MessagesPage() {
                     </div>
                   </div>
 
-                  <button className="p-2 hover:bg-gray-100 rounded-lg">
+                  <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                     <MoreVertical className="w-5 h-5 text-gray-500" />
                   </button>
                 </div>
@@ -289,7 +289,7 @@ export default function MessagesPage() {
                 {currentConversation.listing && (
                   <Link
                     href={`/listings/${currentConversation.listing.id}`}
-                    className="p-3 bg-gray-50 border-b border-gray-200 flex items-center gap-3 hover:bg-gray-100 transition-colors"
+                    className="p-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     {currentConversation.listing.images?.[0]?.url ? (
                       <img
@@ -301,10 +301,10 @@ export default function MessagesPage() {
                       <div className="w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
+                      <p className="font-medium text-sm truncate dark:text-white">
                         {currentConversation.listing.title}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         ${currentConversation.listing.price}
                       </p>
                     </div>
@@ -320,7 +320,7 @@ export default function MessagesPage() {
                 {/* Message input */}
                 <form
                   onSubmit={handleSendMessage}
-                  className="p-4 border-t border-gray-200 flex items-center gap-3"
+                  className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-3"
                 >
                   <button
                     type="button"
@@ -349,10 +349,10 @@ export default function MessagesPage() {
                 </form>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-500">
+              <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
                 <div className="text-center">
                   <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">Select a conversation</p>
+                  <p className="text-lg font-medium dark:text-gray-300">Select a conversation</p>
                   <p className="text-sm mt-1">
                     Choose a conversation from the sidebar to start chatting
                   </p>
