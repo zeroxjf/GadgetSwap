@@ -10,6 +10,9 @@ import {
   BarChart3,
   Settings,
   Home,
+  LayoutDashboard,
+  CreditCard,
+  MessageSquare,
 } from 'lucide-react'
 
 export default async function AdminLayout({
@@ -34,11 +37,11 @@ export default async function AdminLayout({
   }
 
   const navItems = [
+    { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/reviews', icon: ClipboardList, label: 'Review Queue' },
-    // Add more admin sections as needed
-    // { href: '/admin/users', icon: Users, label: 'Users' },
-    // { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
-    // { href: '/admin/settings', icon: Settings, label: 'Settings' },
+    { href: '/admin/users', icon: Users, label: 'Users' },
+    { href: '/admin/transactions', icon: CreditCard, label: 'Transactions' },
+    { href: '/admin/support', icon: MessageSquare, label: 'Support' },
   ]
 
   return (
