@@ -169,7 +169,7 @@ export default function MyListingsPage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Listings</h1>
               <p className="text-gray-600 dark:text-gray-400">{listings.length} total listings</p>
             </div>
-            <Link href="/listings/new" className="btn-primary flex items-center gap-2">
+            <Link href="/listings/new?new=true" className="btn-primary flex items-center gap-2">
               <Plus className="w-4 h-4" />
               New Listing
             </Link>
@@ -206,7 +206,7 @@ export default function MyListingsPage() {
                 : `You don't have any ${filter} listings.`}
             </p>
             {filter === 'all' && (
-              <Link href="/listings/new" className="btn-primary">
+              <Link href="/listings/new?new=true" className="btn-primary">
                 Create Listing
               </Link>
             )}
