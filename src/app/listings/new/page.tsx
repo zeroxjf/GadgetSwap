@@ -274,6 +274,7 @@ export default function NewListingPage() {
         body: JSON.stringify({
           imei: imeiVerification.imei,
           deviceType: formData.deviceType,
+          selectedModel: formData.deviceModel, // For model matching verification
         }),
       })
 
@@ -1043,10 +1044,21 @@ export default function NewListingPage() {
                               error: null,
                             }))
                           }}
+                          onPaste={(e) => {
+                            e.preventDefault()
+                            const pasted = e.clipboardData.getData('text')
+                            const cleaned = pasted.replace(/[\s\-]/g, '').replace(/\D/g, '').slice(0, 15)
+                            setImeiVerification(prev => ({
+                              ...prev,
+                              imei: cleaned,
+                              verified: false,
+                              error: null,
+                            }))
+                          }}
                           placeholder="Enter 15-digit IMEI"
                           className={`input flex-1 font-mono ${
                             imeiVerification.verified
-                              ? 'border-green-500 bg-green-50'
+                              ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
                               : imeiVerification.error
                               ? 'border-red-500'
                               : ''
