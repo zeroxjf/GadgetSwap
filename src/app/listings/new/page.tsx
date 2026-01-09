@@ -18,6 +18,10 @@ import {
   TrendingUp,
   Shield,
   Loader2,
+  Camera,
+  Fingerprint,
+  FileCheck,
+  Copy,
 } from 'lucide-react'
 import { getModelsForDeviceType, getStorageForModel, DeviceModel } from '@/lib/device-models'
 import { checkJailbreakCompatibility, JailbreakResult } from '@/lib/jailbreak-compatibility'
@@ -110,6 +114,22 @@ interface IMEIVerification {
   verifiedModel: string | null
 }
 
+// Verification code and photo state type
+interface VerificationState {
+  code: string | null
+  isGenerating: boolean
+  photoUrl: string | null
+  isUploading: boolean
+  aiScore: number | null
+  aiResult: any | null
+  safeSearch: {
+    adult: string | null
+    violence: string | null
+    racy: string | null
+  } | null
+  error: string | null
+}
+
 export default function NewListingPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
@@ -150,6 +170,21 @@ export default function NewListingPage() {
     waitTime: 0,
     verifiedModel: null,
   })
+
+  // Verification code and photo state
+  const [verification, setVerification] = useState<VerificationState>({
+    code: null,
+    isGenerating: false,
+    photoUrl: null,
+    isUploading: false,
+    aiScore: null,
+    aiResult: null,
+    safeSearch: null,
+    error: null,
+  })
+
+  // Track uploaded image URLs (from Cloudinary)
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([])
 
   const [formData, setFormData] = useState({
     // Basic info
@@ -447,29 +482,178 @@ export default function NewListingPage() {
     const files = e.target.files
     if (!files) return
 
-    // In production, you'd upload to cloud storage
-    // For now, just create object URLs
+    // Create object URLs for preview
     const newImages = Array.from(files).map((file) => URL.createObjectURL(file))
     setImages((prev) => [...prev, ...newImages].slice(0, 10))
   }
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index))
+    setUploadedImageUrls((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  // Generate verification code when entering step 5
+  const generateVerificationCode = async () => {
+    setVerification((prev) => ({ ...prev, isGenerating: true, error: null }))
+
+    try {
+      const response = await fetch('/api/listings/verification-code', {
+        method: 'POST',
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate code')
+      }
+
+      setVerification((prev) => ({
+        ...prev,
+        code: data.code,
+        isGenerating: false,
+      }))
+    } catch (error) {
+      setVerification((prev) => ({
+        ...prev,
+        isGenerating: false,
+        error: error instanceof Error ? error.message : 'Failed to generate code',
+      }))
+    }
+  }
+
+  // Upload image to Cloudinary
+  const uploadToCloudinary = async (
+    imageData: string,
+    type: 'listing' | 'verification'
+  ): Promise<{ url: string; publicId: string; aiScore?: number; aiResult?: any; safeSearch?: any } | null> => {
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: imageData,
+          type,
+          folder: type === 'verification' ? 'verification' : 'listings',
+        }),
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Upload failed')
+      }
+
+      return {
+        url: data.url,
+        publicId: data.publicId,
+        aiScore: data.aiAnalysis?.aiGeneratedScore,
+        aiResult: data.aiAnalysis,
+        safeSearch: data.aiAnalysis?.safeSearch,
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      return null
+    }
+  }
+
+  // Handle verification photo upload
+  const handleVerificationPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    const file = files[0]
+    setVerification((prev) => ({ ...prev, isUploading: true, error: null }))
+
+    try {
+      // Convert to base64
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64 = reader.result as string
+        const result = await uploadToCloudinary(base64, 'verification')
+
+        if (!result) {
+          throw new Error('Failed to upload verification photo')
+        }
+
+        setVerification((prev) => ({
+          ...prev,
+          photoUrl: result.url,
+          isUploading: false,
+          aiScore: result.aiScore || null,
+          aiResult: result.aiResult || null,
+          safeSearch: result.safeSearch ? {
+            adult: result.safeSearch.adult,
+            violence: result.safeSearch.violence,
+            racy: result.safeSearch.racy,
+          } : null,
+        }))
+      }
+      reader.onerror = () => {
+        throw new Error('Failed to read file')
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      setVerification((prev) => ({
+        ...prev,
+        isUploading: false,
+        error: error instanceof Error ? error.message : 'Upload failed',
+      }))
+    }
+  }
+
+  // Copy verification code to clipboard
+  const copyVerificationCode = () => {
+    if (verification.code) {
+      navigator.clipboard.writeText(verification.code)
+    }
   }
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
 
     try {
-      // Note: blob URLs from local file selection don't persist
-      // In production, images would be uploaded to cloud storage first
-      // For now, we skip images unless they're actual URLs
-      const persistentImages = images.filter(img => !img.startsWith('blob:'))
+      // Upload images to Cloudinary if we have blob URLs
+      let finalImageUrls: string[] = [...uploadedImageUrls]
+      const blobImages = images.filter((img) => img.startsWith('blob:'))
 
-      // Build listing data with optional IMEI
+      if (blobImages.length > 0) {
+        // Convert blob URLs to base64 and upload
+        for (let i = 0; i < blobImages.length; i++) {
+          const blobUrl = blobImages[i]
+          try {
+            // Fetch the blob
+            const response = await fetch(blobUrl)
+            const blob = await response.blob()
+
+            // Convert to base64
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader()
+              reader.onload = () => resolve(reader.result as string)
+              reader.onerror = reject
+              reader.readAsDataURL(blob)
+            })
+
+            // Upload to Cloudinary
+            const result = await uploadToCloudinary(base64, 'listing')
+            if (result) {
+              finalImageUrls.push(result.url)
+            }
+          } catch (err) {
+            console.error('Failed to upload image:', err)
+          }
+        }
+      }
+
+      // Build listing data with verification info
       const listingData: any = {
         ...formData,
-        images: persistentImages.length > 0 ? persistentImages : undefined,
+        images: finalImageUrls.length > 0 ? finalImageUrls : undefined,
+        // Verification data
+        verificationCode: verification.code,
+        verificationPhotoUrl: verification.photoUrl,
+        aiDetectionScore: verification.aiScore,
+        aiDetectionResult: verification.aiResult,
+        safeSearchAdult: verification.safeSearch?.adult,
+        safeSearchViolence: verification.safeSearch?.violence,
+        safeSearchRacy: verification.safeSearch?.racy,
       }
 
       // Add IMEI data if verified
@@ -491,8 +675,8 @@ export default function NewListingPage() {
         throw new Error(data.error || 'Failed to create listing')
       }
 
-      // Redirect to the new listing page
-      router.push(`/listings/${data.listing.id}`)
+      // Redirect to the listing page with pending status message
+      router.push(`/listings/${data.listing.id}?submitted=true`)
     } catch (error) {
       console.error('Failed to create listing:', error)
       alert(error instanceof Error ? error.message : 'Failed to create listing')
@@ -516,11 +700,21 @@ export default function NewListingPage() {
       case 3:
         return true // Optional step
       case 4:
-        return true // Images optional for now (cloud storage not implemented)
+        return true // Images optional
+      case 5:
+        // Verification code and photo required
+        return verification.code && verification.photoUrl && !verification.isUploading
       default:
         return false
     }
   }
+
+  // Generate verification code when entering step 5
+  useEffect(() => {
+    if (step === 5 && !verification.code && !verification.isGenerating) {
+      generateVerificationCode()
+    }
+  }, [step, verification.code, verification.isGenerating])
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -541,6 +735,7 @@ export default function NewListingPage() {
               { num: 2, label: 'Details' },
               { num: 3, label: 'Jailbreak' },
               { num: 4, label: 'Photos' },
+              { num: 5, label: 'Verify' },
             ].map((s, i) => (
               <div key={s.num} className="flex items-center">
                 <div
@@ -559,9 +754,9 @@ export default function NewListingPage() {
                 >
                   {s.label}
                 </span>
-                {i < 3 && (
+                {i < 4 && (
                   <div
-                    className={`w-12 h-0.5 mx-3 ${
+                    className={`w-8 h-0.5 mx-3 ${
                       step > s.num ? 'bg-primary-600' : 'bg-gray-200'
                     }`}
                   />
@@ -579,27 +774,28 @@ export default function NewListingPage() {
               { num: 2, label: 'Details' },
               { num: 3, label: 'Jailbreak' },
               { num: 4, label: 'Photos' },
+              { num: 5, label: 'Verify' },
             ].map((s, i) => (
               <div key={s.num} className="flex items-center">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
                     step >= s.num
                       ? 'bg-primary-600 text-white'
                       : 'bg-gray-200 text-gray-500'
                   }`}
                 >
-                  {step > s.num ? <Check className="w-4 h-4" /> : s.num}
+                  {step > s.num ? <Check className="w-3 h-3 sm:w-4 sm:h-4" /> : s.num}
                 </div>
                 <span
-                  className={`ml-2 text-sm hidden sm:inline ${
+                  className={`ml-1 sm:ml-2 text-xs sm:text-sm hidden sm:inline ${
                     step >= s.num ? 'text-gray-900' : 'text-gray-400'
                   }`}
                 >
                   {s.label}
                 </span>
-                {i < 3 && (
+                {i < 4 && (
                   <div
-                    className={`w-8 sm:w-16 h-0.5 mx-2 sm:mx-4 ${
+                    className={`w-4 sm:w-8 h-0.5 mx-1 sm:mx-2 ${
                       step > s.num ? 'bg-primary-600' : 'bg-gray-200'
                     }`}
                   />
@@ -1338,6 +1534,221 @@ export default function NewListingPage() {
             </div>
           )}
 
+          {/* Step 5: Verification */}
+          {step === 5 && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Fingerprint className="w-5 h-5 text-primary-600" />
+                  Verify Your Listing
+                </h2>
+                <p className="text-gray-600 text-sm mt-1">
+                  To prevent fraud, please photograph your device with the verification code visible.
+                </p>
+              </div>
+
+              <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+                {/* Left column - Verification Code */}
+                <div className="space-y-4">
+                  <div className="p-6 bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl border-2 border-primary-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-primary-700">Your Verification Code</span>
+                      {verification.code && (
+                        <button
+                          type="button"
+                          onClick={copyVerificationCode}
+                          className="text-primary-600 hover:text-primary-800 p-1"
+                          title="Copy code"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {verification.isGenerating ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+                        <span className="ml-2 text-primary-700">Generating code...</span>
+                      </div>
+                    ) : verification.code ? (
+                      <div className="text-center">
+                        <p className="text-4xl font-mono font-bold tracking-widest text-primary-900">
+                          {verification.code}
+                        </p>
+                        <p className="text-xs text-primary-600 mt-2">
+                          Write this code clearly on a piece of paper
+                        </p>
+                      </div>
+                    ) : verification.error ? (
+                      <div className="text-center text-red-600">
+                        <p>{verification.error}</p>
+                        <button
+                          type="button"
+                          onClick={generateVerificationCode}
+                          className="mt-2 text-sm underline hover:no-underline"
+                        >
+                          Try again
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                      <FileCheck className="w-4 h-4 text-gray-600" />
+                      How to verify
+                    </h4>
+                    <ol className="space-y-2 text-sm text-gray-600">
+                      <li className="flex gap-2">
+                        <span className="font-semibold text-gray-900">1.</span>
+                        Write the code above on a piece of paper
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-semibold text-gray-900">2.</span>
+                        Place the paper next to your device
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-semibold text-gray-900">3.</span>
+                        Take a clear photo showing both the device and the code
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-semibold text-gray-900">4.</span>
+                        Upload the photo below
+                      </li>
+                    </ol>
+                  </div>
+                </div>
+
+                {/* Right column - Photo Upload */}
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 bg-white">
+                    <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                      <Camera className="w-4 h-4 text-gray-600" />
+                      Verification Photo
+                    </h4>
+
+                    {verification.photoUrl ? (
+                      <div className="space-y-3">
+                        <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
+                          <img
+                            src={verification.photoUrl}
+                            alt="Verification photo"
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setVerification((prev) => ({
+                                ...prev,
+                                photoUrl: null,
+                                aiScore: null,
+                                aiResult: null,
+                                safeSearch: null,
+                              }))
+                            }
+                            className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* AI Analysis Result */}
+                        {verification.aiScore !== null && (
+                          <div
+                            className={`p-3 rounded-lg ${
+                              verification.aiScore > 0.6
+                                ? 'bg-red-50 border border-red-200'
+                                : verification.aiScore > 0.3
+                                ? 'bg-yellow-50 border border-yellow-200'
+                                : 'bg-green-50 border border-green-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              {verification.aiScore > 0.6 ? (
+                                <AlertTriangle className="w-4 h-4 text-red-600" />
+                              ) : verification.aiScore > 0.3 ? (
+                                <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                              ) : (
+                                <Check className="w-4 h-4 text-green-600" />
+                              )}
+                              <span
+                                className={`text-sm font-medium ${
+                                  verification.aiScore > 0.6
+                                    ? 'text-red-700'
+                                    : verification.aiScore > 0.3
+                                    ? 'text-yellow-700'
+                                    : 'text-green-700'
+                                }`}
+                              >
+                                {verification.aiScore > 0.6
+                                  ? 'Photo may be AI-generated or manipulated'
+                                  : verification.aiScore > 0.3
+                                  ? 'Photo flagged for manual review'
+                                  : 'Photo looks authentic'}
+                              </span>
+                            </div>
+                            {verification.aiScore > 0.3 && (
+                              <p className="text-xs text-gray-600 mt-1">
+                                Your listing will still be submitted but will require admin review.
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <label className="block cursor-pointer">
+                        <div className="flex flex-col items-center justify-center py-8 text-gray-500 hover:text-primary-600 transition-colors">
+                          {verification.isUploading ? (
+                            <>
+                              <Loader2 className="w-10 h-10 animate-spin mb-3" />
+                              <span className="text-sm">Uploading and analyzing...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Camera className="w-10 h-10 mb-3" />
+                              <span className="font-medium">Upload verification photo</span>
+                              <span className="text-sm text-gray-400 mt-1">
+                                Click to select or drag and drop
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleVerificationPhotoUpload}
+                          className="hidden"
+                          disabled={verification.isUploading}
+                        />
+                      </label>
+                    )}
+
+                    {verification.error && (
+                      <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-700">{verification.error}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Review Notice */}
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-blue-900">Pending Review</h4>
+                        <p className="text-sm text-blue-700 mt-1">
+                          After submission, your listing will be reviewed by our team before going live.
+                          This usually takes less than 24 hours.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Navigation buttons */}
           <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
             {step > 1 ? (
@@ -1353,7 +1764,7 @@ export default function NewListingPage() {
               <div />
             )}
 
-            {step < 4 ? (
+            {step < 5 ? (
               <button
                 type="button"
                 onClick={() => setStep(step + 1)}
@@ -1370,7 +1781,7 @@ export default function NewListingPage() {
                 disabled={!canProceed() || isSubmitting}
                 className="btn-primary px-8 disabled:opacity-50"
               >
-                {isSubmitting ? 'Publishing...' : 'Publish Listing'}
+                {isSubmitting ? 'Submitting for Review...' : 'Submit for Review'}
               </button>
             )}
           </div>

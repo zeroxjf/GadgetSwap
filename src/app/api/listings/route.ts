@@ -3,10 +3,14 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import crypto from 'crypto'
+import { createNotification } from '@/lib/notifications'
+
+// AI detection threshold for flagging
+const AI_FLAG_THRESHOLD = 0.5
 
 /**
  * POST /api/listings
- * Create a new listing
+ * Create a new listing (goes to review queue)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -48,12 +52,27 @@ export async function POST(request: NextRequest) {
       imei,
       imeiVerified,
       imeiVerifiedModel,
+      // Verification code and photo (NEW)
+      verificationCode,
+      verificationPhotoUrl,
+      // AI detection results (passed from frontend after upload)
+      aiDetectionScore,
+      aiDetectionResult,
+      safeSearchResults,
     } = body
 
     // Validate required fields
     if (!title || !description || !price || !deviceType || !deviceModel || !condition) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      )
+    }
+
+    // Require verification code and photo
+    if (!verificationCode || !verificationPhotoUrl) {
+      return NextResponse.json(
+        { error: 'Verification code and photo are required' },
         { status: 400 }
       )
     }
@@ -75,11 +94,15 @@ export async function POST(request: NextRequest) {
       // Hash full IMEI for duplicate detection (SHA256)
       imeiData.imeiHash = crypto.createHash('sha256').update(cleanIMEI).digest('hex')
 
-      // Check for duplicate IMEI (same device already listed)
+      // Check for duplicate IMEI (same device already listed by another seller)
+      // Also check pending review listings
       const existingListing = await prisma.listing.findFirst({
         where: {
           imeiHash: imeiData.imeiHash,
-          status: 'ACTIVE',
+          OR: [
+            { status: 'ACTIVE' },
+            { reviewStatus: 'PENDING_REVIEW' },
+          ],
           sellerId: { not: session.user.id }, // Allow same user to relist
         },
       })
@@ -96,7 +119,13 @@ export async function POST(request: NextRequest) {
       imeiData.imeiVerifiedModel = imeiVerifiedModel || null
     }
 
-    // Create the listing
+    // Determine if listing should be flagged for review
+    const shouldFlag =
+      (aiDetectionScore && aiDetectionScore > AI_FLAG_THRESHOLD) ||
+      (safeSearchResults?.adult === 'LIKELY' || safeSearchResults?.adult === 'VERY_LIKELY') ||
+      (safeSearchResults?.violence === 'LIKELY' || safeSearchResults?.violence === 'VERY_LIKELY')
+
+    // Create the listing with PENDING status and PENDING_REVIEW reviewStatus
     const listing = await prisma.listing.create({
       data: {
         title,
@@ -122,8 +151,23 @@ export async function POST(request: NextRequest) {
         returnWindowDays: acceptsReturns ? (returnWindowDays || 14) : null,
         // IMEI verification data
         ...imeiData,
-        status: 'ACTIVE',
+        // Listing status - pending review
+        status: 'PENDING',
+        reviewStatus: 'PENDING_REVIEW',
         sellerId: session.user.id,
+        // Verification code and photo
+        verificationCode,
+        verificationPhotoUrl,
+        verificationStatus: 'PENDING',
+        // AI detection results
+        aiDetectionScore: aiDetectionScore || null,
+        aiDetectionResult: aiDetectionResult || null,
+        aiAnalyzedAt: aiDetectionResult ? new Date() : null,
+        flaggedForReview: shouldFlag,
+        // SafeSearch results
+        safeSearchAdult: safeSearchResults?.adult || null,
+        safeSearchViolence: safeSearchResults?.violence || null,
+        safeSearchRacy: safeSearchResults?.racy || null,
         // Create images if provided
         images: images && images.length > 0 ? {
           create: images.map((url: string, index: number) => ({
@@ -144,9 +188,20 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Notify admins of new listing to review (especially if flagged)
+    if (shouldFlag) {
+      // In production, you'd notify admin users
+      console.log('🚨 FLAGGED LISTING FOR REVIEW:', listing.id, {
+        aiScore: aiDetectionScore,
+        safeSearch: safeSearchResults,
+      })
+    }
+
     return NextResponse.json({
       success: true,
       listing,
+      message: 'Your listing has been submitted for review. You will be notified once it is approved.',
+      pendingReview: true,
     })
   } catch (error) {
     console.error('Create listing error:', error)
@@ -160,9 +215,11 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/listings
  * Get listings with optional filters
+ * Only shows APPROVED listings in public search (unless viewing own listings)
  */
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
     const searchParams = request.nextUrl.searchParams
 
     // Pagination
@@ -183,12 +240,24 @@ export async function GET(request: NextRequest) {
     const storageMax = searchParams.get('storageMax')
     const bootromExploit = searchParams.get('bootromExploit')
     const sellerId = searchParams.get('sellerId')
+    const includeOwn = searchParams.get('includeOwn') === 'true'
 
     // Sort
     const sortBy = searchParams.get('sortBy') || 'newest'
 
-    const where: any = {
-      status: 'ACTIVE',
+    // Build where clause
+    // For public search: only show ACTIVE + APPROVED listings
+    // For own listings: show all statuses if includeOwn=true and sellerId matches
+    const where: any = {}
+
+    // If viewing own listings, allow all review statuses
+    if (includeOwn && sellerId && session?.user?.id === sellerId) {
+      where.sellerId = sellerId
+      // Don't filter by status or reviewStatus - show all their listings
+    } else {
+      // Public listings: must be ACTIVE and APPROVED
+      where.status = 'ACTIVE'
+      where.reviewStatus = 'APPROVED'
     }
 
     // Text search
@@ -240,7 +309,8 @@ export async function GET(request: NextRequest) {
       where.bootromExploit = true
     }
 
-    if (sellerId) {
+    // If sellerId provided but not using includeOwn, filter public listings by seller
+    if (sellerId && !includeOwn) {
       where.sellerId = sellerId
     }
 
