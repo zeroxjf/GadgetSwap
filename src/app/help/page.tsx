@@ -75,7 +75,7 @@ const faqs: Record<string, Array<{ q: string; a: string; id?: string }>> = {
     },
     {
       q: 'What fees does GadgetSwap charge?',
-      a: 'Free accounts pay 10% on sales. Plus subscribers pay 7%, and Pro subscribers pay only 5%. There are no listing fees.',
+      a: 'Free accounts pay ~4% total (1% platform fee + ~3% Stripe processing). Plus and Pro subscribers pay 0% - we cover all fees including Stripe. There are no listing fees.',
     },
     {
       q: 'How do I get paid?',
