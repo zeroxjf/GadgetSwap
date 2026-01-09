@@ -54,9 +54,10 @@ export async function POST(request: NextRequest) {
       name,
       deviceType,
       deviceModel,
-      osVersionMin,
-      osVersionMax,
-      osVersionExact,
+      osVersion, // Simplified: major version like "16", "17", etc.
+      osVersionMin: legacyMin,
+      osVersionMax: legacyMax,
+      osVersionExact: legacyExact,
       jailbreakStatus,
       bootromExploitOnly,
       storageMinGB,
@@ -65,6 +66,16 @@ export async function POST(request: NextRequest) {
       priceMax,
       emailNotify,
     } = body
+
+    // Map simplified osVersion to min/max range (e.g., "16" -> "16.0" to "16.99")
+    let osVersionMin = legacyMin
+    let osVersionMax = legacyMax
+    let osVersionExact = legacyExact
+
+    if (osVersion && !osVersionMin && !osVersionMax && !osVersionExact) {
+      osVersionMin = `${osVersion}.0`
+      osVersionMax = osVersion === '13' ? '13.99' : `${osVersion}.99`
+    }
 
     if (!name) {
       return NextResponse.json(
