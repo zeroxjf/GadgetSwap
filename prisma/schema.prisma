@@ -1,0 +1,561 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?   // For credentials auth
+  name          String?
+  username      String?   @unique
+  image         String?
+  bio           String?
+  location      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Subscription
+  subscriptionTier SubscriptionTier @default(FREE)
+  subscriptionId   String?
+  subscriptionEnd  DateTime?
+  stripeCustomerId String?         // Stripe customer ID for subscriptions
+
+  // Stripe Connect (for sellers)
+  stripeAccountId       String?   // Stripe Connect account ID
+  stripeAccountStatus   String?   // 'pending', 'active', 'restricted'
+  stripeOnboardingComplete Boolean @default(false)
+
+  // Seller stats
+  totalSales     Int     @default(0)
+  totalPurchases Int     @default(0)
+  rating         Float   @default(0)
+  ratingCount    Int     @default(0)
+
+  // Notification preferences
+  emailNotifications Boolean @default(true)
+  marketingEmails    Boolean @default(false)
+  priceDropAlerts    Boolean @default(true)
+  newMessageAlerts   Boolean @default(true)
+  orderUpdates       Boolean @default(true)
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  listings      Listing[]
+  purchases     Transaction[] @relation("Buyer")
+  sales         Transaction[] @relation("Seller")
+  reviews       Review[]      @relation("ReviewAuthor")
+  receivedReviews Review[]    @relation("ReviewTarget")
+  sentMessages  Message[]     @relation("MessageSender")
+  receivedMessages Message[]  @relation("MessageReceiver")
+  watchlist     Watchlist[]
+  notifications Notification[]
+  deviceAlerts  DeviceAlert[]
+  savedAddresses SavedAddress[]
+}
+
+model SavedAddress {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label     String?  // "Home", "Work", etc.
+  name      String   // Recipient name
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  zipCode   String
+  country   String   @default("US")
+  phone     String?
+
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// SUBSCRIPTIONS
+// ============================================
+
+enum SubscriptionTier {
+  FREE
+  PLUS
+  PRO
+}
+
+model SubscriptionPlan {
+  id          String           @id @default(cuid())
+  name        String
+  tier        SubscriptionTier @unique
+  price       Float            // Monthly price
+  yearlyPrice Float?           // Annual price (discount)
+
+  // Feature limits
+  maxActiveListings   Int
+  maxDeviceAlerts     Int      @default(1)  // Free: 1, Plus: 3, Pro: unlimited (-1)
+  transactionFeePercent Float
+  featuredListings    Int      @default(0)
+  analyticsAccess     Boolean  @default(false)
+  prioritySupport     Boolean  @default(false)
+  earlyAccessDeals    Boolean  @default(false)
+  bulkListingTools    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// LISTINGS
+// ============================================
+
+model Listing {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  price       Float
+  condition   DeviceCondition
+  status      ListingStatus @default(ACTIVE)
+  views       Int           @default(0)
+  featured    Boolean       @default(false)
+
+  // Seller
+  sellerId String
+  seller   User   @relation(fields: [sellerId], references: [id])
+
+  // Device info
+  deviceType    DeviceType
+  deviceModel   String      // e.g., "iPhone 14 Pro", "MacBook Pro 16"
+  storageGB     Int?
+  color         String?
+  carrier       String?     // For phones: Unlocked, AT&T, Verizon, etc.
+
+  // iOS/macOS specific (key for jailbreak community!)
+  osVersion     String?     // e.g., "16.1.2", "14.8"
+  buildNumber   String?     // e.g., "20B82"
+
+  // Jailbreak info
+  jailbreakStatus   JailbreakStatus @default(UNKNOWN)
+  jailbreakTool     String?         // e.g., "unc0ver", "checkra1n", "Dopamine"
+  bootromExploit    Boolean?        // Device has checkm8 bootrom exploit (iPhone 4S - iPhone X)
+
+  // Hardware details
+  batteryHealth     Int?            // Percentage
+  screenReplaced    Boolean?
+  originalParts     Boolean?
+  imeiClean         Boolean?
+  icloudUnlocked    Boolean         @default(true)
+
+  // Media
+  images    ListingImage[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime?
+
+  // Relations
+  transactions Transaction[]
+  watchlistedBy Watchlist[]
+  priceHistory  PriceHistory[]
+  messages      Message[]
+
+  @@index([deviceType, deviceModel])
+  @@index([osVersion])
+  @@index([jailbreakStatus])
+  @@index([status, createdAt])
+}
+
+model ListingImage {
+  id        String   @id @default(cuid())
+  url       String
+  order     Int      @default(0)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+enum DeviceType {
+  IPHONE
+  IPAD
+  MACBOOK
+  MAC_MINI
+  MAC_STUDIO
+  MAC_PRO
+  IMAC
+  APPLE_WATCH
+  APPLE_TV
+  AIRPODS
+  ACCESSORIES
+}
+
+enum DeviceCondition {
+  NEW
+  LIKE_NEW
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  FOR_PARTS
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  PENDING
+  SOLD
+  EXPIRED
+  REMOVED
+}
+
+enum JailbreakStatus {
+  UNKNOWN
+  NOT_JAILBROKEN
+  JAILBROKEN
+  JAILBREAKABLE
+  ROOTLESS_JB
+  ROOTFUL_JB
+}
+
+// ============================================
+// TRANSACTIONS
+// ============================================
+
+model Transaction {
+  id              String            @id @default(cuid())
+
+  // Parties
+  buyerId         String
+  buyer           User              @relation("Buyer", fields: [buyerId], references: [id])
+  sellerId        String
+  seller          User              @relation("Seller", fields: [sellerId], references: [id])
+
+  // Listing
+  listingId       String
+  listing         Listing           @relation(fields: [listingId], references: [id])
+
+  // Pricing
+  salePrice       Float             // Item price
+  taxAmount       Float             @default(0)  // Sales tax
+  taxRate         Float             @default(0)  // Tax rate applied
+  shippingCost    Float             @default(0)  // Shipping cost
+  platformFee     Float             // Our cut (based on subscription tier)
+  stripeFee       Float             // Stripe's cut (2.9% + $0.30)
+  sellerPayout    Float             // What seller receives
+  totalAmount     Float             // Total charged to buyer
+
+  // Stripe
+  stripePaymentIntentId String?     @unique
+  stripeTransferId      String?     // Transfer to seller's Connect account
+  stripeChargeId        String?
+  stripeStatus          String?     // 'pending', 'succeeded', 'failed'
+
+  // Status
+  status          TransactionStatus @default(PENDING)
+  fundsHeld       Boolean           @default(true)  // Funds held until escrow period ends
+  fundsReleasedAt DateTime?         // When funds were released to seller
+  escrowReleaseAt DateTime?         // When funds can be released (24h after delivery)
+
+  // Shipping
+  shippingName    String?
+  shippingLine1   String?
+  shippingLine2   String?
+  shippingCity    String?
+  shippingState   String?
+  shippingZip     String?
+  shippingCountry String?           @default("US")
+  shippingPhone   String?
+  trackingNumber  String?
+  shippingCarrier String?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+
+  // Timestamps
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  completedAt     DateTime?
+
+  // Disputes
+  disputeId       String?
+  disputeReason   String?
+  disputeStatus   DisputeStatus?
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([stripePaymentIntentId])
+}
+
+enum TransactionStatus {
+  PENDING
+  PAYMENT_RECEIVED
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  DISPUTED
+  REFUNDED
+  CANCELLED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED_BUYER
+  RESOLVED_SELLER
+  ESCALATED
+}
+
+// ============================================
+// REVIEWS
+// ============================================
+
+model Review {
+  id          String   @id @default(cuid())
+  rating      Int      // 1-5
+  comment     String?  
+
+  authorId    String
+  author      User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+
+  targetId    String
+  target      User     @relation("ReviewTarget", fields: [targetId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([authorId, targetId])
+}
+
+// ============================================
+// MESSAGING
+// ============================================
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String   
+  read       Boolean  @default(false)
+
+  senderId   String
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+
+  receiverId String
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+
+  listingId  String?
+  listing    Listing? @relation(fields: [listingId], references: [id])
+
+  createdAt  DateTime @default(now())
+
+  @@index([senderId, receiverId])
+  @@index([listingId])
+}
+
+// ============================================
+// WATCHLIST
+// ============================================
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+}
+
+// ============================================
+// DEVICE ALERTS
+// ============================================
+
+model DeviceAlert {
+  id          String   @id @default(cuid())
+  name        String   // User-friendly name, e.g., "iPhone 14 Pro on iOS 16.1"
+  active      Boolean  @default(true)
+
+  // User
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Device criteria (all optional - user sets what they care about)
+  deviceType      DeviceType?
+  deviceModel     String?         // e.g., "iPhone 14 Pro", "MacBook Pro 14"
+
+  // iOS/OS version criteria
+  osVersionMin    String?         // Minimum iOS version (e.g., "15.0")
+  osVersionMax    String?         // Maximum iOS version (e.g., "15.4.1")
+  osVersionExact  String?         // Exact iOS version match
+
+  // Jailbreak criteria
+  jailbreakStatus     JailbreakStatus?
+  bootromExploitOnly  Boolean?    // Only devices with checkm8/bootrom exploit
+
+  // Storage
+  storageMinGB    Int?
+  storageMaxGB    Int?
+
+  // Price
+  priceMin        Float?
+  priceMax        Float?
+
+  // Condition
+  conditionMin    DeviceCondition?  // Minimum condition (GOOD means GOOD or better)
+
+  // Other criteria
+  carrier         String?           // Unlocked, AT&T, etc.
+
+  // Notification preferences
+  emailNotify     Boolean  @default(true)
+  pushNotify      Boolean  @default(true)   // For future mobile app
+
+  // Stats
+  matchCount      Int      @default(0)      // How many times this alert matched
+  lastMatchAt     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, active])
+  @@index([deviceType, deviceModel])
+  @@index([osVersionMin, osVersionMax])
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  link      String?
+
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+}
+
+enum NotificationType {
+  NEW_MESSAGE
+  LISTING_SOLD
+  NEW_SALE
+  PURCHASE_CONFIRMED
+  ITEM_SHIPPED
+  DELIVERY_CONFIRMED
+  FUNDS_RELEASED
+  DISPUTE_OPENED
+  DISPUTE_RESOLVED
+  PRICE_DROP
+  WATCHLIST_ALERT
+  DEVICE_ALERT_MATCH
+  TRANSACTION_UPDATE
+  REVIEW_RECEIVED
+  ALERT_MATCH
+  SYSTEM
+}
+
+// ============================================
+// MARKET INSIGHTS
+// ============================================
+
+model PriceHistory {
+  id        String   @id @default(cuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  price     Float
+  createdAt DateTime @default(now())
+}
+
+model MarketRate {
+  id           String     @id @default(cuid())
+  deviceType   DeviceType
+  deviceModel  String
+  condition    DeviceCondition
+  storageGB    Int?
+
+  // Price stats
+  avgPrice     Float
+  minPrice     Float
+  maxPrice     Float
+  sampleSize   Int
+
+  // iOS version premium/discount
+  osVersion    String?
+  osPremium    Float?     // Percentage premium/discount for this iOS version
+
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([deviceType, deviceModel, condition, storageGB, osVersion])
+  @@index([deviceType, deviceModel])
+}
+
+// Jailbreak compatibility database
+model JailbreakInfo {
+  id              String   @id @default(cuid())
+  osVersionMin    String   // e.g., "15.0"
+  osVersionMax    String   // e.g., "15.4.1"
+  deviceModels    String   // Compatible device models (JSON array)
+  jailbreakTool   String   // e.g., "Dopamine", "unc0ver"
+  jailbreakType   String   // "semi-untethered", "untethered", "tethered"
+  requiresBootrom Boolean  @default(false)
+  active          Boolean  @default(true)
+  notes           String?
+  websiteUrl      String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([osVersionMin, osVersionMax])
+}

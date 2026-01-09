@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: gadgetswap-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gadgetswap
+      POSTGRES_PASSWORD: gadgetswap_local_dev
+      POSTGRES_DB: gadgetswap
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Optional: Adminer for database GUI
+  adminer:
+    image: adminer
+    container_name: gadgetswap-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
