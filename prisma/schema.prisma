@@ -40,6 +40,9 @@ model User {
   subscriptionEnd  DateTime?
   stripeCustomerId String?         // Stripe customer ID for subscriptions
 
+  // Onboarding
+  onboardingComplete    Boolean   @default(false) // Has seen/completed initial setup flow
+
   // Stripe Connect (for sellers)
   stripeAccountId       String?   // Stripe Connect account ID
   stripeAccountStatus   String?   // 'pending', 'active', 'restricted'

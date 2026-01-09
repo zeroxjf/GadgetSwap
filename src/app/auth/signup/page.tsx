@@ -91,7 +91,7 @@ export default function SignUpPage() {
       await signIn('credentials', {
         email: formData.email,
         password: formData.password,
-        callbackUrl: '/',
+        callbackUrl: '/onboarding',
       })
     } catch (err: any) {
       setError(err.message)
@@ -124,7 +124,7 @@ export default function SignUpPage() {
           {/* Social sign up */}
           <div className="space-y-3 mb-6">
             <button
-              onClick={() => signIn('google', { callbackUrl: '/' })}
+              onClick={() => signIn('google', { callbackUrl: '/onboarding' })}
               className="w-full btn-outline py-3 flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -149,7 +149,7 @@ export default function SignUpPage() {
             </button>
 
             <button
-              onClick={() => signIn('apple', { callbackUrl: '/' })}
+              onClick={() => signIn('apple', { callbackUrl: '/onboarding' })}
               className="w-full btn-outline py-3 flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">

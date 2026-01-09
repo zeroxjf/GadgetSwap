@@ -83,6 +83,7 @@ export const authOptions: NextAuthOptions = {
             subscriptionTier: true,
             rating: true,
             totalSales: true,
+            onboardingComplete: true,
           },
         })
 
@@ -91,6 +92,7 @@ export const authOptions: NextAuthOptions = {
           token.subscriptionTier = dbUser.subscriptionTier
           token.rating = dbUser.rating
           token.totalSales = dbUser.totalSales
+          token.onboardingComplete = dbUser.onboardingComplete
         }
       }
 
@@ -103,6 +105,7 @@ export const authOptions: NextAuthOptions = {
         session.user.subscriptionTier = token.subscriptionTier as string
         session.user.rating = token.rating as number
         session.user.totalSales = token.totalSales as number
+        session.user.onboardingComplete = token.onboardingComplete as boolean
       }
       return session
     },
@@ -139,6 +142,7 @@ declare module 'next-auth' {
       subscriptionTier: string
       rating: number
       totalSales: number
+      onboardingComplete: boolean
     }
   }
 }
@@ -150,5 +154,6 @@ declare module 'next-auth/jwt' {
     subscriptionTier: string
     rating: number
     totalSales: number
+    onboardingComplete: boolean
   }
 }
