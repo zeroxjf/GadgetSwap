@@ -64,7 +64,7 @@ export function TrustBadges() {
             <Shield className="w-4 h-4 text-blue-400" />
             <span className="underline underline-offset-2">IMEI Verified</span>
           </button>
-          <ArrowUp className="absolute -top-5 left-1/2 -translate-x-1/2 w-4 h-4 text-blue-400 animate-bounce" />
+          <ArrowUp className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-4 h-4 text-blue-400 animate-bounce" />
         </div>
 
         {/* 24h Escrow */}
@@ -76,7 +76,7 @@ export function TrustBadges() {
             <CheckCircle className="w-4 h-4 text-green-400" />
             <span className="underline underline-offset-2">24h Escrow</span>
           </button>
-          <ArrowUp className="absolute -top-5 left-1/2 -translate-x-1/2 w-4 h-4 text-green-400 animate-bounce [animation-delay:150ms]" />
+          <ArrowUp className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-4 h-4 text-green-400 animate-bounce [animation-delay:150ms]" />
         </div>
 
         {/* Instant Alerts */}
@@ -88,7 +88,7 @@ export function TrustBadges() {
             <Bell className="w-4 h-4 text-yellow-400" />
             <span className="underline underline-offset-2">Instant Alerts</span>
           </button>
-          <ArrowUp className="absolute -top-5 left-1/2 -translate-x-1/2 w-4 h-4 text-yellow-400 animate-bounce [animation-delay:300ms]" />
+          <ArrowUp className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-4 h-4 text-yellow-400 animate-bounce [animation-delay:300ms]" />
         </div>
       </div>
 
