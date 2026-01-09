@@ -23,8 +23,8 @@ const plans = {
   PLUS: {
     name: 'GadgetSwap Plus',
     description: '0% platform fee, 15 active listings, 3 device alerts',
-    monthlyPrice: 999, // $9.99 in cents
-    yearlyPrice: 9900, // $99.00 in cents
+    monthlyPrice: 499, // $4.99 in cents
+    yearlyPrice: 4000, // $40.00 in cents
     features: [
       '15 active listings',
       '0% platform fee',
@@ -36,8 +36,8 @@ const plans = {
   PRO: {
     name: 'GadgetSwap Pro',
     description: '0% platform fee, unlimited listings, unlimited alerts',
-    monthlyPrice: 2999, // $29.99 in cents
-    yearlyPrice: 29900, // $299.00 in cents
+    monthlyPrice: 1199, // $11.99 in cents
+    yearlyPrice: 10000, // $100.00 in cents
     features: [
       'Unlimited listings',
       '0% platform fee',
