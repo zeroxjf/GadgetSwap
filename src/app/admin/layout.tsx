@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   CreditCard,
   MessageSquare,
+  AlertTriangle,
 } from 'lucide-react'
 
 export default async function AdminLayout({
@@ -39,6 +40,7 @@ export default async function AdminLayout({
   const navItems = [
     { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/reviews', icon: ClipboardList, label: 'Review Queue' },
+    { href: '/admin/messages', icon: AlertTriangle, label: 'Flagged Messages' },
     { href: '/admin/users', icon: Users, label: 'Users' },
     { href: '/admin/transactions', icon: CreditCard, label: 'Transactions' },
     { href: '/admin/support', icon: MessageSquare, label: 'Support' },

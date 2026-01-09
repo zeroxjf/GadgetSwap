@@ -80,6 +80,7 @@ export const authOptions: NextAuthOptions = {
             name: true,
             username: true,
             image: true,
+            role: true,
             subscriptionTier: true,
             rating: true,
             totalSales: true,
@@ -89,6 +90,7 @@ export const authOptions: NextAuthOptions = {
 
         if (dbUser) {
           token.username = dbUser.username
+          token.role = dbUser.role
           token.subscriptionTier = dbUser.subscriptionTier
           token.rating = dbUser.rating
           token.totalSales = dbUser.totalSales
@@ -102,6 +104,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string
         session.user.username = token.username as string | null
+        session.user.role = token.role as 'USER' | 'MODERATOR' | 'ADMIN'
         session.user.subscriptionTier = token.subscriptionTier as string
         session.user.rating = token.rating as number
         session.user.totalSales = token.totalSales as number
@@ -139,6 +142,7 @@ declare module 'next-auth' {
       name?: string | null
       image?: string | null
       username?: string | null
+      role: 'USER' | 'MODERATOR' | 'ADMIN'
       subscriptionTier: string
       rating: number
       totalSales: number
@@ -151,6 +155,7 @@ declare module 'next-auth/jwt' {
   interface JWT {
     id: string
     username?: string | null
+    role: 'USER' | 'MODERATOR' | 'ADMIN'
     subscriptionTier: string
     rating: number
     totalSales: number

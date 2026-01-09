@@ -55,6 +55,11 @@ model User {
   rating         Float   @default(0)
   ratingCount    Int     @default(0)
 
+  // Ban status
+  banned        Boolean   @default(false)
+  bannedAt      DateTime?
+  bannedReason  String?
+
   // Notification preferences
   emailNotifications Boolean @default(true)
   marketingEmails    Boolean @default(false)
@@ -490,8 +495,13 @@ model Review {
 
 model Message {
   id         String   @id @default(cuid())
-  content    String   
+  content    String
   read       Boolean  @default(false)
+
+  // Content moderation
+  flagged    Boolean  @default(false)
+  blocked    Boolean  @default(false)
+  riskScore  Int      @default(0)  // 0-100
 
   senderId   String
   sender     User     @relation("MessageSender", fields: [senderId], references: [id])
@@ -502,10 +512,37 @@ model Message {
   listingId  String?
   listing    Listing? @relation(fields: [listingId], references: [id])
 
+  // Relation to flag details
+  moderationFlags MessageFlag[]
+
   createdAt  DateTime @default(now())
 
   @@index([senderId, receiverId])
   @@index([listingId])
+  @@index([flagged])
+}
+
+// Message moderation flags for tracking off-platform transaction attempts
+model MessageFlag {
+  id        String   @id @default(cuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  type      String   // 'phone', 'email', 'payment_app', 'social_media', 'external_link', 'evasion', 'crypto'
+  severity  String   // 'low', 'medium', 'high'
+  match     String   // The matched text
+  context   String   // Surrounding context
+
+  // Admin review
+  reviewed    Boolean   @default(false)
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  actionTaken String?   // 'dismissed', 'warned', 'banned'
+
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+  @@index([reviewed])
 }
 
 // ============================================

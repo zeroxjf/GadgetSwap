@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Send, Search, MoreVertical, Image as ImageIcon, ChevronLeft, MessageSquare, Loader2 } from 'lucide-react'
+import { Send, Search, MoreVertical, ChevronLeft, MessageSquare, Loader2, AlertTriangle } from 'lucide-react'
 
 interface Conversation {
   id: string
@@ -34,6 +34,12 @@ interface Message {
   content: string
   createdAt: string
   senderId: string
+  sender: {
+    id: string
+    name: string | null
+    username: string | null
+    image: string | null
+  }
 }
 
 function formatTime(dateStr: string): string {
@@ -52,6 +58,11 @@ function formatTime(dateStr: string): string {
   }
 }
 
+function formatMessageTime(dateStr: string): string {
+  const date = new Date(dateStr)
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
 export default function MessagesPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -61,7 +72,10 @@ export default function MessagesPage() {
   const [newMessage, setNewMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadingMessages, setLoadingMessages] = useState(false)
   const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -75,6 +89,18 @@ export default function MessagesPage() {
       fetchConversations()
     }
   }, [session])
+
+  // Fetch messages when conversation changes
+  useEffect(() => {
+    if (selectedConversation) {
+      fetchMessages()
+    }
+  }, [selectedConversation])
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   const fetchConversations = async () => {
     try {
@@ -90,13 +116,45 @@ export default function MessagesPage() {
     }
   }
 
+  const fetchMessages = async () => {
+    if (!selectedConversation) return
+
+    setLoadingMessages(true)
+    try {
+      const conv = conversations.find(c => c.id === selectedConversation)
+      if (!conv) return
+
+      const params = new URLSearchParams({
+        userId: conv.otherUser.id,
+      })
+      if (conv.listing?.id) {
+        params.append('listingId', conv.listing.id)
+      } else {
+        params.append('listingId', 'general')
+      }
+
+      const response = await fetch(`/api/messages/conversation?${params}`)
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessages(data.messages || [])
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error)
+    } finally {
+      setLoadingMessages(false)
+    }
+  }
+
   const currentConversation = conversations.find((c) => c.id === selectedConversation)
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMessage.trim() || !currentConversation) return
 
+    setError(null)
     setSending(true)
+
     try {
       const response = await fetch('/api/messages', {
         method: 'POST',
@@ -108,12 +166,33 @@ export default function MessagesPage() {
         }),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
         setNewMessage('')
+        // Add the new message to the list
+        if (data.message) {
+          setMessages(prev => [...prev, data.message])
+        }
+        // Refresh conversations to update last message
         fetchConversations()
+
+        // Show warning if flagged
+        if (data.warning) {
+          setError(data.warning)
+          setTimeout(() => setError(null), 5000)
+        }
+      } else {
+        // Handle blocked message
+        if (data.blocked) {
+          setError(data.error || 'Message blocked')
+        } else {
+          setError(data.error || 'Failed to send message')
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error)
+      setError('Failed to send message')
     } finally {
       setSending(false)
     }
@@ -273,7 +352,7 @@ export default function MessagesPage() {
                     <div>
                       <Link
                         href={`/users/${currentConversation.otherUser.username || currentConversation.otherUser.id}`}
-                        className="font-medium hover:text-primary-600"
+                        className="font-medium hover:text-primary-600 dark:text-white"
                       >
                         {currentConversation.otherUser.name || currentConversation.otherUser.username || 'User'}
                       </Link>
@@ -312,22 +391,62 @@ export default function MessagesPage() {
                   </Link>
                 )}
 
-                {/* Messages - empty state for now since we'd need separate endpoint */}
-                <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center">
-                  <p className="text-gray-400 text-sm">Messages will appear here</p>
+                {/* Messages area */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {loadingMessages ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                      No messages yet. Start the conversation!
+                    </div>
+                  ) : (
+                    <>
+                      {messages.map((message) => {
+                        const isMe = message.senderId === session.user.id
+                        return (
+                          <div
+                            key={message.id}
+                            className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                                isMe
+                                  ? 'bg-primary-600 text-white rounded-br-md'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-md'
+                              }`}
+                            >
+                              <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                              <p
+                                className={`text-xs mt-1 ${
+                                  isMe ? 'text-primary-200' : 'text-gray-400'
+                                }`}
+                              >
+                                {formatMessageTime(message.createdAt)}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      <div ref={messagesEndRef} />
+                    </>
+                  )}
                 </div>
+
+                {/* Error message */}
+                {error && (
+                  <div className="px-4 py-2 bg-red-50 border-t border-red-200 flex items-center gap-2 text-red-700 text-sm">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    <p>{error}</p>
+                  </div>
+                )}
 
                 {/* Message input */}
                 <form
                   onSubmit={handleSendMessage}
                   className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-3"
                 >
-                  <button
-                    type="button"
-                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"
-                  >
-                    <ImageIcon className="w-5 h-5" />
-                  </button>
                   <input
                     type="text"
                     value={newMessage}
