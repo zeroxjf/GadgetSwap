@@ -107,9 +107,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">G</span>
-            </div>
+            <img src="/logo.png" alt="GadgetSwap" className="w-8 h-8 rounded-lg" />
             <span className="text-white font-semibold">GadgetSwap</span>
           </div>
 

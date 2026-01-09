@@ -68,9 +68,11 @@ export function Header() {
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">G</span>
-            </div>
+            <img
+              src="/logo.png"
+              alt="GadgetSwap"
+              className="w-10 h-10 rounded-xl"
+            />
             <span className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
               GadgetSwap
             </span>
