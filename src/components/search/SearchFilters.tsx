@@ -3,6 +3,14 @@
 import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
+import {
+  deviceTypes,
+  modelsByDeviceType,
+  conditions,
+  storageOptions,
+  iosVersions,
+  jailbreakStatuses,
+} from '@/lib/device-data'
 
 interface FilterSectionProps {
   title: string
@@ -30,144 +38,6 @@ function FilterSection({ title, children, defaultOpen = true }: FilterSectionPro
     </div>
   )
 }
-
-const deviceTypes = [
-  { value: 'IPHONE', label: 'iPhone' },
-  { value: 'IPAD', label: 'iPad' },
-  { value: 'MACBOOK', label: 'MacBook' },
-  { value: 'IMAC', label: 'iMac' },
-  { value: 'MAC_MINI', label: 'Mac Mini' },
-  { value: 'APPLE_WATCH', label: 'Apple Watch' },
-  { value: 'AIRPODS', label: 'AirPods' },
-]
-
-// Models per device type
-const modelsByDeviceType: Record<string, { value: string; label: string }[]> = {
-  IPHONE: [
-    { value: 'iPhone 16 Pro Max', label: 'iPhone 16 Pro Max' },
-    { value: 'iPhone 16 Pro', label: 'iPhone 16 Pro' },
-    { value: 'iPhone 16 Plus', label: 'iPhone 16 Plus' },
-    { value: 'iPhone 16', label: 'iPhone 16' },
-    { value: 'iPhone 15 Pro Max', label: 'iPhone 15 Pro Max' },
-    { value: 'iPhone 15 Pro', label: 'iPhone 15 Pro' },
-    { value: 'iPhone 15 Plus', label: 'iPhone 15 Plus' },
-    { value: 'iPhone 15', label: 'iPhone 15' },
-    { value: 'iPhone 14 Pro Max', label: 'iPhone 14 Pro Max' },
-    { value: 'iPhone 14 Pro', label: 'iPhone 14 Pro' },
-    { value: 'iPhone 14 Plus', label: 'iPhone 14 Plus' },
-    { value: 'iPhone 14', label: 'iPhone 14' },
-    { value: 'iPhone 13 Pro Max', label: 'iPhone 13 Pro Max' },
-    { value: 'iPhone 13 Pro', label: 'iPhone 13 Pro' },
-    { value: 'iPhone 13', label: 'iPhone 13' },
-    { value: 'iPhone 13 mini', label: 'iPhone 13 mini' },
-    { value: 'iPhone 12 Pro Max', label: 'iPhone 12 Pro Max' },
-    { value: 'iPhone 12 Pro', label: 'iPhone 12 Pro' },
-    { value: 'iPhone 12', label: 'iPhone 12' },
-    { value: 'iPhone 12 mini', label: 'iPhone 12 mini' },
-    { value: 'iPhone 11 Pro Max', label: 'iPhone 11 Pro Max' },
-    { value: 'iPhone 11 Pro', label: 'iPhone 11 Pro' },
-    { value: 'iPhone 11', label: 'iPhone 11' },
-    { value: 'iPhone XS Max', label: 'iPhone XS Max' },
-    { value: 'iPhone XS', label: 'iPhone XS' },
-    { value: 'iPhone XR', label: 'iPhone XR' },
-    { value: 'iPhone X', label: 'iPhone X' },
-    { value: 'iPhone SE', label: 'iPhone SE' },
-    { value: 'iPhone 8 Plus', label: 'iPhone 8 Plus' },
-    { value: 'iPhone 8', label: 'iPhone 8' },
-  ],
-  IPAD: [
-    { value: 'iPad Pro 13-inch (M4)', label: 'iPad Pro 13" (M4)' },
-    { value: 'iPad Pro 11-inch (M4)', label: 'iPad Pro 11" (M4)' },
-    { value: 'iPad Pro 12.9-inch (6th gen)', label: 'iPad Pro 12.9" (6th gen)' },
-    { value: 'iPad Pro 11-inch (4th gen)', label: 'iPad Pro 11" (4th gen)' },
-    { value: 'iPad Air 13-inch (M2)', label: 'iPad Air 13" (M2)' },
-    { value: 'iPad Air 11-inch (M2)', label: 'iPad Air 11" (M2)' },
-    { value: 'iPad Air (5th gen)', label: 'iPad Air (5th gen)' },
-    { value: 'iPad (10th gen)', label: 'iPad (10th gen)' },
-    { value: 'iPad (9th gen)', label: 'iPad (9th gen)' },
-    { value: 'iPad mini (6th gen)', label: 'iPad mini (6th gen)' },
-    { value: 'iPad mini (5th gen)', label: 'iPad mini (5th gen)' },
-  ],
-  MACBOOK: [
-    { value: 'MacBook Pro 16 (M4)', label: 'MacBook Pro 16" (M4)' },
-    { value: 'MacBook Pro 14 (M4)', label: 'MacBook Pro 14" (M4)' },
-    { value: 'MacBook Pro 16 (M3)', label: 'MacBook Pro 16" (M3)' },
-    { value: 'MacBook Pro 14 (M3)', label: 'MacBook Pro 14" (M3)' },
-    { value: 'MacBook Pro 16 (M2)', label: 'MacBook Pro 16" (M2)' },
-    { value: 'MacBook Pro 14 (M2)', label: 'MacBook Pro 14" (M2)' },
-    { value: 'MacBook Pro 13 (M2)', label: 'MacBook Pro 13" (M2)' },
-    { value: 'MacBook Air 15 (M3)', label: 'MacBook Air 15" (M3)' },
-    { value: 'MacBook Air 13 (M3)', label: 'MacBook Air 13" (M3)' },
-    { value: 'MacBook Air 15 (M2)', label: 'MacBook Air 15" (M2)' },
-    { value: 'MacBook Air 13 (M2)', label: 'MacBook Air 13" (M2)' },
-    { value: 'MacBook Air (M1)', label: 'MacBook Air (M1)' },
-  ],
-  IMAC: [
-    { value: 'iMac 24 (M4)', label: 'iMac 24" (M4)' },
-    { value: 'iMac 24 (M3)', label: 'iMac 24" (M3)' },
-    { value: 'iMac 24 (M1)', label: 'iMac 24" (M1)' },
-    { value: 'iMac 27 (2020)', label: 'iMac 27" (2020)' },
-    { value: 'iMac Pro', label: 'iMac Pro' },
-  ],
-  MAC_MINI: [
-    { value: 'Mac mini (M4)', label: 'Mac mini (M4)' },
-    { value: 'Mac mini (M2)', label: 'Mac mini (M2)' },
-    { value: 'Mac mini (M1)', label: 'Mac mini (M1)' },
-  ],
-  APPLE_WATCH: [
-    { value: 'Apple Watch Ultra 2', label: 'Apple Watch Ultra 2' },
-    { value: 'Apple Watch Ultra', label: 'Apple Watch Ultra' },
-    { value: 'Apple Watch Series 10', label: 'Series 10' },
-    { value: 'Apple Watch Series 9', label: 'Series 9' },
-    { value: 'Apple Watch Series 8', label: 'Series 8' },
-    { value: 'Apple Watch Series 7', label: 'Series 7' },
-    { value: 'Apple Watch Series 6', label: 'Series 6' },
-    { value: 'Apple Watch SE (2nd gen)', label: 'SE (2nd gen)' },
-    { value: 'Apple Watch SE', label: 'SE' },
-  ],
-  AIRPODS: [
-    { value: 'AirPods Pro (2nd gen)', label: 'AirPods Pro (2nd gen)' },
-    { value: 'AirPods Pro', label: 'AirPods Pro (1st gen)' },
-    { value: 'AirPods (4th gen)', label: 'AirPods (4th gen)' },
-    { value: 'AirPods (3rd gen)', label: 'AirPods (3rd gen)' },
-    { value: 'AirPods (2nd gen)', label: 'AirPods (2nd gen)' },
-    { value: 'AirPods Max', label: 'AirPods Max' },
-  ],
-}
-
-const conditions = [
-  { value: 'NEW', label: 'New' },
-  { value: 'LIKE_NEW', label: 'Like New' },
-  { value: 'EXCELLENT', label: 'Excellent' },
-  { value: 'GOOD', label: 'Good' },
-  { value: 'FAIR', label: 'Fair' },
-  { value: 'POOR', label: 'Poor' },
-  { value: 'FOR_PARTS', label: 'For Parts' },
-]
-
-const jailbreakStatuses = [
-  { value: 'JAILBREAKABLE', label: 'Jailbreakable' },
-  { value: 'NOT_JAILBROKEN', label: 'Stock (Not Jailbreakable)' },
-]
-
-// Simplified iOS versions - major versions only
-const iosVersions = [
-  { value: '18', label: 'iOS 18' },
-  { value: '17', label: 'iOS 17' },
-  { value: '16', label: 'iOS 16' },
-  { value: '15', label: 'iOS 15' },
-  { value: '14', label: 'iOS 14' },
-  { value: '13', label: 'iOS 13 & below' },
-]
-
-const storageOptions = [
-  { value: 32, label: '32GB' },
-  { value: 64, label: '64GB' },
-  { value: 128, label: '128GB' },
-  { value: 256, label: '256GB' },
-  { value: 512, label: '512GB' },
-  { value: 1024, label: '1TB' },
-]
 
 export function SearchFilters() {
   const searchParams = useSearchParams()
