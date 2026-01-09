@@ -71,8 +71,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    const { returnUrl, refreshUrl } = body
+    let returnUrl: string | undefined
+    let refreshUrl: string | undefined
+
+    try {
+      const body = await request.json()
+      returnUrl = body.returnUrl
+      refreshUrl = body.refreshUrl
+    } catch {
+      // No body sent, use defaults
+    }
 
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
     const finalReturnUrl = returnUrl || `${baseUrl}/account/seller`
