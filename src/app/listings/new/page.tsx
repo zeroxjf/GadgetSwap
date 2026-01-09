@@ -22,6 +22,8 @@ import {
   Fingerprint,
   FileCheck,
   Copy,
+  Save,
+  Trash2,
 } from 'lucide-react'
 import { getModelsForDeviceType, getStorageForModel, DeviceModel } from '@/lib/device-models'
 import { checkJailbreakCompatibility, JailbreakResult } from '@/lib/jailbreak-compatibility'
@@ -237,6 +239,79 @@ function NewListingContent() {
     acceptsReturns: false,
     returnWindowDays: 14,
   })
+
+  // Draft saving state
+  const DRAFT_KEY = 'gadgetswap_listing_draft'
+  const [hasDraft, setHasDraft] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [showDraftRestored, setShowDraftRestored] = useState(false)
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem(DRAFT_KEY)
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft)
+        if (draft.formData) {
+          setFormData(draft.formData)
+          setHasDraft(true)
+          setShowDraftRestored(true)
+          // Hide the notification after 5 seconds
+          setTimeout(() => setShowDraftRestored(false), 5000)
+        }
+        if (draft.images) {
+          setImages(draft.images)
+        }
+        if (draft.isCurrentlyJailbroken !== undefined) {
+          setIsCurrentlyJailbroken(draft.isCurrentlyJailbroken)
+        }
+        if (draft.lastSaved) {
+          setLastSaved(new Date(draft.lastSaved))
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load draft:', e)
+    }
+  }, [])
+
+  // Save draft to localStorage
+  const saveDraft = useCallback(() => {
+    setIsSaving(true)
+    try {
+      const draft = {
+        formData,
+        images: images.filter(img => !img.startsWith('blob:')), // Only save uploaded URLs
+        isCurrentlyJailbroken,
+        lastSaved: new Date().toISOString(),
+      }
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+      setLastSaved(new Date())
+      setHasDraft(true)
+    } catch (e) {
+      console.error('Failed to save draft:', e)
+    }
+    setIsSaving(false)
+  }, [formData, images, isCurrentlyJailbroken])
+
+  // Auto-save draft every 30 seconds if there are changes
+  useEffect(() => {
+    const hasContent = formData.title || formData.description || formData.deviceType || formData.price
+    if (!hasContent) return
+
+    const autoSaveTimer = setTimeout(() => {
+      saveDraft()
+    }, 30000) // Auto-save every 30 seconds
+
+    return () => clearTimeout(autoSaveTimer)
+  }, [formData, saveDraft])
+
+  // Clear draft
+  const clearDraft = useCallback(() => {
+    localStorage.removeItem(DRAFT_KEY)
+    setHasDraft(false)
+    setLastSaved(null)
+  }, [])
 
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => {
@@ -697,6 +772,9 @@ function NewListingContent() {
         throw new Error(data.error || 'Failed to create listing')
       }
 
+      // Clear draft on successful submission
+      clearDraft()
+
       // Redirect to the listing page with pending status message
       router.push(`/listings/${data.listing.id}?submitted=true`)
     } catch (error) {
@@ -741,8 +819,24 @@ function NewListingContent() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-6xl mx-auto px-4">
+        {/* Draft restored notification */}
+        {showDraftRestored && (
+          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <Save className="w-4 h-4" />
+              <span className="text-sm">Draft restored from {lastSaved ? lastSaved.toLocaleString() : 'earlier'}</span>
+            </div>
+            <button
+              onClick={() => setShowDraftRestored(false)}
+              className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <Link href="/" className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm mb-2 inline-block">
               ← Back to home
@@ -750,8 +844,69 @@ function NewListingContent() {
             <h1 className="text-2xl font-bold dark:text-white">Create a Listing</h1>
             <p className="text-gray-600 dark:text-gray-400">List your device in a few simple steps</p>
           </div>
-          {/* Progress steps - horizontal on desktop */}
-          <div className="hidden lg:flex items-center gap-2">
+
+          {/* Save/Clear draft buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={saveDraft}
+              disabled={isSaving}
+              className="btn-secondary text-sm flex items-center gap-2"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {isSaving ? 'Saving...' : 'Save Draft'}
+            </button>
+            {hasDraft && (
+              <button
+                onClick={() => {
+                  if (confirm('Are you sure you want to clear your draft? This cannot be undone.')) {
+                    clearDraft()
+                    // Reset form to initial state
+                    setFormData({
+                      title: '',
+                      description: '',
+                      price: '',
+                      deviceType: '',
+                      deviceModel: '',
+                      condition: '',
+                      storageGB: '',
+                      color: '',
+                      carrier: '',
+                      osVersion: '',
+                      buildNumber: '',
+                      jailbreakStatus: 'NOT_JAILBROKEN',
+                      batteryHealth: '',
+                      screenReplaced: false,
+                      originalParts: true,
+                      imeiClean: true,
+                      icloudUnlocked: true,
+                      acceptsReturns: false,
+                      returnWindowDays: 14,
+                    })
+                    setImages([])
+                    setIsCurrentlyJailbroken(false)
+                    router.push('/listings/new?step=1', { scroll: false })
+                  }
+                }}
+                className="btn-secondary text-sm flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                <Trash2 className="w-4 h-4" />
+                Clear
+              </button>
+            )}
+            {lastSaved && (
+              <span className="text-xs text-gray-400 hidden sm:block">
+                Last saved {lastSaved.toLocaleTimeString()}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Progress steps - horizontal on desktop */}
+        <div className="hidden lg:flex items-center gap-2 mb-8 justify-center">
             {[
               { num: 1, label: 'Device' },
               { num: 2, label: 'Details' },
@@ -785,7 +940,6 @@ function NewListingContent() {
                 )}
               </div>
             ))}
-          </div>
         </div>
 
         {/* Mobile progress steps */}
