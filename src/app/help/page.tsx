@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Mail,
   ExternalLink,
+  Loader2,
 } from 'lucide-react'
 
 const categories = [
@@ -128,7 +129,7 @@ const faqs: Record<string, Array<{ q: string; a: string; id?: string }>> = {
   ],
 }
 
-export default function HelpPage() {
+function HelpContent() {
   const searchParams = useSearchParams()
   const [activeCategory, setActiveCategory] = useState('buying')
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null)
@@ -320,5 +321,21 @@ export default function HelpPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function HelpLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+    </div>
+  )
+}
+
+export default function HelpPage() {
+  return (
+    <Suspense fallback={<HelpLoading />}>
+      <HelpContent />
+    </Suspense>
   )
 }
