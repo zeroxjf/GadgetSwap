@@ -65,15 +65,17 @@ export default function OnboardingPage() {
         throw new Error('Failed to create connect account')
       }
 
-      const { url } = await response.json()
-      if (url) {
+      const { onboardingUrl } = await response.json()
+      if (onboardingUrl) {
         // Mark onboarding as seen before redirecting to Stripe
         await fetch('/api/user/onboarding', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ complete: true }),
         })
-        window.location.href = url
+        window.location.href = onboardingUrl
+      } else {
+        throw new Error('No onboarding URL returned')
       }
     } catch (error) {
       console.error('Stripe connect error:', error)
