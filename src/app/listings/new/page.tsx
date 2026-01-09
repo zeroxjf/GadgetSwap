@@ -905,6 +905,39 @@ function NewListingContent() {
           </div>
         </div>
 
+        {/* Step navigation arrows */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => step > 1 && setStep(step - 1)}
+            disabled={step === 1}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              step === 1
+                ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Step {step} of 5
+          </div>
+
+          <button
+            onClick={() => step < 5 && canProceed() && setStep(step + 1)}
+            disabled={step === 5 || !canProceed()}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              step === 5 || !canProceed()
+                ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+          >
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
         {/* Progress steps - horizontal on desktop */}
         <div className="hidden lg:flex items-center gap-2 mb-8 justify-center">
             {[
