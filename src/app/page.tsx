@@ -29,6 +29,7 @@ async function getFeaturedListings() {
     const listings = await prisma.listing.findMany({
       where: {
         status: 'ACTIVE',
+        reviewStatus: 'APPROVED',
       },
       include: {
         images: {
@@ -72,7 +73,7 @@ async function getListingCounts() {
   try {
     const counts = await prisma.listing.groupBy({
       by: ['deviceType'],
-      where: { status: 'ACTIVE' },
+      where: { status: 'ACTIVE', reviewStatus: 'APPROVED' },
       _count: { id: true },
     })
     return counts.reduce((acc, item) => {
