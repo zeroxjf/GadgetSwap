@@ -62,25 +62,19 @@ export async function POST(request: NextRequest) {
     const event = await retrieveV2Event(thinEvent.id)
 
     // Handle different event types
-    switch (event.type) {
-      case 'v2.core.account[requirements].updated':
-        await handleRequirementsUpdated(event)
-        break
+    // Note: V2 event types may not be in SDK types yet, so we cast to string
+    const eventType = event.type as string
 
-      case 'v2.core.account[configuration.merchant].capability_status_updated':
-        await handleMerchantCapabilityUpdated(event)
-        break
-
-      case 'v2.core.account[configuration.customer].capability_status_updated':
-        await handleCustomerCapabilityUpdated(event)
-        break
-
-      case 'v2.core.account[configuration.recipient].capability_status_updated':
-        await handleRecipientCapabilityUpdated(event)
-        break
-
-      default:
-        console.log(`Unhandled event type: ${event.type}`)
+    if (eventType === 'v2.core.account[requirements].updated') {
+      await handleRequirementsUpdated(event)
+    } else if (eventType === 'v2.core.account[configuration.merchant].capability_status_updated') {
+      await handleMerchantCapabilityUpdated(event)
+    } else if (eventType === 'v2.core.account[configuration.customer].capability_status_updated') {
+      await handleCustomerCapabilityUpdated(event)
+    } else if (eventType === 'v2.core.account[configuration.recipient].capability_status_updated') {
+      await handleRecipientCapabilityUpdated(event)
+    } else {
+      console.log(`Unhandled event type: ${eventType}`)
     }
 
     return NextResponse.json({ received: true })
