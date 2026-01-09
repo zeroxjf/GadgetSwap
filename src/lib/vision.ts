@@ -431,7 +431,7 @@ function calculateVariance(values: number[]): number {
  * Detect signs of image compositing based on color distribution
  */
 function detectCompositingSigns(
-  colors: Array<{ pixelFraction?: number | null; color?: { red?: number; green?: number; blue?: number } | null }>
+  colors: Array<{ pixelFraction?: number | null; color?: { red?: number | null; green?: number | null; blue?: number | null } | null }>
 ): number {
   if (!colors || colors.length < 2) return 0
 
