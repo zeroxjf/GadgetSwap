@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Shield, CheckCircle, Bell, X, Fingerprint, Clock } from 'lucide-react'
+import { Shield, CheckCircle, Bell, X, Fingerprint, Clock, ArrowDown } from 'lucide-react'
+import Link from 'next/link'
 
 const imeiContent = {
   title: 'IMEI Verification',
@@ -27,54 +28,100 @@ const escrowContent = {
   critical: true,
 }
 
+const alertsContent = {
+  title: 'Instant Alerts',
+  icon: Bell,
+  description: `Never miss a device with your exact specs. Set alerts for specific iOS versions, storage sizes, colors, and more — get notified the moment a matching device is listed.`,
+  bullets: [
+    'Filter by iOS version, jailbreak status, storage & color',
+    'Email or push notifications within minutes',
+    'Save multiple alert profiles for different searches',
+    'Perfect for finding rare jailbreakable devices',
+  ],
+}
+
 export function TrustBadges() {
-  const [expanded, setExpanded] = useState<'imei' | 'escrow' | null>(null)
+  const [expanded, setExpanded] = useState<'imei' | 'escrow' | 'alerts' | null>(null)
+
+  const getContent = () => {
+    if (expanded === 'imei') return imeiContent
+    if (expanded === 'escrow') return escrowContent
+    if (expanded === 'alerts') return alertsContent
+    return null
+  }
+
+  const content = getContent()
 
   return (
     <div className="relative">
       <div className="flex flex-wrap items-center gap-4 md:gap-6 text-sm text-primary-200">
-        <button
-          onClick={() => setExpanded(expanded === 'imei' ? null : 'imei')}
-          className="flex items-center gap-2 hover:text-white transition-colors"
-        >
-          <Shield className="w-4 h-4 text-green-400" />
-          <span className="underline underline-offset-2">IMEI Verified</span>
-        </button>
-        <button
-          onClick={() => setExpanded(expanded === 'escrow' ? null : 'escrow')}
-          className="flex items-center gap-2 hover:text-white transition-colors"
-        >
-          <CheckCircle className="w-4 h-4 text-green-400" />
-          <span className="underline underline-offset-2">24h Escrow</span>
-        </button>
-        <div className="flex items-center gap-2">
-          <Bell className="w-4 h-4 text-yellow-400" />
-          <span>Instant Alerts</span>
+        {/* IMEI Verified */}
+        <div className="relative">
+          <button
+            onClick={() => setExpanded(expanded === 'imei' ? null : 'imei')}
+            className="flex items-center gap-2 hover:text-white transition-colors group"
+          >
+            <Shield className="w-4 h-4 text-green-400" />
+            <span className="underline underline-offset-2">IMEI Verified</span>
+          </button>
+          <ArrowDown className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-4 h-4 text-green-400 animate-bounce" />
+        </div>
+
+        {/* 24h Escrow */}
+        <div className="relative">
+          <button
+            onClick={() => setExpanded(expanded === 'escrow' ? null : 'escrow')}
+            className="flex items-center gap-2 hover:text-white transition-colors group"
+          >
+            <CheckCircle className="w-4 h-4 text-green-400" />
+            <span className="underline underline-offset-2">24h Escrow</span>
+          </button>
+          <ArrowDown className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-4 h-4 text-green-400 animate-bounce [animation-delay:150ms]" />
+        </div>
+
+        {/* Instant Alerts */}
+        <div className="relative">
+          <button
+            onClick={() => setExpanded(expanded === 'alerts' ? null : 'alerts')}
+            className="flex items-center gap-2 hover:text-white transition-colors group"
+          >
+            <Bell className="w-4 h-4 text-yellow-400" />
+            <span className="underline underline-offset-2">Instant Alerts</span>
+          </button>
+          <ArrowDown className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-4 h-4 text-yellow-400 animate-bounce [animation-delay:300ms]" />
         </div>
       </div>
 
       {/* Expandable Info Bubble */}
-      {expanded && (
-        <div className="absolute top-full left-0 mt-3 z-50 w-full max-w-md animate-in fade-in slide-in-from-top-2 duration-200">
+      {expanded && content && (
+        <div className="absolute top-full left-0 mt-8 z-50 w-full max-w-md animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             {/* Header */}
             <div className={`px-5 py-4 flex items-center justify-between ${
-              expanded === 'escrow' ? 'bg-yellow-50 dark:bg-yellow-900/30' : 'bg-green-50 dark:bg-green-900/30'
+              expanded === 'escrow'
+                ? 'bg-yellow-50 dark:bg-yellow-900/30'
+                : expanded === 'alerts'
+                ? 'bg-yellow-50 dark:bg-yellow-900/30'
+                : 'bg-green-50 dark:bg-green-900/30'
             }`}>
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  expanded === 'escrow'
+                  expanded === 'escrow' || expanded === 'alerts'
                     ? 'bg-yellow-100 dark:bg-yellow-900'
                     : 'bg-green-100 dark:bg-green-900'
                 }`}>
-                  {expanded === 'imei' ? (
+                  {expanded === 'imei' && (
                     <Fingerprint className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  ) : (
+                  )}
+                  {expanded === 'escrow' && (
                     <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                  )}
+                  {expanded === 'alerts' && (
+                    <Bell className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                   )}
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-white">
-                  {expanded === 'imei' ? imeiContent.title : escrowContent.title}
+                  {content.title}
                 </h3>
               </div>
               <button
@@ -96,14 +143,14 @@ export function TrustBadges() {
               )}
 
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
-                {expanded === 'imei' ? imeiContent.description : escrowContent.description}
+                {content.description}
               </p>
 
               <ul className="space-y-2">
-                {(expanded === 'imei' ? imeiContent.bullets : escrowContent.bullets).map((bullet, idx) => (
+                {content.bullets.map((bullet, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
                     <CheckCircle className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
-                      expanded === 'escrow' ? 'text-yellow-500' : 'text-green-500'
+                      expanded === 'escrow' || expanded === 'alerts' ? 'text-yellow-500' : 'text-green-500'
                     }`} />
                     <span>{bullet}</span>
                   </li>
@@ -123,6 +170,18 @@ export function TrustBadges() {
                       Stripe Support
                     </a>
                   </p>
+                </div>
+              )}
+
+              {expanded === 'alerts' && (
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Link
+                    href="/alerts/new"
+                    className="inline-flex items-center gap-2 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-yellow-300 transition-colors"
+                  >
+                    <Bell className="w-4 h-4" />
+                    Set Up Your First Alert
+                  </Link>
                 </div>
               )}
             </div>
