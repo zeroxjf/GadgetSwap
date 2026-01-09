@@ -1,0 +1,98 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { isAdmin } from '@/lib/admin'
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Only admins can change roles
+    const hasAccess = await isAdmin()
+    if (!hasAccess) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
+
+    const { id } = await params
+    const body = await request.json()
+    const { role, suspended } = body
+
+    const updateData: any = {}
+
+    if (role && ['USER', 'MODERATOR', 'ADMIN'].includes(role)) {
+      updateData.role = role
+    }
+
+    if (typeof suspended === 'boolean') {
+      // You could add a suspended field to the User model
+      // For now, we'll skip this
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+    })
+
+    return NextResponse.json({ success: true, user })
+  } catch (error) {
+    console.error('Admin user update error:', error)
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
+  }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        listings: {
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+        },
+        purchases: {
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+        },
+        _count: {
+          select: {
+            listings: true,
+            purchases: true,
+            sales: true,
+          },
+        },
+      },
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ user })
+  } catch (error) {
+    console.error('Admin get user error:', error)
+    return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 })
+  }
+}
