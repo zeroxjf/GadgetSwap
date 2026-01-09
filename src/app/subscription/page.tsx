@@ -32,8 +32,8 @@ const plans = [
   {
     name: 'Plus',
     tier: 'PLUS',
-    price: 9.99,
-    yearlyPrice: 99,
+    price: 4.99,
+    yearlyPrice: 40,
     description: '0% platform fee - just Stripe',
     feeHighlight: '~3%',
     feeSavings: 'Save $24 per $800 sale vs Swappa',
@@ -54,8 +54,8 @@ const plans = [
   {
     name: 'Pro',
     tier: 'PRO',
-    price: 29.99,
-    yearlyPrice: 299,
+    price: 11.99,
+    yearlyPrice: 100,
     description: '100% cheaper - ZERO platform fees',
     feeHighlight: '0%',
     feeSavings: 'Save $48 per $800 sale vs Swappa',
