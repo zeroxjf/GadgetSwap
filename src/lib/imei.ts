@@ -107,17 +107,28 @@ export interface TACLookupResult {
   modelName?: string
   deviceType?: string
   isAppleDevice?: boolean
+  findMyiPhone?: boolean
   error?: string
   rateLimited?: boolean
   waitTime?: number
 }
 
 /**
- * Look up device info from TAC using IMEICheck.com free API
- * Rate limited to 30 requests per minute
+ * Look up device info using IMEICheck.com API
+ * Uses Find My iPhone service which returns model info
+ * Cost: $0.01 per lookup
  */
 export async function lookupTAC(imei: string): Promise<TACLookupResult> {
   const cleanIMEI = imei.replace(/[\s-]/g, '')
+  const apiKey = process.env.IMEICHECK_API_KEY
+
+  if (!apiKey) {
+    console.error('IMEICHECK_API_KEY not configured')
+    return {
+      success: false,
+      error: 'IMEI verification service not configured',
+    }
+  }
 
   // Check rate limit
   const rateCheck = checkRateLimit()
@@ -131,12 +142,14 @@ export async function lookupTAC(imei: string): Promise<TACLookupResult> {
   }
 
   try {
+    // Service ID 1 = Find My iPhone (returns model info + FMI status)
     const response = await fetch(
-      `https://alpha.imeicheck.com/api/modelBrandName?imei=${cleanIMEI}&format=json`,
+      `https://alpha.imeicheck.com/api/php-api/create?key=${apiKey}&service=1&imei=${cleanIMEI}`,
       {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
+          'User-Agent': 'GadgetSwap/1.0',
         },
       }
     )
@@ -144,52 +157,61 @@ export async function lookupTAC(imei: string): Promise<TACLookupResult> {
     incrementRateLimit()
 
     if (!response.ok) {
-      // Check if it's a rate limit response
-      if (response.status === 429) {
-        return {
-          success: false,
-          rateLimited: true,
-          waitTime: 60,
-          error: 'Rate limit reached. Please wait 1 minute before trying again.',
-        }
-      }
+      const text = await response.text()
+      console.error('IMEI API error response:', response.status, text.substring(0, 500))
       throw new Error(`API returned ${response.status}`)
     }
 
     const data = await response.json()
 
-    // Check if we got valid data
-    if (!data || data.error) {
+    // Check for errors
+    if (data.status === 'error') {
       return {
         success: false,
-        error: data?.error || 'Device not found in database',
+        error: data.response || 'IMEI lookup failed',
       }
     }
 
-    const brand = data.brand || data.Brand || ''
-    const model = data.model || data.Model || ''
-    const modelName = data.name || data.modelName || data.commercial_name || ''
+    if (data.status !== 'success' || !data.object) {
+      return {
+        success: false,
+        error: 'Device not found in database',
+      }
+    }
 
-    const isAppleDevice = brand.toLowerCase() === 'apple'
+    // Parse model from response (e.g., "iPhone 17 Pro Max (A3257) [USA]")
+    const fullModel = data.object.model || ''
+    const modelName = fullModel.split('(')[0].trim() // "iPhone 17 Pro Max"
 
-    // Determine device type from model name
+    // Determine device type and brand
+    const modelLower = modelName.toLowerCase()
     let deviceType = 'unknown'
-    const modelLower = (model + ' ' + modelName).toLowerCase()
+    let brand = ''
+
     if (modelLower.includes('iphone')) {
       deviceType = 'iphone'
+      brand = 'Apple'
     } else if (modelLower.includes('ipad')) {
       deviceType = 'ipad'
+      brand = 'Apple'
     } else if (modelLower.includes('watch')) {
       deviceType = 'apple_watch'
+      brand = 'Apple'
+    } else if (modelLower.includes('mac')) {
+      deviceType = 'mac'
+      brand = 'Apple'
     }
+
+    const isAppleDevice = brand === 'Apple'
 
     return {
       success: true,
       brand,
-      model,
+      model: fullModel,
       modelName,
       deviceType,
       isAppleDevice,
+      findMyiPhone: data.object.fmiOn || data.object.fmiON || false,
     }
   } catch (error) {
     console.error('TAC lookup error:', error)
