@@ -185,10 +185,13 @@ export default async function HomePage() {
                   <Bell className="w-4 h-4 text-yellow-400" />
                   <span>Instant Alerts</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Stripe Protected</span>
-                </div>
+                <Link
+                  href="/help?category=payments&faq=buyer-protection"
+                  className="flex items-center gap-2 hover:text-white transition-colors"
+                >
+                  <Shield className="w-4 h-4 text-green-400" />
+                  <span className="underline underline-offset-2">24h Escrow Protection</span>
+                </Link>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4" />
                   <span>4% Low Fees</span>
