@@ -202,7 +202,7 @@ export default async function HomePage() {
 
             {/* Quick iOS Search */}
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-              <h2 className="text-xl font-semibold mb-4">Find by iOS Version</h2>
+              <h2 className="text-xl font-semibold mb-4">Find by iOS/iPadOS Version</h2>
               <JailbreakSearch />
               <div className="mt-4 pt-4 border-t border-white/20">
                 <Link

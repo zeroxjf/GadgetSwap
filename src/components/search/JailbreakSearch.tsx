@@ -51,10 +51,10 @@ export function JailbreakSearch() {
           </select>
         </div>
 
-        {/* iOS Version */}
+        {/* iOS/iPadOS Version */}
         <div>
           <label className="block text-sm font-medium mb-2 text-white/80">
-            iOS Version
+            iOS/iPadOS Version
           </label>
           <div className="relative">
             <input
