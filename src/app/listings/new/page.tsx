@@ -144,20 +144,20 @@ function NewListingContent() {
 
   // Get step from URL, default to 1
   const urlStep = parseInt(searchParams.get('step') || '1', 10)
-  const [step, setStepState] = useState(urlStep >= 1 && urlStep <= 5 ? urlStep : 1)
+  const [step, setStepState] = useState(urlStep >= 1 && urlStep <= 3 ? urlStep : 1)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Sync step with URL changes (browser back/forward)
   useEffect(() => {
     const newStep = parseInt(searchParams.get('step') || '1', 10)
-    if (newStep >= 1 && newStep <= 5 && newStep !== step) {
+    if (newStep >= 1 && newStep <= 3 && newStep !== step) {
       setStepState(newStep)
     }
   }, [searchParams])
 
   // Navigate to a step and update URL
   const setStep = useCallback((newStep: number) => {
-    if (newStep >= 1 && newStep <= 5) {
+    if (newStep >= 1 && newStep <= 3) {
       setStepState(newStep)
       // Use router.push to add to history stack
       router.push(`/listings/new?step=${newStep}`, { scroll: false })
@@ -879,18 +879,16 @@ function NewListingContent() {
         const hasOsVersion = !needsOsVersion || formData.osVersion
         return formData.title && formData.description && formData.price && hasStorage && hasOsVersion && !priceError && imeiValid
       case 3:
-        return true // Photos optional
-      case 4:
-        // Verification code and photo required
+        // Photos optional, but verification code and photo required
         return verification.code && verification.photoUrl && !verification.isUploading
       default:
         return false
     }
   }
 
-  // Generate verification code when entering step 4 (Verification)
+  // Generate verification code when entering step 3 (Photos & Verification)
   useEffect(() => {
-    if (step === 4 && !verification.code && !verification.isGenerating) {
+    if (step === 3 && !verification.code && !verification.isGenerating) {
       generateVerificationCode()
     }
   }, [step, verification.code, verification.isGenerating])
@@ -1023,14 +1021,14 @@ function NewListingContent() {
           </button>
 
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Step {step} of 4
+            Step {step} of 3
           </div>
 
           <button
-            onClick={() => step < 4 && canProceed() && setStep(step + 1)}
-            disabled={step === 4 || !canProceed()}
+            onClick={() => step < 3 && canProceed() && setStep(step + 1)}
+            disabled={step === 3 || !canProceed()}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-              step === 4 || !canProceed()
+              step === 3 || !canProceed()
                 ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
@@ -1045,8 +1043,7 @@ function NewListingContent() {
             {[
               { num: 1, label: 'Device' },
               { num: 2, label: 'Details' },
-              { num: 3, label: 'Photos' },
-              { num: 4, label: 'Verify' },
+              { num: 3, label: 'Photos & Verify' },
             ].map((s, i) => (
               <div key={s.num} className="flex items-center">
                 <div
@@ -1065,7 +1062,7 @@ function NewListingContent() {
                 >
                   {s.label}
                 </span>
-                {i < 3 && (
+                {i < 2 && (
                   <div
                     className={`w-8 h-0.5 mx-3 ${
                       step > s.num ? 'bg-primary-600' : 'bg-gray-200'
@@ -1083,7 +1080,6 @@ function NewListingContent() {
               { num: 1, label: 'Device' },
               { num: 2, label: 'Details' },
               { num: 3, label: 'Photos' },
-              { num: 4, label: 'Verify' },
             ].map((s, i) => (
               <div key={s.num} className="flex items-center">
                 <div
@@ -1102,7 +1098,7 @@ function NewListingContent() {
                 >
                   {s.label}
                 </span>
-                {i < 3 && (
+                {i < 2 && (
                   <div
                     className={`w-4 sm:w-8 h-0.5 mx-1 sm:mx-2 ${
                       step > s.num ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
@@ -1739,82 +1735,82 @@ function NewListingContent() {
             </div>
           )}
 
-          {/* Step 3: Photos */}
+          {/* Step 3: Photos & Verification */}
           {step === 3 && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
+            <div className="space-y-8">
+              {/* Photos Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                      <Camera className="w-5 h-5 text-primary-600" />
+                      Add Photos
+                    </h2>
+                    <p className="text-gray-600 text-sm mt-1">
+                      Add up to 10 photos. The first photo will be the cover image.
+                    </p>
+                  </div>
+                  {images.length === 0 && (
+                    <span className="text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Optional</span>
+                  )}
+                </div>
+
+                {/* Image upload grid */}
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                  {images.map((image, index) => (
+                    <div key={index} className="relative aspect-square">
+                      <img
+                        src={image}
+                        alt={`Upload ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                      {index === 0 && (
+                        <span className="absolute bottom-1 left-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded">
+                          Cover
+                        </span>
+                      )}
+                    </div>
+                  ))}
+
+                  {images.length < 10 && (
+                    <label className="aspect-square border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
+                      <Upload className="w-6 h-6 text-gray-400 mb-1" />
+                      <span className="text-xs text-gray-500">Add</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-gray-200 dark:border-gray-700" />
+
+              {/* Verification Section */}
+              <div className="space-y-4">
                 <div>
-                  <h2 className="text-lg font-semibold">Add Photos</h2>
-                  <p className="text-gray-600 text-sm">
-                    Add up to 10 photos. The first photo will be the cover image.
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Fingerprint className="w-5 h-5 text-primary-600" />
+                    Verify Your Device
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                    To prevent fraud, photograph your device with the verification code visible.
                   </p>
                 </div>
-                {images.length === 0 && (
-                  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Optional</span>
-                )}
-              </div>
 
-              {/* Image upload - wider grid on desktop */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {images.map((image, index) => (
-                  <div key={index} className="relative aspect-square">
-                    <img
-                      src={image}
-                      alt={`Upload ${index + 1}`}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    {index === 0 && (
-                      <span className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-2 py-0.5 rounded">
-                        Cover
-                      </span>
-                    )}
-                  </div>
-                ))}
-
-                {images.length < 10 && (
-                  <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition-colors">
-                    <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-500">Add Photo</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
-
-              {images.length === 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                  Photos are optional for now. You can publish without images and add them later.
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 4: Verification */}
-          {step === 4 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Fingerprint className="w-5 h-5 text-primary-600" />
-                  Verify Your Listing
-                </h2>
-                <p className="text-gray-600 text-sm mt-1">
-                  To prevent fraud, please photograph your device with the verification code visible.
-                </p>
-              </div>
-
-              <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+                <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
                 {/* Left column - Verification Code */}
                 <div className="space-y-4">
                   <div className="p-6 bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl border-2 border-primary-200">
@@ -2098,6 +2094,7 @@ function NewListingContent() {
                   </div>
                 </div>
               </div>
+              </div>
             </div>
           )}
 
@@ -2116,7 +2113,7 @@ function NewListingContent() {
               <div />
             )}
 
-            {step < 4 ? (
+            {step < 3 ? (
               <button
                 type="button"
                 onClick={() => setStep(step + 1)}
