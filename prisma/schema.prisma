@@ -3,13 +3,20 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // ============================================
 // USER & AUTHENTICATION
 // ============================================
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
 
 model User {
   id            String    @id @default(cuid())
@@ -23,6 +30,9 @@ model User {
   location      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  // Role for admin access
+  role          UserRole  @default(USER)
 
   // Subscription
   subscriptionTier SubscriptionTier @default(FREE)
@@ -62,6 +72,9 @@ model User {
   notifications Notification[]
   deviceAlerts  DeviceAlert[]
   savedAddresses SavedAddress[]
+  // Admin review relations
+  reviewedListings Listing[] @relation("ReviewedListings")
+  listingReviews   ListingReview[]
 }
 
 model SavedAddress {
@@ -156,13 +169,27 @@ model SubscriptionPlan {
 // LISTINGS
 // ============================================
 
+enum ReviewStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  NEEDS_INFO
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  FAILED
+  MANUAL_REVIEW
+}
+
 model Listing {
   id          String        @id @default(cuid())
   title       String
   description String
   price       Float
   condition   DeviceCondition
-  status      ListingStatus @default(ACTIVE)
+  status      ListingStatus @default(PENDING)
   views       Int           @default(0)
   featured    Boolean       @default(false)
 
@@ -204,6 +231,34 @@ model Listing {
   acceptsReturns    Boolean         @default(false)
   returnWindowDays  Int?            // 7, 14, or 30 days
 
+  // ============================================
+  // LISTING REVIEW SYSTEM
+  // ============================================
+
+  // Review status
+  reviewStatus      ReviewStatus    @default(PENDING_REVIEW)
+  reviewedById      String?
+  reviewedBy        User?           @relation("ReviewedListings", fields: [reviewedById], references: [id])
+  reviewedAt        DateTime?
+  rejectionReason   String?
+  reviewNotes       String?         // Internal admin notes
+
+  // Verification code system (seller writes code on paper with device)
+  verificationCode      String?     @unique
+  verificationPhotoUrl  String?
+  verificationStatus    VerificationStatus @default(PENDING)
+
+  // AI Detection results
+  aiDetectionScore      Float?      // 0-1 score (0 = likely real, 1 = likely AI/manipulated)
+  aiDetectionResult     Json?       // Full analysis from Google Vision
+  flaggedForReview      Boolean     @default(false)
+  aiAnalyzedAt          DateTime?
+
+  // SafeSearch content moderation
+  safeSearchAdult       String?     // VERY_UNLIKELY to VERY_LIKELY
+  safeSearchViolence    String?
+  safeSearchRacy        String?
+
   // Media
   images    ListingImage[]
 
@@ -217,12 +272,31 @@ model Listing {
   watchlistedBy Watchlist[]
   priceHistory  PriceHistory[]
   messages      Message[]
+  listingReviews ListingReview[]
 
   @@index([deviceType, deviceModel])
   @@index([osVersion])
   @@index([jailbreakStatus])
   @@index([status, createdAt])
   @@index([imeiHash])
+  @@index([reviewStatus])
+  @@index([verificationCode])
+}
+
+// Audit trail for listing reviews
+model ListingReview {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reviewerId  String
+  reviewer    User     @relation(fields: [reviewerId], references: [id])
+  action      String   // 'APPROVED', 'REJECTED', 'NEEDS_INFO'
+  reason      String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([listingId])
+  @@index([reviewerId])
 }
 
 model ListingImage {
@@ -538,6 +612,11 @@ enum NotificationType {
   REVIEW_RECEIVED
   ALERT_MATCH
   SYSTEM
+  // Listing review notifications
+  LISTING_APPROVED
+  LISTING_REJECTED
+  LISTING_NEEDS_INFO
+  ADMIN_NEW_REVIEW
 }
 
 // ============================================
