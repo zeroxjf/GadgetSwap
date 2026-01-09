@@ -54,6 +54,30 @@ const jailbreakStatuses = [
 
 const carriers = ['Unlocked', 'AT&T', 'Verizon', 'T-Mobile', 'Sprint', 'Other']
 
+const deviceColors = [
+  'Black',
+  'White',
+  'Silver',
+  'Space Gray',
+  'Space Black',
+  'Gold',
+  'Rose Gold',
+  'Natural Titanium',
+  'Blue Titanium',
+  'White Titanium',
+  'Black Titanium',
+  'Desert Titanium',
+  'Blue',
+  'Green',
+  'Yellow',
+  'Purple',
+  'Red',
+  'Pink',
+  'Midnight',
+  'Starlight',
+  'Other',
+]
+
 // Price validation state type
 interface PriceValidation {
   marketValue: number | null
@@ -618,18 +642,23 @@ export default function NewListingPage() {
                       <label htmlFor="color" className="label mb-2 block text-sm">
                         Color
                       </label>
-                      <input
+                      <select
                         id="color"
-                        type="text"
                         value={formData.color}
                         onChange={(e) => updateFormData('color', e.target.value)}
-                        placeholder="Space Black"
                         className="input text-sm"
-                      />
+                      >
+                        <option value="">Select</option>
+                        {deviceColors.map((color) => (
+                          <option key={color} value={color}>
+                            {color}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label htmlFor="batteryHealth" className="label mb-2 block text-sm">
-                        Battery %
+                        Max Battery %
                       </label>
                       <input
                         id="batteryHealth"
