@@ -31,32 +31,52 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Information We Collect</h2>
 
-              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Personal Information</h3>
-              <p className="text-gray-600 mb-4">When you create an account or make a purchase, we collect:</p>
+              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Account Information</h3>
+              <p className="text-gray-600 mb-4">When you create an account, we collect:</p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
                 <li>Name and email address</li>
-                <li>Username and profile information</li>
-                <li>Shipping address</li>
-                <li>Phone number (optional)</li>
-                <li>Payment information (processed securely by Stripe)</li>
+                <li>Username and profile information (bio, location)</li>
+                <li>Profile photo (optional)</li>
+                <li>Authentication data from Google Sign-In (if used)</li>
+                <li>Notification preferences</li>
               </ul>
 
-              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Usage Information</h3>
-              <p className="text-gray-600 mb-4">We automatically collect:</p>
+              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Listing Information</h3>
+              <p className="text-gray-600 mb-4">When you create a listing, we collect:</p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
-                <li>Device and browser information</li>
-                <li>IP address and location data</li>
-                <li>Pages visited and features used</li>
-                <li>Search queries and viewing history</li>
+                <li>Device details (model, storage, condition, iOS/macOS version)</li>
+                <li>IMEI number (hashed for security, last 4 digits stored for display)</li>
+                <li>Photos of your device (stored on Cloudinary)</li>
+                <li>Verification photo with handwritten code</li>
+                <li>Pricing and return policy preferences</li>
               </ul>
 
-              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Transaction Information</h3>
-              <p className="text-gray-600 mb-4">For marketplace transactions, we collect:</p>
+              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Transaction &amp; Payment Information</h3>
+              <p className="text-gray-600 mb-4">For purchases and sales, we collect:</p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
+                <li>Shipping addresses and phone numbers</li>
+                <li>Payment information (processed securely by Stripe - we never store card details)</li>
+                <li>Stripe Connect account information for sellers receiving payouts</li>
                 <li>Purchase and sale history</li>
-                <li>Shipping and tracking information</li>
-                <li>Communication between buyers and sellers</li>
+                <li>Shipping tracking numbers</li>
+              </ul>
+
+              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Communication &amp; Activity</h3>
+              <p className="text-gray-600 mb-4">We also collect:</p>
+              <ul className="list-disc pl-6 text-gray-600 space-y-2">
+                <li>Messages between buyers and sellers</li>
                 <li>Reviews and ratings</li>
+                <li>Device alerts and watchlist items</li>
+                <li>Listing view counts</li>
+              </ul>
+
+              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Automated Image Analysis</h3>
+              <p className="text-gray-600 mb-4">To prevent fraud, we use Google Cloud Vision to analyze uploaded images:</p>
+              <ul className="list-disc pl-6 text-gray-600 space-y-2">
+                <li>OCR to verify handwritten verification codes</li>
+                <li>Detection of manipulated or AI-generated images</li>
+                <li>SafeSearch moderation for inappropriate content</li>
+                <li>Object detection to verify device presence in photos</li>
               </ul>
             </section>
 
@@ -81,16 +101,26 @@ export default function PrivacyPage() {
               <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Other Users</h3>
               <p className="text-gray-600 mb-4">
                 When you buy or sell, relevant information is shared with the other party (e.g.,
-                shipping address with sellers, seller contact info with buyers).
+                shipping address with sellers, seller profile info with buyers).
               </p>
 
               <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Service Providers</h3>
+              <p className="text-gray-600 mb-4">We use the following third-party services:</p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
-                <li>Stripe - Payment processing</li>
-                <li>Shipping carriers (UPS, FedEx, USPS) - Package tracking</li>
-                <li>Cloud hosting providers</li>
-                <li>Analytics services</li>
+                <li><strong>Stripe</strong> - Payment processing and seller payouts (PCI-DSS compliant)</li>
+                <li><strong>Cloudinary</strong> - Image hosting and storage for listing photos</li>
+                <li><strong>Google Cloud Vision</strong> - Image analysis for fraud prevention and content moderation</li>
+                <li><strong>Google OAuth</strong> - Optional sign-in with Google</li>
+                <li><strong>Shipping carriers</strong> (UPS, FedEx, USPS) - Package tracking via their APIs</li>
+                <li><strong>Vercel</strong> - Website hosting</li>
+                <li><strong>PostgreSQL database</strong> - Data storage (hosted on Neon/Supabase)</li>
               </ul>
+
+              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">IMEI Verification</h3>
+              <p className="text-gray-600 mb-4">
+                For iPhone and iPad listings, we verify IMEI numbers using third-party services to confirm
+                device legitimacy. We store only a hash of the full IMEI and the last 4 digits for display.
+              </p>
 
               <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Legal Requirements</h3>
               <p className="text-gray-600 mb-4">
@@ -139,13 +169,13 @@ export default function PrivacyPage() {
                 We use cookies and similar technologies to:
               </p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
-                <li>Keep you signed in</li>
-                <li>Remember your preferences</li>
-                <li>Analyze site traffic and usage</li>
-                <li>Personalize your experience</li>
+                <li>Keep you signed in (session cookies via NextAuth)</li>
+                <li>Remember your preferences (theme, dismissed banners)</li>
+                <li>Track listing view counts</li>
               </ul>
               <p className="text-gray-600 mt-4">
-                You can control cookies through your browser settings, though some features may not work properly if disabled.
+                We do not currently use third-party analytics or advertising trackers. You can control cookies
+                through your browser settings, though signing in requires session cookies.
               </p>
             </section>
 
