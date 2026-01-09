@@ -11,7 +11,11 @@ import {
   ArrowRight,
   Star,
   CheckCircle,
-  Bell
+  Bell,
+  Lock,
+  Fingerprint,
+  Clock,
+  BadgeCheck
 } from 'lucide-react'
 import { ListingCard } from '@/components/listings/ListingCard'
 import { JailbreakSearch } from '@/components/search/JailbreakSearch'
@@ -181,20 +185,23 @@ export default async function HomePage() {
 
               {/* Trust badges */}
               <div className="flex flex-wrap items-center gap-4 md:gap-6 mt-8 text-sm text-primary-200">
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-yellow-400" />
-                  <span>Instant Alerts</span>
-                </div>
+                <Link
+                  href="/help?category=payments&faq=imei-verification"
+                  className="flex items-center gap-2 hover:text-white transition-colors"
+                >
+                  <Shield className="w-4 h-4 text-green-400" />
+                  <span className="underline underline-offset-2">IMEI Verified</span>
+                </Link>
                 <Link
                   href="/help?category=payments&faq=buyer-protection"
                   className="flex items-center gap-2 hover:text-white transition-colors"
                 >
-                  <Shield className="w-4 h-4 text-green-400" />
-                  <span className="underline underline-offset-2">24h Escrow Protection</span>
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span className="underline underline-offset-2">24h Escrow</span>
                 </Link>
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  <span>4% Low Fees</span>
+                  <Bell className="w-4 h-4 text-yellow-400" />
+                  <span>Instant Alerts</span>
                 </div>
               </div>
             </div>
@@ -221,7 +228,7 @@ export default async function HomePage() {
       </section>
 
       {/* Categories */}
-      <section className="py-12 bg-white">
+      <section className="py-12 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {categories.map((category) => (
@@ -231,10 +238,122 @@ export default async function HomePage() {
                 className="card p-6 hover:shadow-md transition-shadow group"
               >
                 <category.icon className="w-8 h-8 text-primary-600 mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                <p className="text-sm text-gray-500">{category.count.toLocaleString()} listings</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white">{category.name}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{category.count.toLocaleString()} listings</p>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Safety Section - Prominent */}
+      <section className="py-16 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-y border-green-100 dark:border-green-900">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              <Shield className="w-4 h-4" />
+              Your Safety is Our Priority
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Trade With Confidence
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              GadgetSwap is built with multiple layers of protection to ensure every transaction is safe and secure.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* IMEI Verification Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-green-200 dark:border-green-800 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 dark:bg-green-900/50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
+              <div className="relative">
+                <div className="w-14 h-14 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center mb-6">
+                  <Fingerprint className="w-7 h-7 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">IMEI Verification</h3>
+                  <BadgeCheck className="w-5 h-5 text-green-500" />
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Every iPhone and cellular iPad listing requires IMEI verification. We confirm the device is real, matches the model listed, and detect duplicate listings.
+                </p>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span>Device authenticity verified against Apple database</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span>Model mismatch detection prevents false listings</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span>Privacy-preserving: full IMEI never stored</span>
+                  </li>
+                </ul>
+                <Link
+                  href="/help?category=payments&faq=imei-verification"
+                  className="inline-flex items-center gap-2 text-green-600 dark:text-green-400 font-medium hover:underline"
+                >
+                  Learn how IMEI verification works
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Escrow Protection Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-green-200 dark:border-green-800 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 dark:bg-green-900/50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
+              <div className="relative">
+                <div className="w-14 h-14 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center mb-6">
+                  <Lock className="w-7 h-7 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">24-Hour Escrow</h3>
+                  <Clock className="w-5 h-5 text-green-500" />
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Your payment is held securely by Stripe until 24 hours after delivery. This gives you time to inspect the device and raise any concerns.
+                </p>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span>Funds held until delivery + 24 hour inspection</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span>Automatic tracking via UPS, FedEx, USPS</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span>Full refund if item doesn't match description</span>
+                  </li>
+                </ul>
+                <Link
+                  href="/help?category=payments&faq=buyer-protection"
+                  className="inline-flex items-center gap-2 text-green-600 dark:text-green-400 font-medium hover:underline"
+                >
+                  Learn about buyer protection
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12 mt-12 pt-8 border-t border-green-200 dark:border-green-800">
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+              <Shield className="w-5 h-5 text-green-500" />
+              <span className="font-medium">Stripe Secure Payments</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+              <Lock className="w-5 h-5 text-green-500" />
+              <span className="font-medium">PCI Compliant</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+              <BadgeCheck className="w-5 h-5 text-green-500" />
+              <span className="font-medium">Verified Sellers</span>
+            </div>
           </div>
         </div>
       </section>

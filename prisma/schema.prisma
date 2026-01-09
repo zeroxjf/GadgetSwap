@@ -193,6 +193,13 @@ model Listing {
   imeiClean         Boolean?
   icloudUnlocked    Boolean         @default(true)
 
+  // IMEI Verification (for iPhones and cellular iPads)
+  imeiLast4         String?         // Last 4 digits of IMEI for display
+  imeiHash          String?         // SHA256 hash of full IMEI for duplicate detection
+  imeiVerified      Boolean         @default(false)
+  imeiVerifiedAt    DateTime?
+  imeiVerifiedModel String?         // Model returned by IMEI verification API
+
   // Return policy
   acceptsReturns    Boolean         @default(false)
   returnWindowDays  Int?            // 7, 14, or 30 days
@@ -215,6 +222,7 @@ model Listing {
   @@index([osVersion])
   @@index([jailbreakStatus])
   @@index([status, createdAt])
+  @@index([imeiHash])
 }
 
 model ListingImage {
