@@ -1,9 +1,20 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { stripe } from '@/lib/stripe'
+import { stripeClient, createBillingPortalSession } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 
+// =============================================================================
+// BILLING PORTAL API
+// =============================================================================
+
+/**
+ * POST /api/subscription/portal
+ * Create a billing portal session for the user to manage their subscription
+ *
+ * For V2 accounts, uses customer_account (the connected account ID) instead of
+ * a separate customer ID. This allows using one ID for both Connect and billing.
+ */
 export async function POST() {
   try {
     const session = await getServerSession(authOptions)
@@ -15,26 +26,40 @@ export async function POST() {
       )
     }
 
-    // Get user's Stripe customer ID
+    // Get user's Stripe account ID (V2) or customer ID (legacy)
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { stripeCustomerId: true },
+      select: {
+        stripeAccountId: true,     // V2 Connect account ID
+        stripeCustomerId: true,    // Legacy customer ID
+      },
     })
 
-    if (!user?.stripeCustomerId) {
-      return NextResponse.json(
-        { error: 'No billing account found' },
-        { status: 400 }
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const returnUrl = `${baseUrl}/account`
+
+    // V2 accounts: Use the connected account ID directly with customer_account
+    if (user?.stripeAccountId) {
+      const portalSession = await createBillingPortalSession(
+        user.stripeAccountId,
+        returnUrl
       )
+      return NextResponse.json({ url: portalSession.url })
     }
 
-    // Create a billing portal session
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: user.stripeCustomerId,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/account`,
-    })
+    // Legacy: Fall back to customer ID if no Connect account
+    if (user?.stripeCustomerId) {
+      const portalSession = await stripeClient.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: returnUrl,
+      })
+      return NextResponse.json({ url: portalSession.url })
+    }
 
-    return NextResponse.json({ url: portalSession.url })
+    return NextResponse.json(
+      { error: 'No billing account found. Please set up your seller account first.' },
+      { status: 400 }
+    )
   } catch (error) {
     console.error('Billing portal error:', error)
     return NextResponse.json(

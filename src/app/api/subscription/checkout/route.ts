@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { stripe, SUBSCRIPTION_PRICES } from '@/lib/stripe'
+import { stripeClient, SUBSCRIPTION_PRICES, createSubscriptionCheckoutForConnectedAccount } from '@/lib/stripe'
+import { prisma } from '@/lib/prisma'
 
+// =============================================================================
+// SUBSCRIPTION CHECKOUT API
+// =============================================================================
+
+/**
+ * POST /api/subscription/checkout
+ * Create a subscription checkout session
+ *
+ * For V2 accounts with Stripe Connect, uses customer_account to allow the
+ * connected account ID to be used directly for subscriptions.
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -44,16 +56,43 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if using placeholder price IDs (not real Stripe prices)
+    // PLACEHOLDER: Create products/prices in Stripe Dashboard and add IDs to .env
     if (priceId.startsWith('price_plus_') || priceId.startsWith('price_pro_')) {
-      console.error('Stripe prices not configured. Set STRIPE_PLUS_MONTHLY_PRICE_ID, etc. in .env')
+      console.error(
+        '⚠️  Stripe prices not configured.\n' +
+        '   Set STRIPE_PLUS_MONTHLY_PRICE_ID, STRIPE_PLUS_YEARLY_PRICE_ID,\n' +
+        '   STRIPE_PRO_MONTHLY_PRICE_ID, STRIPE_PRO_YEARLY_PRICE_ID in your .env file.\n' +
+        '   Create prices at: https://dashboard.stripe.com/products'
+      )
       return NextResponse.json(
         { error: 'Subscription prices not configured. Please set up Stripe products in your dashboard and add price IDs to .env' },
         { status: 500 }
       )
     }
 
-    // Create Stripe checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
+    // Get user's Stripe account ID (V2) or email (legacy)
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        stripeAccountId: true,
+        email: true,
+      },
+    })
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+    // V2 accounts: Use the connected account ID directly with customer_account
+    // This allows using one ID for both Connect and subscriptions
+    if (user?.stripeAccountId) {
+      const checkoutSession = await createSubscriptionCheckoutForConnectedAccount(
+        user.stripeAccountId,
+        priceId
+      )
+      return NextResponse.json({ url: checkoutSession.url })
+    }
+
+    // Legacy: Create checkout session with customer_email
+    const checkoutSession = await stripeClient.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [
@@ -67,9 +106,9 @@ export async function POST(request: NextRequest) {
         tier,
         billingPeriod,
       },
-      customer_email: session.user.email || undefined,
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription?canceled=true`,
+      customer_email: user?.email || session.user.email || undefined,
+      success_url: `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/subscription?canceled=true`,
       subscription_data: {
         metadata: {
           userId: session.user.id,
