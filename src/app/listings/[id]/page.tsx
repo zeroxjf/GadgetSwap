@@ -65,6 +65,7 @@ interface Listing {
     totalSales: number
     createdAt: string
     stripeOnboardingComplete: boolean
+    role: string
   }
 }
 
@@ -135,7 +136,9 @@ export default function ListingDetailPage() {
   }
 
   const isOwnListing = session?.user?.id === listing.seller.id
-  const canPurchase = listing.status === 'ACTIVE' && !isOwnListing && listing.seller.stripeOnboardingComplete
+  // Admin sellers bypass Stripe onboarding requirement
+  const sellerCanReceivePayments = listing.seller.stripeOnboardingComplete || listing.seller.role === 'ADMIN'
+  const canPurchase = listing.status === 'ACTIVE' && !isOwnListing && sellerCanReceivePayments
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 lg:pb-8">
