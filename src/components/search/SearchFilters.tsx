@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 
 interface FilterSectionProps {
   title: string
@@ -31,29 +32,133 @@ function FilterSection({ title, children, defaultOpen = true }: FilterSectionPro
 }
 
 const deviceTypes = [
-  { value: 'IPHONE', label: 'iPhone', count: 2341 },
-  { value: 'IPAD', label: 'iPad', count: 892 },
-  { value: 'MACBOOK', label: 'MacBook', count: 1203 },
-  { value: 'IMAC', label: 'iMac', count: 234 },
-  { value: 'MAC_MINI', label: 'Mac Mini', count: 156 },
-  { value: 'APPLE_WATCH', label: 'Apple Watch', count: 456 },
-  { value: 'AIRPODS', label: 'AirPods', count: 678 },
+  { value: 'IPHONE', label: 'iPhone' },
+  { value: 'IPAD', label: 'iPad' },
+  { value: 'MACBOOK', label: 'MacBook' },
+  { value: 'IMAC', label: 'iMac' },
+  { value: 'MAC_MINI', label: 'Mac Mini' },
+  { value: 'APPLE_WATCH', label: 'Apple Watch' },
+  { value: 'AIRPODS', label: 'AirPods' },
 ]
 
+// Models per device type
+const modelsByDeviceType: Record<string, { value: string; label: string }[]> = {
+  IPHONE: [
+    { value: 'iPhone 16 Pro Max', label: 'iPhone 16 Pro Max' },
+    { value: 'iPhone 16 Pro', label: 'iPhone 16 Pro' },
+    { value: 'iPhone 16 Plus', label: 'iPhone 16 Plus' },
+    { value: 'iPhone 16', label: 'iPhone 16' },
+    { value: 'iPhone 15 Pro Max', label: 'iPhone 15 Pro Max' },
+    { value: 'iPhone 15 Pro', label: 'iPhone 15 Pro' },
+    { value: 'iPhone 15 Plus', label: 'iPhone 15 Plus' },
+    { value: 'iPhone 15', label: 'iPhone 15' },
+    { value: 'iPhone 14 Pro Max', label: 'iPhone 14 Pro Max' },
+    { value: 'iPhone 14 Pro', label: 'iPhone 14 Pro' },
+    { value: 'iPhone 14 Plus', label: 'iPhone 14 Plus' },
+    { value: 'iPhone 14', label: 'iPhone 14' },
+    { value: 'iPhone 13 Pro Max', label: 'iPhone 13 Pro Max' },
+    { value: 'iPhone 13 Pro', label: 'iPhone 13 Pro' },
+    { value: 'iPhone 13', label: 'iPhone 13' },
+    { value: 'iPhone 13 mini', label: 'iPhone 13 mini' },
+    { value: 'iPhone 12 Pro Max', label: 'iPhone 12 Pro Max' },
+    { value: 'iPhone 12 Pro', label: 'iPhone 12 Pro' },
+    { value: 'iPhone 12', label: 'iPhone 12' },
+    { value: 'iPhone 12 mini', label: 'iPhone 12 mini' },
+    { value: 'iPhone 11 Pro Max', label: 'iPhone 11 Pro Max' },
+    { value: 'iPhone 11 Pro', label: 'iPhone 11 Pro' },
+    { value: 'iPhone 11', label: 'iPhone 11' },
+    { value: 'iPhone XS Max', label: 'iPhone XS Max' },
+    { value: 'iPhone XS', label: 'iPhone XS' },
+    { value: 'iPhone XR', label: 'iPhone XR' },
+    { value: 'iPhone X', label: 'iPhone X' },
+    { value: 'iPhone SE', label: 'iPhone SE' },
+    { value: 'iPhone 8 Plus', label: 'iPhone 8 Plus' },
+    { value: 'iPhone 8', label: 'iPhone 8' },
+  ],
+  IPAD: [
+    { value: 'iPad Pro 13-inch (M4)', label: 'iPad Pro 13" (M4)' },
+    { value: 'iPad Pro 11-inch (M4)', label: 'iPad Pro 11" (M4)' },
+    { value: 'iPad Pro 12.9-inch (6th gen)', label: 'iPad Pro 12.9" (6th gen)' },
+    { value: 'iPad Pro 11-inch (4th gen)', label: 'iPad Pro 11" (4th gen)' },
+    { value: 'iPad Air 13-inch (M2)', label: 'iPad Air 13" (M2)' },
+    { value: 'iPad Air 11-inch (M2)', label: 'iPad Air 11" (M2)' },
+    { value: 'iPad Air (5th gen)', label: 'iPad Air (5th gen)' },
+    { value: 'iPad (10th gen)', label: 'iPad (10th gen)' },
+    { value: 'iPad (9th gen)', label: 'iPad (9th gen)' },
+    { value: 'iPad mini (6th gen)', label: 'iPad mini (6th gen)' },
+    { value: 'iPad mini (5th gen)', label: 'iPad mini (5th gen)' },
+  ],
+  MACBOOK: [
+    { value: 'MacBook Pro 16 (M4)', label: 'MacBook Pro 16" (M4)' },
+    { value: 'MacBook Pro 14 (M4)', label: 'MacBook Pro 14" (M4)' },
+    { value: 'MacBook Pro 16 (M3)', label: 'MacBook Pro 16" (M3)' },
+    { value: 'MacBook Pro 14 (M3)', label: 'MacBook Pro 14" (M3)' },
+    { value: 'MacBook Pro 16 (M2)', label: 'MacBook Pro 16" (M2)' },
+    { value: 'MacBook Pro 14 (M2)', label: 'MacBook Pro 14" (M2)' },
+    { value: 'MacBook Pro 13 (M2)', label: 'MacBook Pro 13" (M2)' },
+    { value: 'MacBook Air 15 (M3)', label: 'MacBook Air 15" (M3)' },
+    { value: 'MacBook Air 13 (M3)', label: 'MacBook Air 13" (M3)' },
+    { value: 'MacBook Air 15 (M2)', label: 'MacBook Air 15" (M2)' },
+    { value: 'MacBook Air 13 (M2)', label: 'MacBook Air 13" (M2)' },
+    { value: 'MacBook Air (M1)', label: 'MacBook Air (M1)' },
+  ],
+  IMAC: [
+    { value: 'iMac 24 (M4)', label: 'iMac 24" (M4)' },
+    { value: 'iMac 24 (M3)', label: 'iMac 24" (M3)' },
+    { value: 'iMac 24 (M1)', label: 'iMac 24" (M1)' },
+    { value: 'iMac 27 (2020)', label: 'iMac 27" (2020)' },
+    { value: 'iMac Pro', label: 'iMac Pro' },
+  ],
+  MAC_MINI: [
+    { value: 'Mac mini (M4)', label: 'Mac mini (M4)' },
+    { value: 'Mac mini (M2)', label: 'Mac mini (M2)' },
+    { value: 'Mac mini (M1)', label: 'Mac mini (M1)' },
+  ],
+  APPLE_WATCH: [
+    { value: 'Apple Watch Ultra 2', label: 'Apple Watch Ultra 2' },
+    { value: 'Apple Watch Ultra', label: 'Apple Watch Ultra' },
+    { value: 'Apple Watch Series 10', label: 'Series 10' },
+    { value: 'Apple Watch Series 9', label: 'Series 9' },
+    { value: 'Apple Watch Series 8', label: 'Series 8' },
+    { value: 'Apple Watch Series 7', label: 'Series 7' },
+    { value: 'Apple Watch Series 6', label: 'Series 6' },
+    { value: 'Apple Watch SE (2nd gen)', label: 'SE (2nd gen)' },
+    { value: 'Apple Watch SE', label: 'SE' },
+  ],
+  AIRPODS: [
+    { value: 'AirPods Pro (2nd gen)', label: 'AirPods Pro (2nd gen)' },
+    { value: 'AirPods Pro', label: 'AirPods Pro (1st gen)' },
+    { value: 'AirPods (4th gen)', label: 'AirPods (4th gen)' },
+    { value: 'AirPods (3rd gen)', label: 'AirPods (3rd gen)' },
+    { value: 'AirPods (2nd gen)', label: 'AirPods (2nd gen)' },
+    { value: 'AirPods Max', label: 'AirPods Max' },
+  ],
+}
+
 const conditions = [
-  { value: 'NEW', label: 'New', count: 89 },
-  { value: 'LIKE_NEW', label: 'Like New', count: 456 },
-  { value: 'EXCELLENT', label: 'Excellent', count: 1203 },
-  { value: 'GOOD', label: 'Good', count: 2145 },
-  { value: 'FAIR', label: 'Fair', count: 876 },
-  { value: 'POOR', label: 'Poor', count: 234 },
-  { value: 'FOR_PARTS', label: 'For Parts', count: 123 },
+  { value: 'NEW', label: 'New' },
+  { value: 'LIKE_NEW', label: 'Like New' },
+  { value: 'EXCELLENT', label: 'Excellent' },
+  { value: 'GOOD', label: 'Good' },
+  { value: 'FAIR', label: 'Fair' },
+  { value: 'POOR', label: 'Poor' },
+  { value: 'FOR_PARTS', label: 'For Parts' },
 ]
 
 const jailbreakStatuses = [
-  { value: 'JAILBROKEN', label: 'Jailbroken', count: 456 },
-  { value: 'JAILBREAKABLE', label: 'Jailbreakable', count: 1234 },
-  { value: 'NOT_JAILBROKEN', label: 'Stock/Not JB', count: 3456 },
+  { value: 'JAILBROKEN', label: 'Jailbroken' },
+  { value: 'JAILBREAKABLE', label: 'Jailbreakable' },
+  { value: 'NOT_JAILBROKEN', label: 'Stock/Not JB' },
+]
+
+// Simplified iOS versions - major versions only
+const iosVersions = [
+  { value: '18', label: 'iOS 18' },
+  { value: '17', label: 'iOS 17' },
+  { value: '16', label: 'iOS 16' },
+  { value: '15', label: 'iOS 15' },
+  { value: '14', label: 'iOS 14' },
+  { value: '13', label: 'iOS 13 & below' },
 ]
 
 const storageOptions = [
@@ -66,15 +171,34 @@ const storageOptions = [
 ]
 
 export function SearchFilters() {
-  const [selectedDeviceTypes, setSelectedDeviceTypes] = useState<string[]>([])
+  const searchParams = useSearchParams()
+
+  // Initialize from URL params
+  const initialDeviceType = searchParams.get('deviceType')?.split(',') || []
+
+  const [selectedDeviceTypes, setSelectedDeviceTypes] = useState<string[]>(initialDeviceType)
+  const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [selectedConditions, setSelectedConditions] = useState<string[]>([])
   const [selectedJBStatus, setSelectedJBStatus] = useState<string[]>([])
   const [selectedStorage, setSelectedStorage] = useState<number[]>([])
+  const [selectediOSVersion, setSelectediOSVersion] = useState<string>('')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
-  const [osVersionMin, setOsVersionMin] = useState('')
-  const [osVersionMax, setOsVersionMax] = useState('')
   const [bootromOnly, setBootromOnly] = useState(false)
+
+  // Get available models based on selected device type
+  const availableModels = selectedDeviceTypes.length === 1
+    ? modelsByDeviceType[selectedDeviceTypes[0]] || []
+    : []
+
+  // Clear models when device type changes
+  useEffect(() => {
+    setSelectedModels([])
+  }, [selectedDeviceTypes.join(',')])
+
+  // Check if iOS/jailbreak filters should show (only for iPhone/iPad)
+  const showIOSFilters = selectedDeviceTypes.length === 0 ||
+    selectedDeviceTypes.some(t => t === 'IPHONE' || t === 'IPAD')
 
   const toggleArrayValue = <T,>(array: T[], value: T, setter: (arr: T[]) => void) => {
     if (array.includes(value)) {
@@ -88,16 +212,28 @@ export function SearchFilters() {
     const params = new URLSearchParams()
 
     if (selectedDeviceTypes.length) params.set('deviceType', selectedDeviceTypes.join(','))
+    if (selectedModels.length) params.set('model', selectedModels.join(','))
     if (selectedConditions.length) params.set('condition', selectedConditions.join(','))
     if (selectedJBStatus.length) params.set('jailbreakStatus', selectedJBStatus.join(','))
     if (selectedStorage.length) params.set('storage', selectedStorage.join(','))
     if (minPrice) params.set('minPrice', minPrice)
     if (maxPrice) params.set('maxPrice', maxPrice)
-    if (osVersionMin) params.set('osVersionMin', osVersionMin)
-    if (osVersionMax) params.set('osVersionMax', osVersionMax)
+    if (selectediOSVersion) params.set('osVersion', selectediOSVersion)
     if (bootromOnly) params.set('bootromExploit', 'true')
 
     window.location.href = `/search?${params.toString()}`
+  }
+
+  const handleReset = () => {
+    setSelectedDeviceTypes([])
+    setSelectedModels([])
+    setSelectedConditions([])
+    setSelectedJBStatus([])
+    setSelectedStorage([])
+    setMinPrice('')
+    setMaxPrice('')
+    setSelectediOSVersion('')
+    setBootromOnly(false)
   }
 
   return (
@@ -116,11 +252,29 @@ export function SearchFilters() {
                 className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">{type.label}</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">({type.count})</span>
             </label>
           ))}
         </div>
       </FilterSection>
+
+      {/* Model - only show when single device type is selected */}
+      {availableModels.length > 0 && (
+        <FilterSection title="Model">
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {availableModels.map((model) => (
+              <label key={model.value} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedModels.includes(model.value)}
+                  onChange={() => toggleArrayValue(selectedModels, model.value, setSelectedModels)}
+                  className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{model.label}</span>
+              </label>
+            ))}
+          </div>
+        </FilterSection>
+      )}
 
       {/* Price Range */}
       <FilterSection title="Price">
@@ -143,88 +297,85 @@ export function SearchFilters() {
         </div>
         {/* Quick price buttons */}
         <div className="flex flex-wrap gap-1 mt-2">
-          {['$0-200', '$200-500', '$500-1000', '$1000+'].map((range) => (
+          {[
+            { label: '$0-200', min: '0', max: '200' },
+            { label: '$200-500', min: '200', max: '500' },
+            { label: '$500-1000', min: '500', max: '1000' },
+            { label: '$1000+', min: '1000', max: '' },
+          ].map((range) => (
             <button
-              key={range}
+              key={range.label}
+              onClick={() => {
+                setMinPrice(range.min)
+                setMaxPrice(range.max)
+              }}
               className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-600 dark:text-gray-300"
             >
-              {range}
+              {range.label}
             </button>
           ))}
         </div>
       </FilterSection>
 
-      {/* iOS Version Range */}
-      <FilterSection title="iOS Version">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="From (e.g., 14.0)"
-              value={osVersionMin}
-              onChange={(e) => setOsVersionMin(e.target.value)}
-              className="input py-1.5 text-sm w-full"
-            />
-            <span className="text-gray-400 dark:text-gray-500">-</span>
-            <input
-              type="text"
-              placeholder="To (e.g., 16.1.2)"
-              value={osVersionMax}
-              onChange={(e) => setOsVersionMax(e.target.value)}
-              className="input py-1.5 text-sm w-full"
-            />
+      {/* iOS Version - only show for iPhone/iPad or when no device type selected */}
+      {showIOSFilters && (
+        <FilterSection title="iOS/iPadOS Version">
+          <div className="space-y-2">
+            {iosVersions.map((version) => (
+              <label key={version.value} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="iosVersion"
+                  checked={selectediOSVersion === version.value}
+                  onChange={() => setSelectediOSVersion(version.value)}
+                  className="border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{version.label}</span>
+              </label>
+            ))}
+            {selectediOSVersion && (
+              <button
+                onClick={() => setSelectediOSVersion('')}
+                className="text-xs text-primary-600 hover:text-primary-700"
+              >
+                Clear selection
+              </button>
+            )}
           </div>
-          {/* Popular iOS versions */}
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Popular versions:</p>
-            <div className="flex flex-wrap gap-1">
-              {['17.0', '16.6.1', '16.5', '15.4.1', '14.8'].map((ver) => (
-                <button
-                  key={ver}
-                  onClick={() => {
-                    setOsVersionMin(ver)
-                    setOsVersionMax(ver)
-                  }}
-                  className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded text-purple-700 dark:text-purple-300"
-                >
-                  {ver}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </FilterSection>
+        </FilterSection>
+      )}
 
-      {/* Jailbreak Status */}
-      <FilterSection title="Jailbreak Status">
-        <div className="space-y-2">
-          {jailbreakStatuses.map((status) => (
-            <label key={status.value} className="flex items-center gap-2 cursor-pointer">
+      {/* Jailbreak Status - only show for iPhone/iPad */}
+      {showIOSFilters && (
+        <FilterSection title="Jailbreak Status">
+          <div className="space-y-2">
+            {jailbreakStatuses.map((status) => (
+              <label key={status.value} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedJBStatus.includes(status.value)}
+                  onChange={() => toggleArrayValue(selectedJBStatus, status.value, setSelectedJBStatus)}
+                  className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{status.label}</span>
+              </label>
+            ))}
+          </div>
+
+          {/* Jailbreak-specific options */}
+          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={selectedJBStatus.includes(status.value)}
-                onChange={() => toggleArrayValue(selectedJBStatus, status.value, setSelectedJBStatus)}
+                checked={bootromOnly}
+                onChange={(e) => setBootromOnly(e.target.checked)}
                 className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">{status.label}</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">({status.count})</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">checkm8 device only</span>
             </label>
-          ))}
-        </div>
-
-        {/* Jailbreak-specific options */}
-        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={bootromOnly}
-              onChange={(e) => setBootromOnly(e.target.checked)}
-              className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
-            />
-            <span className="text-sm text-gray-700 dark:text-gray-300">checkm8 device only</span>
-          </label>
-        </div>
-      </FilterSection>
+          </div>
+        </FilterSection>
+      )}
 
       {/* Condition */}
       <FilterSection title="Condition">
@@ -238,7 +389,6 @@ export function SearchFilters() {
                 className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">{condition.label}</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">({condition.count})</span>
             </label>
           ))}
         </div>
@@ -272,17 +422,7 @@ export function SearchFilters() {
           Apply Filters
         </button>
         <button
-          onClick={() => {
-            setSelectedDeviceTypes([])
-            setSelectedConditions([])
-            setSelectedJBStatus([])
-            setSelectedStorage([])
-            setMinPrice('')
-            setMaxPrice('')
-            setOsVersionMin('')
-            setOsVersionMax('')
-            setBootromOnly(false)
-          }}
+          onClick={handleReset}
           className="btn-secondary w-full"
         >
           Reset All
