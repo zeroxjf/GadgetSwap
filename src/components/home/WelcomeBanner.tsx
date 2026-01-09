@@ -1,26 +1,25 @@
 'use client'
 
-// Welcome banner for first-time visitors - dismissible via localStorage
+// Welcome popup for first-time visitors - must be dismissed
 import { useState, useEffect } from 'react'
-import { X, Rocket, PartyPopper } from 'lucide-react'
+import { X, Rocket, PartyPopper, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 export function WelcomeBanner() {
   const [isVisible, setIsVisible] = useState(false)
-  const [isDismissed, setIsDismissed] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
 
   useEffect(() => {
-    // Check if user has dismissed the banner before
     const dismissed = localStorage.getItem('welcomeBannerDismissed')
     if (!dismissed) {
-      setIsVisible(true)
+      // Small delay for smoother appearance
+      setTimeout(() => setIsVisible(true), 500)
     }
   }, [])
 
   const handleDismiss = () => {
-    setIsDismissed(true)
+    setIsClosing(true)
     localStorage.setItem('welcomeBannerDismissed', 'true')
-    // Animate out then hide
     setTimeout(() => setIsVisible(false), 300)
   }
 
@@ -28,38 +27,71 @@ export function WelcomeBanner() {
 
   return (
     <div
-      className={`relative bg-gradient-to-r from-primary-600 via-accent-600 to-primary-600 text-white transition-all duration-300 ${
-        isDismissed ? 'opacity-0 -translate-y-full' : 'opacity-100'
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ${
+        isClosing ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 py-4 sm:py-5">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 text-center sm:text-left">
-          <div className="flex items-center gap-2">
-            <Rocket className="w-5 h-5 flex-shrink-0" />
-            <span className="font-semibold">We just launched!</span>
-          </div>
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={handleDismiss}
+      />
 
-          <div className="text-sm sm:text-base text-white/90">
-            <span className="hidden sm:inline">Yes, it looks like a ghost town in here. </span>
-            <span className="sm:hidden">Empty? That's because </span>
-            you're early - like, making-history early.
-            <PartyPopper className="w-4 h-4 inline ml-1 -mt-0.5" />
+      {/* Modal */}
+      <div
+        className={`relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transition-all duration-300 ${
+          isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+        }`}
+      >
+        {/* Gradient header */}
+        <div className="bg-gradient-to-r from-primary-600 via-accent-600 to-primary-600 px-6 py-8 text-center text-white">
+          <div className="flex justify-center mb-3">
+            <div className="bg-white/20 rounded-full p-3">
+              <Rocket className="w-8 h-8" />
+            </div>
           </div>
-
-          <Link
-            href="/listings/new"
-            className="inline-flex items-center gap-2 bg-white text-primary-700 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-white/90 transition-colors whitespace-nowrap"
-          >
-            Create the first listing
-          </Link>
+          <h2 className="text-2xl font-bold mb-1">We Just Launched!</h2>
+          <div className="flex items-center justify-center gap-1 text-white/90">
+            <Sparkles className="w-4 h-4" />
+            <span>You found us early</span>
+            <Sparkles className="w-4 h-4" />
+          </div>
         </div>
 
+        {/* Content */}
+        <div className="px-6 py-6 text-center">
+          <p className="text-gray-600 dark:text-gray-300 mb-2">
+            Yes, it looks like a ghost town in here.
+          </p>
+          <p className="text-gray-900 dark:text-white font-medium mb-6">
+            You're early — like, making-history early.
+            <PartyPopper className="w-5 h-5 inline ml-1.5 -mt-1 text-accent-500" />
+          </p>
+
+          <div className="space-y-3">
+            <Link
+              href="/listings/new"
+              onClick={handleDismiss}
+              className="block w-full bg-gradient-to-r from-primary-600 to-accent-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-accent-700 transition-all shadow-lg shadow-primary-500/25"
+            >
+              Create the First Listing
+            </Link>
+            <button
+              onClick={handleDismiss}
+              className="block w-full text-gray-500 dark:text-gray-400 px-6 py-2 rounded-xl font-medium hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              Just Browsing
+            </button>
+          </div>
+        </div>
+
+        {/* Close button */}
         <button
           onClick={handleDismiss}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-          aria-label="Dismiss banner"
+          className="absolute top-3 right-3 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+          aria-label="Close"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </button>
       </div>
     </div>
