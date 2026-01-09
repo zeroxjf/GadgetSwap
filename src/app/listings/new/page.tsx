@@ -16,6 +16,8 @@ import {
   Check,
   AlertTriangle,
   TrendingUp,
+  Shield,
+  Loader2,
 } from 'lucide-react'
 import { getModelsForDeviceType, getStorageForModel, DeviceModel } from '@/lib/device-models'
 import { checkJailbreakCompatibility, JailbreakResult } from '@/lib/jailbreak-compatibility'
@@ -97,6 +99,17 @@ interface LastSoldData {
   isLoading: boolean
 }
 
+// IMEI verification state type
+interface IMEIVerification {
+  imei: string
+  isVerifying: boolean
+  verified: boolean
+  error: string | null
+  rateLimited: boolean
+  waitTime: number
+  verifiedModel: string | null
+}
+
 export default function NewListingPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
@@ -126,6 +139,17 @@ export default function NewListingPage() {
   // Auto-detected jailbreak compatibility
   const [jailbreakCompat, setJailbreakCompat] = useState<JailbreakResult | null>(null)
   const [isCurrentlyJailbroken, setIsCurrentlyJailbroken] = useState(false)
+
+  // IMEI verification state
+  const [imeiVerification, setImeiVerification] = useState<IMEIVerification>({
+    imei: '',
+    isVerifying: false,
+    verified: false,
+    error: null,
+    rateLimited: false,
+    waitTime: 0,
+    verifiedModel: null,
+  })
 
   const [formData, setFormData] = useState({
     // Basic info
@@ -166,6 +190,16 @@ export default function NewListingPage() {
       if (field === 'deviceType') {
         newData.deviceModel = ''
         newData.storageGB = ''
+        // Reset IMEI verification when device type changes
+        setImeiVerification({
+          imei: '',
+          isVerifying: false,
+          verified: false,
+          error: null,
+          rateLimited: false,
+          waitTime: 0,
+          verifiedModel: null,
+        })
       }
 
       // Reset storage when model changes
@@ -175,6 +209,77 @@ export default function NewListingPage() {
 
       return newData
     })
+  }
+
+  // Check if current device type requires IMEI
+  const requiresIMEI = ['IPHONE', 'IPAD'].includes(formData.deviceType)
+
+  // Verify IMEI
+  const verifyIMEI = async () => {
+    if (!imeiVerification.imei || imeiVerification.imei.length < 15) {
+      setImeiVerification(prev => ({
+        ...prev,
+        error: 'Please enter a valid 15-digit IMEI',
+        verified: false,
+      }))
+      return
+    }
+
+    setImeiVerification(prev => ({
+      ...prev,
+      isVerifying: true,
+      error: null,
+      rateLimited: false,
+    }))
+
+    try {
+      const response = await fetch('/api/imei/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imei: imeiVerification.imei,
+          deviceType: formData.deviceType,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.status === 429) {
+        setImeiVerification(prev => ({
+          ...prev,
+          isVerifying: false,
+          rateLimited: true,
+          waitTime: data.waitTime || 60,
+          error: data.error || 'Too many requests. Please wait 1 minute.',
+        }))
+        return
+      }
+
+      if (!response.ok || !data.success) {
+        setImeiVerification(prev => ({
+          ...prev,
+          isVerifying: false,
+          verified: false,
+          error: data.error || 'Verification failed',
+        }))
+        return
+      }
+
+      setImeiVerification(prev => ({
+        ...prev,
+        isVerifying: false,
+        verified: true,
+        error: null,
+        verifiedModel: data.modelName || data.model || null,
+      }))
+    } catch (error) {
+      setImeiVerification(prev => ({
+        ...prev,
+        isVerifying: false,
+        verified: false,
+        error: 'Failed to verify IMEI. Please try again.',
+      }))
+    }
   }
 
   // Get available models for selected device type
@@ -361,13 +466,23 @@ export default function NewListingPage() {
       // For now, we skip images unless they're actual URLs
       const persistentImages = images.filter(img => !img.startsWith('blob:'))
 
+      // Build listing data with optional IMEI
+      const listingData: any = {
+        ...formData,
+        images: persistentImages.length > 0 ? persistentImages : undefined,
+      }
+
+      // Add IMEI data if verified
+      if (requiresIMEI && imeiVerification.verified) {
+        listingData.imei = imeiVerification.imei
+        listingData.imeiVerified = true
+        listingData.imeiVerifiedModel = imeiVerification.verifiedModel
+      }
+
       const response = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          images: persistentImages.length > 0 ? persistentImages : undefined,
-        }),
+        body: JSON.stringify(listingData),
       })
 
       const data = await response.json()
@@ -395,7 +510,9 @@ export default function NewListingPage() {
         // Storage is required for devices that have storage options
         const needsStorage = availableStorage.length > 0
         const hasStorage = !needsStorage || formData.storageGB
-        return formData.title && formData.description && formData.price && hasStorage && !priceError
+        // IMEI verification required for iPhones and iPads
+        const imeiValid = !requiresIMEI || imeiVerification.verified
+        return formData.title && formData.description && formData.price && hasStorage && !priceError && imeiValid
       case 3:
         return true // Optional step
       case 4:
@@ -698,6 +815,99 @@ export default function NewListingPage() {
                           </button>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* IMEI Verification */}
+                  {requiresIMEI && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Shield className="w-4 h-4 text-primary-600" />
+                        <label className="label">IMEI Verification</label>
+                        <span className="text-xs text-gray-500">(Required)</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-3">
+                        Verify your device's IMEI to build buyer trust. Find it in Settings → General → About.
+                      </p>
+
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={imeiVerification.imei}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 15)
+                            setImeiVerification(prev => ({
+                              ...prev,
+                              imei: value,
+                              verified: false,
+                              error: null,
+                            }))
+                          }}
+                          placeholder="Enter 15-digit IMEI"
+                          className={`input flex-1 font-mono ${
+                            imeiVerification.verified
+                              ? 'border-green-500 bg-green-50'
+                              : imeiVerification.error
+                              ? 'border-red-500'
+                              : ''
+                          }`}
+                          maxLength={15}
+                        />
+                        <button
+                          type="button"
+                          onClick={verifyIMEI}
+                          disabled={imeiVerification.isVerifying || imeiVerification.imei.length < 15 || imeiVerification.verified}
+                          className="btn-primary px-4 disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {imeiVerification.isVerifying ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Verifying
+                            </>
+                          ) : imeiVerification.verified ? (
+                            <>
+                              <Check className="w-4 h-4" />
+                              Verified
+                            </>
+                          ) : (
+                            'Verify'
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Character count */}
+                      <p className="text-xs text-gray-400 mt-1">
+                        {imeiVerification.imei.length}/15 digits
+                      </p>
+
+                      {/* Verification result */}
+                      {imeiVerification.verified && (
+                        <div className="flex items-center gap-2 mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                          <Check className="w-4 h-4 text-green-600" />
+                          <span className="text-sm text-green-700">
+                            IMEI verified
+                            {imeiVerification.verifiedModel && ` - ${imeiVerification.verifiedModel}`}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Error message */}
+                      {imeiVerification.error && !imeiVerification.verified && (
+                        <div className="flex items-start gap-2 mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                          <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-red-700">{imeiVerification.error}</span>
+                        </div>
+                      )}
+
+                      {/* Rate limit message */}
+                      {imeiVerification.rateLimited && (
+                        <div className="flex items-start gap-2 mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <Info className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-yellow-700">
+                            Too many verification attempts. Please wait {imeiVerification.waitTime} seconds before trying again.
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
 

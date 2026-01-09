@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import crypto from 'crypto'
 
 /**
  * POST /api/listings
@@ -43,6 +44,10 @@ export async function POST(request: NextRequest) {
       acceptsReturns,
       returnWindowDays,
       images,
+      // IMEI verification fields
+      imei,
+      imeiVerified,
+      imeiVerifiedModel,
     } = body
 
     // Validate required fields
@@ -51,6 +56,44 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields' },
         { status: 400 }
       )
+    }
+
+    // Process IMEI if provided
+    let imeiData: {
+      imeiLast4?: string
+      imeiHash?: string
+      imeiVerified?: boolean
+      imeiVerifiedAt?: Date
+      imeiVerifiedModel?: string
+    } = {}
+
+    if (imei && imeiVerified) {
+      // Store last 4 digits for display
+      const cleanIMEI = imei.replace(/\D/g, '')
+      imeiData.imeiLast4 = cleanIMEI.slice(-4)
+
+      // Hash full IMEI for duplicate detection (SHA256)
+      imeiData.imeiHash = crypto.createHash('sha256').update(cleanIMEI).digest('hex')
+
+      // Check for duplicate IMEI (same device already listed)
+      const existingListing = await prisma.listing.findFirst({
+        where: {
+          imeiHash: imeiData.imeiHash,
+          status: 'ACTIVE',
+          sellerId: { not: session.user.id }, // Allow same user to relist
+        },
+      })
+
+      if (existingListing) {
+        return NextResponse.json(
+          { error: 'This device is already listed by another seller' },
+          { status: 400 }
+        )
+      }
+
+      imeiData.imeiVerified = true
+      imeiData.imeiVerifiedAt = new Date()
+      imeiData.imeiVerifiedModel = imeiVerifiedModel || null
     }
 
     // Create the listing
@@ -77,6 +120,8 @@ export async function POST(request: NextRequest) {
         icloudUnlocked: icloudUnlocked ?? true,
         acceptsReturns: acceptsReturns ?? false,
         returnWindowDays: acceptsReturns ? (returnWindowDays || 14) : null,
+        // IMEI verification data
+        ...imeiData,
         status: 'ACTIVE',
         sellerId: session.user.id,
         // Create images if provided

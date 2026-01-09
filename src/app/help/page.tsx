@@ -111,6 +111,11 @@ const faqs: Record<string, Array<{ q: string; a: string; id?: string }>> = {
       id: 'buyer-protection',
     },
     {
+      q: 'What is IMEI verification and why does GadgetSwap require it?',
+      a: 'IMEI (International Mobile Equipment Identity) verification is a critical safety feature for iPhones and cellular iPads:\n\n**What is an IMEI?**\nEvery iPhone and cellular iPad has a unique 15-digit IMEI number — think of it like a serial number that identifies the specific device. You can find it in Settings > General > About, or by dialing *#06#.\n\n**Why we verify IMEIs:**\n1. **Device Authentication**: We verify the IMEI belongs to a genuine Apple device and matches the model being listed (e.g., if you\'re selling an iPhone 14 Pro, the IMEI must match an iPhone 14 Pro).\n\n2. **Duplicate Prevention**: We hash each IMEI to detect if the same device is listed multiple times by different sellers — preventing scams where someone tries to sell a device they don\'t own.\n\n3. **Buyer Confidence**: When you see "IMEI Verified" on a listing, you know the seller has proven they have the actual device in hand.\n\n**Privacy Protection:**\nWe never store full IMEIs. Instead, we store only the last 4 digits (for display) and a secure hash (for duplicate detection). Sellers\' full IMEI numbers remain private.\n\n**Note:** IMEI verification confirms the device is real and matches the listing — it does not check carrier blacklist status. For additional peace of mind, you can verify the IMEI with your carrier before purchasing.',
+      id: 'imei-verification',
+    },
+    {
       q: 'What payment methods are accepted?',
       a: 'We accept all major credit/debit cards (Visa, Mastercard, Amex, Discover) and Apple Pay through our secure Stripe payment system.',
     },
