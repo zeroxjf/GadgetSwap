@@ -80,7 +80,7 @@ export default function MyListingsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-pulse text-gray-400">Loading...</div>
       </div>
     )
@@ -151,18 +151,18 @@ export default function MyListingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/account" className="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-flex items-center gap-1">
+          <Link href="/account" className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm mb-2 inline-flex items-center gap-1">
             <ChevronLeft className="w-4 h-4" />
             Back to Account
           </Link>
           <div className="flex items-center justify-between mt-2">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Listings</h1>
-              <p className="text-gray-600">{listings.length} total listings</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Listings</h1>
+              <p className="text-gray-600 dark:text-gray-400">{listings.length} total listings</p>
             </div>
             <Link href="/listings/new" className="btn-primary flex items-center gap-2">
               <Plus className="w-4 h-4" />
@@ -180,7 +180,7 @@ export default function MyListingsPage() {
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 filter === f
                   ? 'bg-primary-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
               }`}
             >
               {filterLabels[f]} {statusCounts[f] > 0 && `(${statusCounts[f]})`}
@@ -192,10 +192,10 @@ export default function MyListingsPage() {
         {filteredListings.length === 0 ? (
           <div className="card p-12 text-center">
             <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               {filter === 'all' ? 'No listings yet' : `No ${filter} listings`}
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
               {filter === 'all'
                 ? "Start selling by creating your first listing."
                 : `You don't have any ${filter} listings.`}
@@ -207,7 +207,7 @@ export default function MyListingsPage() {
             )}
           </div>
         ) : (
-          <div className="card divide-y divide-gray-100">
+          <div className="card divide-y divide-gray-100 dark:divide-gray-700">
             {filteredListings.map((listing) => {
               const reviewConfig = reviewStatusConfig[listing.reviewStatus]
               return (
@@ -227,7 +227,7 @@ export default function MyListingsPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Link href={`/listings/${listing.id}`} className="font-medium text-gray-900 hover:text-primary-600 truncate">
+                        <Link href={`/listings/${listing.id}`} className="font-medium text-gray-900 dark:text-white hover:text-primary-600 truncate">
                           {listing.title}
                         </Link>
                         {/* Review Status Badge */}
@@ -244,11 +244,11 @@ export default function MyListingsPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {listing.deviceModel} · {listing.condition}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                        <span className="font-semibold text-gray-900">${listing.price.toLocaleString()}</span>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        <span className="font-semibold text-gray-900 dark:text-white">${listing.price.toLocaleString()}</span>
                         {listing.reviewStatus === 'APPROVED' && (
                           <span className="flex items-center gap-1">
                             <Eye className="w-4 h-4" />
@@ -263,7 +263,7 @@ export default function MyListingsPage() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/listings/${listing.id}/edit`}
-                        className="p-2 hover:bg-gray-100 rounded-lg"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                         title="Edit"
                       >
                         <Edit2 className="w-5 h-5 text-gray-400" />

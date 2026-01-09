@@ -81,7 +81,7 @@ export default function PurchasesPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-pulse text-gray-400">Loading...</div>
       </div>
     )
@@ -92,17 +92,17 @@ export default function PurchasesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/account" className="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-flex items-center gap-1">
+          <Link href="/account" className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm mb-2 inline-flex items-center gap-1">
             <ChevronLeft className="w-4 h-4" />
             Back to Account
           </Link>
           <div className="mt-2">
-            <h1 className="text-2xl font-bold text-gray-900">Purchase History</h1>
-            <p className="text-gray-600">{purchases.length} purchases</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Purchase History</h1>
+            <p className="text-gray-600 dark:text-gray-400">{purchases.length} purchases</p>
           </div>
         </div>
 
@@ -110,8 +110,8 @@ export default function PurchasesPage() {
         {purchases.length === 0 ? (
           <div className="card p-12 text-center">
             <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No purchases yet</h3>
-            <p className="text-gray-500 mb-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No purchases yet</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
               When you buy something, it will appear here.
             </p>
             <Link href="/search" className="btn-primary">
@@ -142,10 +142,10 @@ export default function PurchasesPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div>
-                          <Link href={`/listings/${purchase.listing.id}`} className="font-medium text-gray-900 hover:text-primary-600">
+                          <Link href={`/listings/${purchase.listing.id}`} className="font-medium text-gray-900 dark:text-white hover:text-primary-600">
                             {purchase.listing.title}
                           </Link>
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                             {purchase.listing.deviceModel} · Sold by @{purchase.seller.username || purchase.seller.name}
                           </p>
                         </div>
@@ -156,7 +156,7 @@ export default function PurchasesPage() {
                       </div>
 
                       <div className="flex items-center justify-between mt-4">
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           <p>Ordered {new Date(purchase.createdAt).toLocaleDateString()}</p>
                           {purchase.trackingNumber && (
                             <p className="mt-1">
@@ -165,15 +165,15 @@ export default function PurchasesPage() {
                           )}
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-gray-900">${purchase.totalAmount.toFixed(2)}</p>
-                          <p className="text-xs text-gray-500">Total paid</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">${purchase.totalAmount.toFixed(2)}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Total paid</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <Link href={`/orders/${purchase.id}`} className="btn-secondary text-sm">
                       View Details
                     </Link>

@@ -175,15 +175,15 @@ function HelpContent() {
     : null
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full mb-4">
             <HelpCircle className="w-8 h-8 text-primary-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Help Center</h1>
-          <p className="text-gray-600 mt-2">Find answers to common questions</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Help Center</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Find answers to common questions</p>
         </div>
 
         {/* Search */}
@@ -194,24 +194,24 @@ function HelpContent() {
             placeholder="Search for help..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
 
         {/* Search Results */}
         {filteredFaqs && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Search Results ({filteredFaqs.length})
             </h2>
             {filteredFaqs.length === 0 ? (
-              <p className="text-gray-500">No results found. Try a different search term.</p>
+              <p className="text-gray-500 dark:text-gray-400">No results found. Try a different search term.</p>
             ) : (
               <div className="space-y-3">
                 {filteredFaqs.map((faq, index) => (
                   <div key={index} className="card p-4">
-                    <p className="font-medium text-gray-900">{faq.q}</p>
-                    <p className="text-sm text-gray-600 mt-2">{faq.a}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{faq.q}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{faq.a}</p>
                     <p className="text-xs text-gray-400 mt-2 capitalize">Category: {faq.category}</p>
                   </div>
                 ))}
@@ -237,16 +237,16 @@ function HelpContent() {
                   <div className={`w-10 h-10 rounded-lg ${cat.color} flex items-center justify-center mb-3`}>
                     <cat.icon className="w-5 h-5" />
                   </div>
-                  <h3 className="font-semibold text-gray-900">{cat.title}</h3>
-                  <p className="text-xs text-gray-500 mt-1">{cat.description}</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{cat.title}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{cat.description}</p>
                 </button>
               ))}
             </div>
 
             {/* FAQs */}
-            <div className="card divide-y divide-gray-100">
-              <div className="p-4 bg-gray-50 rounded-t-xl">
-                <h2 className="font-semibold text-gray-900">
+            <div className="card divide-y divide-gray-100 dark:divide-gray-700">
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-t-xl">
+                <h2 className="font-semibold text-gray-900 dark:text-white">
                   {categories.find((c) => c.id === activeCategory)?.title} FAQ
                 </h2>
               </div>
@@ -256,7 +256,7 @@ function HelpContent() {
                     onClick={() => setExpandedFaq(expandedFaq === `${activeCategory}-${index}` ? null : `${activeCategory}-${index}`)}
                     className="w-full flex items-center justify-between text-left"
                   >
-                    <span className="font-medium text-gray-900 pr-4">{faq.q}</span>
+                    <span className="font-medium text-gray-900 dark:text-white pr-4">{faq.q}</span>
                     {expandedFaq === `${activeCategory}-${index}` ? (
                       <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
                     ) : (
@@ -264,7 +264,7 @@ function HelpContent() {
                     )}
                   </button>
                   {expandedFaq === `${activeCategory}-${index}` && (
-                    <div className="text-gray-600 mt-3 text-sm whitespace-pre-line">
+                    <div className="text-gray-600 dark:text-gray-400 mt-3 text-sm whitespace-pre-line">
                       {faq.a.split('\n').map((line, i) => {
                         // Handle markdown-style bold
                         const parts = line.split(/\*\*(.*?)\*\*/g)
@@ -287,23 +287,23 @@ function HelpContent() {
         {/* Quick Links */}
         <div className="mt-8 grid md:grid-cols-2 gap-4">
           <Link href="/tools/jailbreak-checker" className="card p-4 hover:shadow-md transition-shadow flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
               <Search className="w-6 h-6 text-primary-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900">Jailbreak Checker</h3>
-              <p className="text-sm text-gray-500">Check device compatibility</p>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Jailbreak Checker</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Check device compatibility</p>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </Link>
 
           <Link href="/market-insights" className="card p-4 hover:shadow-md transition-shadow flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
               <ExternalLink className="w-6 h-6 text-green-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900">Market Insights</h3>
-              <p className="text-sm text-gray-500">Pricing and trends</p>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Market Insights</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Pricing and trends</p>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </Link>
@@ -312,8 +312,8 @@ function HelpContent() {
         {/* Contact */}
         <div className="mt-8 card p-6 text-center">
           <MessageCircle className="w-10 h-10 text-primary-600 mx-auto mb-3" />
-          <h2 className="text-xl font-semibold text-gray-900">Still need help?</h2>
-          <p className="text-gray-600 mt-2 mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Still need help?</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-2 mb-4">
             Our support team is here to help you with any questions.
           </p>
           <a
@@ -331,7 +331,7 @@ function HelpContent() {
 
 function HelpLoading() {
   return (
-    <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 flex items-center justify-center">
       <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
     </div>
   )

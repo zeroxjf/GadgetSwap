@@ -13,16 +13,16 @@ function FilterSection({ title, children, defaultOpen = true }: FilterSectionPro
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="border-b border-gray-200 py-4">
+    <div className="border-b border-gray-200 dark:border-gray-700 py-4">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full text-left"
       >
-        <span className="font-medium text-gray-900">{title}</span>
+        <span className="font-medium text-gray-900 dark:text-white">{title}</span>
         {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-gray-500" />
+          <ChevronUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-gray-500" />
+          <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
         )}
       </button>
       {isOpen && <div className="mt-3">{children}</div>}
@@ -101,8 +101,8 @@ export function SearchFilters() {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
-      <h2 className="font-semibold text-lg mb-4">Filters</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Filters</h2>
 
       {/* Device Type */}
       <FilterSection title="Device Type">
@@ -113,10 +113,10 @@ export function SearchFilters() {
                 type="checkbox"
                 checked={selectedDeviceTypes.includes(type.value)}
                 onChange={() => toggleArrayValue(selectedDeviceTypes, type.value, setSelectedDeviceTypes)}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
               />
-              <span className="text-sm text-gray-700">{type.label}</span>
-              <span className="text-xs text-gray-400 ml-auto">({type.count})</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{type.label}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">({type.count})</span>
             </label>
           ))}
         </div>
@@ -132,7 +132,7 @@ export function SearchFilters() {
             onChange={(e) => setMinPrice(e.target.value)}
             className="input py-1.5 text-sm w-full"
           />
-          <span className="text-gray-400">-</span>
+          <span className="text-gray-400 dark:text-gray-500">-</span>
           <input
             type="number"
             placeholder="Max"
@@ -146,7 +146,7 @@ export function SearchFilters() {
           {['$0-200', '$200-500', '$500-1000', '$1000+'].map((range) => (
             <button
               key={range}
-              className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600"
+              className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-600 dark:text-gray-300"
             >
               {range}
             </button>
@@ -165,7 +165,7 @@ export function SearchFilters() {
               onChange={(e) => setOsVersionMin(e.target.value)}
               className="input py-1.5 text-sm w-full"
             />
-            <span className="text-gray-400">-</span>
+            <span className="text-gray-400 dark:text-gray-500">-</span>
             <input
               type="text"
               placeholder="To (e.g., 16.1.2)"
@@ -176,7 +176,7 @@ export function SearchFilters() {
           </div>
           {/* Popular iOS versions */}
           <div>
-            <p className="text-xs text-gray-500 mb-1">Popular versions:</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Popular versions:</p>
             <div className="flex flex-wrap gap-1">
               {['17.0', '16.6.1', '16.5', '15.4.1', '14.8'].map((ver) => (
                 <button
@@ -185,7 +185,7 @@ export function SearchFilters() {
                     setOsVersionMin(ver)
                     setOsVersionMax(ver)
                   }}
-                  className="text-xs px-2 py-1 bg-purple-100 hover:bg-purple-200 rounded text-purple-700"
+                  className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded text-purple-700 dark:text-purple-300"
                 >
                   {ver}
                 </button>
@@ -204,24 +204,24 @@ export function SearchFilters() {
                 type="checkbox"
                 checked={selectedJBStatus.includes(status.value)}
                 onChange={() => toggleArrayValue(selectedJBStatus, status.value, setSelectedJBStatus)}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
               />
-              <span className="text-sm text-gray-700">{status.label}</span>
-              <span className="text-xs text-gray-400 ml-auto">({status.count})</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{status.label}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">({status.count})</span>
             </label>
           ))}
         </div>
 
         {/* Jailbreak-specific options */}
-        <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={bootromOnly}
               onChange={(e) => setBootromOnly(e.target.checked)}
-              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
             />
-            <span className="text-sm text-gray-700">checkm8 device only</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">checkm8 device only</span>
           </label>
         </div>
       </FilterSection>
@@ -235,10 +235,10 @@ export function SearchFilters() {
                 type="checkbox"
                 checked={selectedConditions.includes(condition.value)}
                 onChange={() => toggleArrayValue(selectedConditions, condition.value, setSelectedConditions)}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
               />
-              <span className="text-sm text-gray-700">{condition.label}</span>
-              <span className="text-xs text-gray-400 ml-auto">({condition.count})</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{condition.label}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">({condition.count})</span>
             </label>
           ))}
         </div>
@@ -254,7 +254,7 @@ export function SearchFilters() {
               className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
                 selectedStorage.includes(storage.value)
                   ? 'bg-primary-600 text-white border-primary-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-primary-600'
+                  : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-primary-600'
               }`}
             >
               {storage.label}

@@ -115,7 +115,7 @@ export default function MarketInsightsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero */}
       <section className="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4">
@@ -134,10 +134,10 @@ export default function MarketInsightsPage() {
             {/* Jailbreak Compatibility Checker */}
             <div className="card p-6">
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-xl font-bold">Jailbreak Compatibility Checker</h2>
+                <h2 className="text-xl font-bold dark:text-white">Jailbreak Compatibility Checker</h2>
                 <span className="badge bg-purple-100 text-purple-800">Popular</span>
               </div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Select your device and iOS version to check jailbreak compatibility.
               </p>
 
@@ -250,7 +250,7 @@ export default function MarketInsightsPage() {
 
             {/* Market Data - Shows empty state */}
             <div className="card p-6">
-              <h2 className="text-xl font-bold mb-4">Market Data</h2>
+              <h2 className="text-xl font-bold mb-4 dark:text-white">Market Data</h2>
 
               {loading ? (
                 <div className="flex items-center justify-center py-8">
@@ -258,23 +258,23 @@ export default function MarketInsightsPage() {
                 </div>
               ) : stats && stats.totalListings > 0 ? (
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-2xl font-bold text-gray-900">{stats.totalListings}</p>
-                    <p className="text-sm text-gray-500">Active Listings</p>
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalListings}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Active Listings</p>
                   </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <p className="text-2xl font-bold text-purple-600">{stats.jailbreakableCount}</p>
-                    <p className="text-sm text-gray-500">Jailbreakable</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Jailbreakable</p>
                   </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-2xl font-bold text-gray-900">
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {stats.avgPrice > 0 ? `$${stats.avgPrice}` : '-'}
                     </p>
-                    <p className="text-sm text-gray-500">Avg Price</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Avg Price</p>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <BarChart3 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                   <p className="font-medium">No market data yet</p>
                   <p className="text-sm mt-1">
@@ -290,7 +290,7 @@ export default function MarketInsightsPage() {
             {/* iOS Version Guide */}
             <div className="card p-6">
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-xl font-bold">iOS Version Guide</h2>
+                <h2 className="text-xl font-bold dark:text-white">iOS Version Guide</h2>
                 <div className="relative group">
                   <Info className="w-4 h-4 text-gray-400 cursor-help" />
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-10">
@@ -298,7 +298,7 @@ export default function MarketInsightsPage() {
                   </div>
                 </div>
               </div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Some iOS versions are more desirable due to jailbreak compatibility.
               </p>
 
@@ -354,7 +354,7 @@ export default function MarketInsightsPage() {
           <div className="space-y-6">
             {/* Jailbreak Tools Reference */}
             <div className="card p-6">
-              <h3 className="font-semibold mb-4">Jailbreak Tools</h3>
+              <h3 className="font-semibold mb-4 dark:text-white">Jailbreak Tools</h3>
               <div className="space-y-3">
                 {jailbreakTools.map((tool) => (
                   <a
@@ -362,13 +362,13 @@ export default function MarketInsightsPage() {
                     href={tool.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="block p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium">{tool.name}</span>
+                      <span className="font-medium dark:text-white">{tool.name}</span>
                       <ExternalLink className="w-3 h-3 text-gray-400" />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       iOS {tool.iosMin} - {tool.iosMax} | {tool.type}
                     </p>
                   </a>
@@ -378,31 +378,31 @@ export default function MarketInsightsPage() {
 
             {/* Quick Links */}
             <div className="card p-6">
-              <h3 className="font-semibold mb-4">Resources</h3>
+              <h3 className="font-semibold mb-4 dark:text-white">Resources</h3>
               <div className="space-y-2">
                 <a
                   href="https://ios.cfw.guide"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600"
                 >
-                  <span className="text-sm">iOS CFW Guide</span>
+                  <span className="text-sm dark:text-gray-300">iOS CFW Guide</span>
                   <ExternalLink className="w-3 h-3 text-gray-400" />
                 </a>
                 <a
                   href="https://reddit.com/r/jailbreak"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600"
                 >
-                  <span className="text-sm">r/jailbreak</span>
+                  <span className="text-sm dark:text-gray-300">r/jailbreak</span>
                   <ExternalLink className="w-3 h-3 text-gray-400" />
                 </a>
                 <Link
                   href="/tools/jailbreak-checker"
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600"
                 >
-                  <span className="text-sm">Full Compatibility Checker</span>
+                  <span className="text-sm dark:text-gray-300">Full Compatibility Checker</span>
                   <span className="text-xs text-primary-600">View</span>
                 </Link>
               </div>

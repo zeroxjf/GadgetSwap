@@ -146,16 +146,16 @@ export function ListingCard({ listing }: ListingCardProps) {
         <div className="p-4">
           {/* Price */}
           <div className="flex items-baseline justify-between mb-1">
-            <span className="text-xl font-bold text-gray-900">
+            <span className="text-xl font-bold text-gray-900 dark:text-white">
               ${listing.price.toLocaleString()}
             </span>
             {listing.storageGB && (
-              <span className="text-sm text-gray-500">{listing.storageGB}GB</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{listing.storageGB}GB</span>
             )}
           </div>
 
           {/* Title */}
-          <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
+          <h3 className="font-medium text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
             {listing.title}
           </h3>
 
@@ -172,14 +172,14 @@ export function ListingCard({ listing }: ListingCardProps) {
 
           {/* Jailbreak tool if applicable */}
           {listing.jailbreakTool && (
-            <p className="text-xs text-gray-500 mb-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
               JB Tool: {listing.jailbreakTool}
             </p>
           )}
 
           {/* Seller info */}
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <span className="text-sm text-gray-600">{listing.seller.name}</span>
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+            <span className="text-sm text-gray-600 dark:text-gray-400">{listing.seller.name}</span>
             <div className="flex items-center gap-1">
               <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
               <span className="text-sm font-medium">{listing.seller.rating}</span>

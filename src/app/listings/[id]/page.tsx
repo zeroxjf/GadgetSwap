@@ -109,7 +109,7 @@ export default function ListingDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
       </div>
     )
@@ -117,11 +117,11 @@ export default function ListingDetailPage() {
 
   if (error || !listing) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="card p-8 max-w-md text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold mb-2">Listing Not Found</h1>
-          <p className="text-gray-600 mb-6">{error || 'This listing may have been removed or sold.'}</p>
+          <h1 className="text-xl font-bold mb-2 dark:text-white">Listing Not Found</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{error || 'This listing may have been removed or sold.'}</p>
           <Link href="/browse" className="btn-primary">
             Browse Listings
           </Link>
@@ -134,18 +134,18 @@ export default function ListingDetailPage() {
   const canPurchase = listing.status === 'ACTIVE' && !isOwnListing && listing.seller.stripeOnboardingComplete
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 lg:pb-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 lg:pb-8">
       {/* Breadcrumb */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 py-3">
-          <nav className="text-sm text-gray-500">
+          <nav className="text-sm text-gray-500 dark:text-gray-400">
             <Link href="/" className="hover:text-primary-600">Home</Link>
             <span className="mx-2">/</span>
             <Link href={`/browse?deviceType=${listing.deviceType}`} className="hover:text-primary-600">
               {listing.deviceType.replace('_', ' ')}
             </Link>
             <span className="mx-2">/</span>
-            <span className="text-gray-900">{listing.deviceModel}</span>
+            <span className="text-gray-900 dark:text-white">{listing.deviceModel}</span>
           </nav>
         </div>
       </div>
@@ -211,23 +211,23 @@ export default function ListingDetailPage() {
 
             {/* Description */}
             <div className="card p-6">
-              <h2 className="text-lg font-semibold mb-4">Description</h2>
-              <div className="prose prose-sm max-w-none text-gray-600 whitespace-pre-line">
+              <h2 className="text-lg font-semibold mb-4 dark:text-white">Description</h2>
+              <div className="prose prose-sm max-w-none text-gray-600 dark:text-gray-400 whitespace-pre-line">
                 {listing.description}
               </div>
             </div>
 
             {/* Device Specifications */}
             <div className="card p-6">
-              <h2 className="text-lg font-semibold mb-4">Device Specifications</h2>
+              <h2 className="text-lg font-semibold mb-4 dark:text-white">Device Specifications</h2>
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Smartphone className="w-5 h-5 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-500">Model</p>
-                      <p className="font-medium">{listing.deviceModel}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Model</p>
+                      <p className="font-medium dark:text-white">{listing.deviceModel}</p>
                     </div>
                   </div>
 
@@ -235,8 +235,8 @@ export default function ListingDetailPage() {
                     <div className="flex items-center gap-3">
                       <HardDrive className="w-5 h-5 text-gray-400" />
                       <div>
-                        <p className="text-sm text-gray-500">Storage</p>
-                        <p className="font-medium">{listing.storageGB}GB</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Storage</p>
+                        <p className="font-medium dark:text-white">{listing.storageGB}GB</p>
                       </div>
                     </div>
                   )}
@@ -245,8 +245,8 @@ export default function ListingDetailPage() {
                     <div className="flex items-center gap-3">
                       <Battery className="w-5 h-5 text-gray-400" />
                       <div>
-                        <p className="text-sm text-gray-500">Battery Health</p>
-                        <p className="font-medium">{listing.batteryHealth}%</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Battery Health</p>
+                        <p className="font-medium dark:text-white">{listing.batteryHealth}%</p>
                       </div>
                     </div>
                   )}
@@ -255,8 +255,8 @@ export default function ListingDetailPage() {
                     <div className="flex items-center gap-3">
                       <Cpu className="w-5 h-5 text-gray-400" />
                       <div>
-                        <p className="text-sm text-gray-500">Carrier</p>
-                        <p className="font-medium">{listing.carrier}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Carrier</p>
+                        <p className="font-medium dark:text-white">{listing.carrier}</p>
                       </div>
                     </div>
                   )}
@@ -321,12 +321,12 @@ export default function ListingDetailPage() {
             <div className="sticky top-[120px] space-y-4">
               {/* Main purchase card */}
               <div className="card p-6">
-                <h1 className="text-xl font-bold text-gray-900 mb-2">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                   {listing.title}
                 </h1>
 
                 <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-3xl font-bold text-gray-900">
+                  <span className="text-3xl font-bold text-gray-900 dark:text-white">
                     ${listing.price.toLocaleString()}
                   </span>
                 </div>
@@ -374,16 +374,16 @@ export default function ListingDetailPage() {
                 </div>
 
                 {/* Secondary actions */}
-                <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-gray-100">
-                  <button className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <button className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1">
                     <Heart className="w-4 h-4" />
                     Save
                   </button>
-                  <button className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                  <button className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1">
                     <Share2 className="w-4 h-4" />
                     Share
                   </button>
-                  <button className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                  <button className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1">
                     <Flag className="w-4 h-4" />
                     Report
                   </button>
@@ -414,16 +414,16 @@ export default function ListingDetailPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-center text-sm border-t border-gray-100 pt-3">
+                <div className="grid grid-cols-2 gap-4 text-center text-sm border-t border-gray-100 dark:border-gray-700 pt-3">
                   <div>
-                    <p className="font-medium text-gray-900">{listing.seller.totalSales}</p>
-                    <p className="text-gray-500">Sales</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{listing.seller.totalSales}</p>
+                    <p className="text-gray-500 dark:text-gray-400">Sales</p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-gray-900 dark:text-white">
                       {Math.floor((Date.now() - new Date(listing.seller.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 30))} mo
                     </p>
-                    <p className="text-gray-500">Member</p>
+                    <p className="text-gray-500 dark:text-gray-400">Member</p>
                   </div>
                 </div>
               </div>
@@ -446,11 +446,11 @@ export default function ListingDetailPage() {
       </div>
 
       {/* Mobile sticky buy bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 lg:hidden">
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 lg:hidden">
         <div className="flex items-center gap-4">
           <div>
-            <p className="text-2xl font-bold">${listing.price}</p>
-            <p className="text-sm text-gray-500">{listing.condition.replace('_', ' ')}</p>
+            <p className="text-2xl font-bold dark:text-white">${listing.price}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{listing.condition.replace('_', ' ')}</p>
           </div>
           <button
             onClick={handleBuyNow}
@@ -492,7 +492,7 @@ function StatusItem({
       ) : (
         <X className="w-4 h-4 text-red-500" />
       )}
-      <span className={isPositive ? 'text-gray-700' : 'text-gray-500'}>
+      <span className={isPositive ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'}>
         {label}
       </span>
     </div>
