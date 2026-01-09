@@ -1,33 +1,22 @@
 import Link from 'next/link'
 
 const footerLinks = {
-  marketplace: [
-    { name: 'Browse All', href: '/search' },
+  browse: [
+    { name: 'All Devices', href: '/search' },
     { name: 'iPhones', href: '/search?deviceType=IPHONE' },
     { name: 'iPads', href: '/search?deviceType=IPAD' },
     { name: 'MacBooks', href: '/search?deviceType=MACBOOK' },
-    { name: 'Jailbreakable Devices', href: '/search?jailbreakStatus=JAILBREAKABLE' },
-    { name: 'Market Insights', href: '/market-insights' },
+    { name: 'Jailbreakable', href: '/search?jailbreakStatus=JAILBREAKABLE' },
   ],
-  selling: [
-    { name: 'Start Selling', href: '/listings/new' },
-    { name: 'Seller Guide', href: '/help/selling' },
-    { name: 'Pricing Tips', href: '/help/pricing' },
-    { name: 'Jailbreak Premium', href: '/help/jailbreak-pricing' },
-    { name: 'Fee Calculator', href: '/tools/fee-calculator' },
-  ],
-  buying: [
-    { name: 'How to Buy', href: '/help/buying' },
+  features: [
     { name: 'Device Alerts', href: '/alerts', highlight: true },
-    { name: 'Buyer Protection', href: '/help/buyer-protection' },
-    { name: 'Jailbreak Guide', href: '/help/jailbreak-guide' },
-    { name: 'iOS Version Guide', href: '/help/ios-versions' },
-  ],
-  company: [
-    { name: 'About Us', href: '/about' },
+    { name: 'Jailbreak Checker', href: '/tools/jailbreak-checker' },
+    { name: 'Start Selling', href: '/listings/new' },
     { name: 'Subscription Plans', href: '/subscription' },
+  ],
+  support: [
     { name: 'Help Center', href: '/help' },
-    { name: 'Contact', href: '/contact' },
+    { name: 'Buyer Protection', href: '/help?category=payments&faq=buyer-protection' },
     { name: 'Terms of Service', href: '/legal/terms' },
     { name: 'Privacy Policy', href: '/legal/privacy' },
   ],
@@ -38,11 +27,11 @@ export function Footer() {
     <footer className="bg-gray-900 text-gray-300">
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Main footer content */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-8">
           <div>
-            <h3 className="text-white font-semibold mb-4">Marketplace</h3>
+            <h3 className="text-white font-semibold mb-4">Browse</h3>
             <ul className="space-y-2">
-              {footerLinks.marketplace.map((link) => (
+              {footerLinks.browse.map((link) => (
                 <li key={link.name}>
                   <Link href={link.href} className="hover:text-white transition-colors text-sm">
                     {link.name}
@@ -53,22 +42,9 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-semibold mb-4">Selling</h3>
+            <h3 className="text-white font-semibold mb-4">Features</h3>
             <ul className="space-y-2">
-              {footerLinks.selling.map((link) => (
-                <li key={link.name}>
-                  <Link href={link.href} className="hover:text-white transition-colors text-sm">
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-white font-semibold mb-4">Buying</h3>
-            <ul className="space-y-2">
-              {footerLinks.buying.map((link) => (
+              {footerLinks.features.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
@@ -85,9 +61,9 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-semibold mb-4">Company</h3>
+            <h3 className="text-white font-semibold mb-4">Support</h3>
             <ul className="space-y-2">
-              {footerLinks.company.map((link) => (
+              {footerLinks.support.map((link) => (
                 <li key={link.name}>
                   <Link href={link.href} className="hover:text-white transition-colors text-sm">
                     {link.name}
