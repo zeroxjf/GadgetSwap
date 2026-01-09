@@ -52,6 +52,31 @@ export function TrustBadges() {
 
   const content = getContent()
 
+  // Color schemes: imei=blue, escrow=green, alerts=yellow
+  const getColorScheme = () => {
+    if (expanded === 'imei') return {
+      headerBg: 'bg-blue-50 dark:bg-blue-900/30',
+      iconBg: 'bg-blue-100 dark:bg-blue-900',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      checkColor: 'text-blue-500',
+    }
+    if (expanded === 'escrow') return {
+      headerBg: 'bg-green-50 dark:bg-green-900/30',
+      iconBg: 'bg-green-100 dark:bg-green-900',
+      iconColor: 'text-green-600 dark:text-green-400',
+      checkColor: 'text-green-500',
+    }
+    if (expanded === 'alerts') return {
+      headerBg: 'bg-yellow-50 dark:bg-yellow-900/30',
+      iconBg: 'bg-yellow-100 dark:bg-yellow-900',
+      iconColor: 'text-yellow-600 dark:text-yellow-400',
+      checkColor: 'text-yellow-500',
+    }
+    return null
+  }
+
+  const colors = getColorScheme()
+
   return (
     <div className="relative">
       <div className="flex flex-wrap items-center gap-4 md:gap-6 text-sm text-primary-200">
@@ -92,32 +117,22 @@ export function TrustBadges() {
         </div>
       </div>
 
-      {/* Expandable Info Bubble */}
-      {expanded && content && (
-        <div className="absolute top-full left-0 mt-8 z-50 w-full max-w-md animate-in fade-in slide-in-from-top-2 duration-200">
+      {/* Expandable Info Bubble - positioned above */}
+      {expanded && content && colors && (
+        <div className="absolute bottom-full left-0 mb-3 z-50 w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             {/* Header */}
-            <div className={`px-5 py-4 flex items-center justify-between ${
-              expanded === 'escrow'
-                ? 'bg-yellow-50 dark:bg-yellow-900/30'
-                : expanded === 'alerts'
-                ? 'bg-yellow-50 dark:bg-yellow-900/30'
-                : 'bg-blue-50 dark:bg-blue-900/30'
-            }`}>
+            <div className={`px-5 py-4 flex items-center justify-between ${colors.headerBg}`}>
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  expanded === 'escrow' || expanded === 'alerts'
-                    ? 'bg-yellow-100 dark:bg-yellow-900'
-                    : 'bg-blue-100 dark:bg-blue-900'
-                }`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colors.iconBg}`}>
                   {expanded === 'imei' && (
-                    <Fingerprint className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <Fingerprint className={`w-5 h-5 ${colors.iconColor}`} />
                   )}
                   {expanded === 'escrow' && (
-                    <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                    <Clock className={`w-5 h-5 ${colors.iconColor}`} />
                   )}
                   {expanded === 'alerts' && (
-                    <Bell className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                    <Bell className={`w-5 h-5 ${colors.iconColor}`} />
                   )}
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -135,8 +150,8 @@ export function TrustBadges() {
             {/* Content */}
             <div className="px-5 py-4">
               {expanded === 'escrow' && (
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg px-4 py-3 mb-4">
-                  <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-4 py-3 mb-4">
+                  <p className="text-sm font-semibold text-green-800 dark:text-green-200">
                     IMPORTANT: Inspect your device within 24 hours of delivery for fast, easy refunds!
                   </p>
                 </div>
@@ -149,9 +164,7 @@ export function TrustBadges() {
               <ul className="space-y-2">
                 {content.bullets.map((bullet, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <CheckCircle className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
-                      expanded === 'escrow' || expanded === 'alerts' ? 'text-yellow-500' : 'text-blue-500'
-                    }`} />
+                    <CheckCircle className={`w-4 h-4 flex-shrink-0 mt-0.5 ${colors.checkColor}`} />
                     <span>{bullet}</span>
                   </li>
                 ))}
