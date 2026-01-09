@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
             stripeAccountId: true,
             stripeOnboardingComplete: true,
             subscriptionTier: true,
+            role: true,
           },
         },
       },
@@ -76,8 +77,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if seller has completed Stripe onboarding
-    if (!listing.seller.stripeAccountId || !listing.seller.stripeOnboardingComplete) {
+    // Check if seller has completed Stripe onboarding (admins bypass this)
+    const isAdminSeller = listing.seller.role === 'ADMIN'
+    if (!isAdminSeller && (!listing.seller.stripeAccountId || !listing.seller.stripeOnboardingComplete)) {
       return NextResponse.json(
         { error: 'Seller has not set up payment processing yet' },
         { status: 400 }
@@ -117,17 +119,13 @@ export async function POST(request: NextRequest) {
     // For Plus/Pro, we only take platform fee (0%) - we absorb Stripe fees
     const applicationFee = isPaidTier ? platformFee : (platformFee + rawStripeFee)
 
-    // Create payment intent with Stripe Connect
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Create payment intent - use Stripe Connect for regular sellers, direct payment for admin sellers
+    const paymentIntentParams: any = {
       amount: Math.round(totalAmount * 100), // Stripe uses cents
       currency: 'usd',
       automatic_payment_methods: {
         enabled: true,
       },
-      transfer_data: {
-        destination: listing.seller.stripeAccountId,
-      },
-      application_fee_amount: Math.round(applicationFee * 100), // Platform fee (+ stripe fee for FREE tier)
       metadata: {
         listingId: listing.id,
         buyerId: session.user.id,
@@ -137,8 +135,19 @@ export async function POST(request: NextRequest) {
         shippingCost: shippingCost.toString(),
         platformFee: platformFee.toString(),
         stripeFee: sellerStripeFee.toString(),
+        isAdminSeller: isAdminSeller.toString(),
       },
-    })
+    }
+
+    // Only add transfer_data for non-admin sellers with Stripe accounts
+    if (!isAdminSeller && listing.seller.stripeAccountId) {
+      paymentIntentParams.transfer_data = {
+        destination: listing.seller.stripeAccountId,
+      }
+      paymentIntentParams.application_fee_amount = Math.round(applicationFee * 100) // Platform fee (+ stripe fee for FREE tier)
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams)
 
     // Create pending transaction record
     const transaction = await prisma.transaction.create({

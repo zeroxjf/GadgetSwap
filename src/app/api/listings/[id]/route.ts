@@ -31,6 +31,7 @@ export async function GET(
             totalSales: true,
             createdAt: true,
             stripeOnboardingComplete: true,
+            role: true,
           },
         },
       },
