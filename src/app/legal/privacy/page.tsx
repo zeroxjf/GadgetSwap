@@ -17,7 +17,7 @@ export default function PrivacyPage() {
 
         <div className="card p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
-          <p className="text-gray-500 mb-8">Last updated: January 2025</p>
+          <p className="text-gray-500 mb-8">Last updated: January 9, 2025</p>
 
           <div className="prose prose-gray max-w-none">
             <section className="mb-8">
