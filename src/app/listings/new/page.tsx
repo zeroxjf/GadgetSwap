@@ -230,8 +230,8 @@ function NewListingContent() {
 
     // Hardware
     batteryHealth: '',
-    screenReplaced: false,
-    originalParts: true,
+    hasThirdPartyParts: false,
+    replacedParts: [] as string[],
     imeiClean: true,
     icloudUnlocked: true,
 
@@ -879,8 +879,8 @@ function NewListingContent() {
                       buildNumber: '',
                       jailbreakStatus: 'NOT_JAILBROKEN',
                       batteryHealth: '',
-                      screenReplaced: false,
-                      originalParts: true,
+                      hasThirdPartyParts: false,
+                      replacedParts: [],
                       imeiClean: true,
                       icloudUnlocked: true,
                       acceptsReturns: false,
@@ -1298,35 +1298,78 @@ function NewListingContent() {
                     </div>
                   )}
 
-                  {/* Hardware checkboxes */}
-                  <div className="flex flex-wrap gap-x-6 gap-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.originalParts}
-                        onChange={(e) => updateFormData('originalParts', e.target.checked)}
-                        className="rounded border-gray-300 text-primary-600"
-                      />
-                      <span className="text-sm">Original Parts</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.imeiClean}
-                        onChange={(e) => updateFormData('imeiClean', e.target.checked)}
-                        className="rounded border-gray-300 text-primary-600"
-                      />
-                      <span className="text-sm">Clean IMEI</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.icloudUnlocked}
-                        onChange={(e) => updateFormData('icloudUnlocked', e.target.checked)}
-                        className="rounded border-gray-300 text-primary-600"
-                      />
-                      <span className="text-sm">iCloud Unlocked</span>
-                    </label>
+                  {/* Hardware attestation */}
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-x-6 gap-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.imeiClean}
+                          onChange={(e) => updateFormData('imeiClean', e.target.checked)}
+                          className="rounded border-gray-300 text-primary-600"
+                        />
+                        <span className="text-sm">Clean IMEI</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.icloudUnlocked}
+                          onChange={(e) => updateFormData('icloudUnlocked', e.target.checked)}
+                          className="rounded border-gray-300 text-primary-600"
+                        />
+                        <span className="text-sm">iCloud Unlocked</span>
+                      </label>
+                    </div>
+
+                    {/* Third-party parts attestation */}
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!formData.hasThirdPartyParts}
+                          onChange={(e) => {
+                            updateFormData('hasThirdPartyParts', !e.target.checked)
+                            if (e.target.checked) {
+                              updateFormData('replacedParts', [])
+                            }
+                          }}
+                          className="rounded border-gray-300 text-primary-600 mt-0.5"
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">All original Apple parts</span>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">I confirm this device has no third-party replacement parts</p>
+                        </div>
+                      </label>
+
+                      {formData.hasThirdPartyParts && (
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">Select replaced parts:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {['Screen', 'Battery', 'Back Glass', 'Camera', 'Charging Port', 'Speaker', 'Other'].map((part) => (
+                              <button
+                                key={part}
+                                type="button"
+                                onClick={() => {
+                                  const current = formData.replacedParts || []
+                                  if (current.includes(part)) {
+                                    updateFormData('replacedParts', current.filter((p: string) => p !== part))
+                                  } else {
+                                    updateFormData('replacedParts', [...current, part])
+                                  }
+                                }}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                                  (formData.replacedParts || []).includes(part)
+                                    ? 'border-orange-500 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300'
+                                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 text-gray-600 dark:text-gray-400'
+                                }`}
+                              >
+                                {part}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Return Policy */}
