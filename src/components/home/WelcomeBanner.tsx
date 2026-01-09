@@ -2,7 +2,7 @@
 
 // Welcome popup for first-time visitors - must be dismissed
 import { useState, useEffect } from 'react'
-import { X, Rocket, PartyPopper, Sparkles } from 'lucide-react'
+import { X, Rocket, PartyPopper, Sparkles, Shield, Clock, Bell, CreditCard } from 'lucide-react'
 import Link from 'next/link'
 
 export function WelcomeBanner() {
@@ -63,10 +63,32 @@ export function WelcomeBanner() {
           <p className="text-gray-600 dark:text-gray-300 mb-2">
             Yes, it looks like a ghost town in here.
           </p>
-          <p className="text-gray-900 dark:text-white font-medium mb-6">
+          <p className="text-gray-900 dark:text-white font-medium mb-5">
             You're early — like, making-history early.
             <PartyPopper className="w-5 h-5 inline ml-1.5 -mt-1 text-accent-500" />
           </p>
+
+          {/* Trust badges */}
+          <div className="grid grid-cols-3 gap-2 mb-5">
+            <div className="flex flex-col items-center gap-1 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <span className="text-xs font-medium text-blue-700 dark:text-blue-300">IMEI Verified</span>
+            </div>
+            <div className="flex flex-col items-center gap-1 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <Clock className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <span className="text-xs font-medium text-green-700 dark:text-green-300">24h Escrow</span>
+            </div>
+            <div className="flex flex-col items-center gap-1 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+              <Bell className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300">Instant Alerts</span>
+            </div>
+          </div>
+
+          {/* Stripe badge */}
+          <div className="flex items-center justify-center gap-2 mb-5 text-gray-500 dark:text-gray-400">
+            <CreditCard className="w-4 h-4" />
+            <span className="text-sm">Payments secured by <span className="font-semibold text-[#635BFF]">Stripe</span></span>
+          </div>
 
           <div className="space-y-3">
             <Link
