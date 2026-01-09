@@ -168,13 +168,21 @@ export async function POST(request: NextRequest) {
         safeSearchAdult: safeSearchResults?.adult || null,
         safeSearchViolence: safeSearchResults?.violence || null,
         safeSearchRacy: safeSearchResults?.racy || null,
-        // Create images if provided
-        images: images && images.length > 0 ? {
-          create: images.map((url: string, index: number) => ({
-            url,
-            order: index,
-          })),
-        } : undefined,
+        // Create images - verification photo is FIRST, then user photos
+        images: {
+          create: [
+            // Verification photo as first image
+            {
+              url: verificationPhotoUrl,
+              order: 0,
+            },
+            // Then user-uploaded images
+            ...(images || []).map((url: string, index: number) => ({
+              url,
+              order: index + 1,
+            })),
+          ],
+        },
       },
       include: {
         images: true,
