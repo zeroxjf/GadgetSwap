@@ -378,19 +378,18 @@ export default function NewListingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
-        <div className="mb-8">
-          <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-block">
-            ← Back to home
-          </Link>
-          <h1 className="text-2xl font-bold">Create a Listing</h1>
-          <p className="text-gray-600">List your device in a few simple steps</p>
-        </div>
-
-        {/* Progress steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm mb-2 inline-block">
+              ← Back to home
+            </Link>
+            <h1 className="text-2xl font-bold">Create a Listing</h1>
+            <p className="text-gray-600">List your device in a few simple steps</p>
+          </div>
+          {/* Progress steps - horizontal on desktop */}
+          <div className="hidden lg:flex items-center gap-2">
             {[
               { num: 1, label: 'Device' },
               { num: 2, label: 'Details' },
@@ -416,7 +415,7 @@ export default function NewListingPage() {
                 </span>
                 {i < 3 && (
                   <div
-                    className={`hidden sm:block w-16 h-0.5 mx-4 ${
+                    className={`w-12 h-0.5 mx-3 ${
                       step > s.num ? 'bg-primary-600' : 'bg-gray-200'
                     }`}
                   />
@@ -426,82 +425,125 @@ export default function NewListingPage() {
           </div>
         </div>
 
-        <div className="card p-6">
+        {/* Mobile progress steps */}
+        <div className="lg:hidden mb-8">
+          <div className="flex items-center justify-between">
+            {[
+              { num: 1, label: 'Device' },
+              { num: 2, label: 'Details' },
+              { num: 3, label: 'Jailbreak' },
+              { num: 4, label: 'Photos' },
+            ].map((s, i) => (
+              <div key={s.num} className="flex items-center">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    step >= s.num
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  {step > s.num ? <Check className="w-4 h-4" /> : s.num}
+                </div>
+                <span
+                  className={`ml-2 text-sm hidden sm:inline ${
+                    step >= s.num ? 'text-gray-900' : 'text-gray-400'
+                  }`}
+                >
+                  {s.label}
+                </span>
+                {i < 3 && (
+                  <div
+                    className={`w-8 sm:w-16 h-0.5 mx-2 sm:mx-4 ${
+                      step > s.num ? 'bg-primary-600' : 'bg-gray-200'
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card p-6 lg:p-8">
           {/* Step 1: Device Info */}
           {step === 1 && (
             <div className="space-y-6">
               <h2 className="text-lg font-semibold">What are you selling?</h2>
 
-              {/* Device Type */}
-              <div>
-                <label className="label mb-2 block">Device Type *</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {deviceTypes.map((type) => (
-                    <button
-                      key={type.value}
-                      type="button"
-                      onClick={() => updateFormData('deviceType', type.value)}
-                      className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                        formData.deviceType === type.value
-                          ? 'border-primary-500 bg-primary-50 text-primary-700'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
+              <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+                {/* Left column - Device Type & Model */}
+                <div className="space-y-6">
+                  {/* Device Type */}
+                  <div>
+                    <label className="label mb-2 block">Device Type *</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2">
+                      {deviceTypes.map((type) => (
+                        <button
+                          key={type.value}
+                          type="button"
+                          onClick={() => updateFormData('deviceType', type.value)}
+                          className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                            formData.deviceType === type.value
+                              ? 'border-primary-500 bg-primary-50 text-primary-700'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {type.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Device Model */}
+                  <div>
+                    <label htmlFor="deviceModel" className="label mb-2 block">
+                      Model *
+                    </label>
+                    {formData.deviceType && formData.deviceType !== 'ACCESSORIES' ? (
+                      <ModelAutocomplete
+                        models={availableModels}
+                        value={formData.deviceModel}
+                        onChange={(value) => updateFormData('deviceModel', value)}
+                        placeholder="Type to search models (e.g., iPhone 17)"
+                        disabled={!formData.deviceType}
+                      />
+                    ) : formData.deviceType === 'ACCESSORIES' ? (
+                      <input
+                        id="deviceModel"
+                        type="text"
+                        value={formData.deviceModel}
+                        onChange={(e) => updateFormData('deviceModel', e.target.value)}
+                        placeholder="Enter accessory name"
+                        className="input"
+                      />
+                    ) : null}
+                    {!formData.deviceType && (
+                      <p className="text-sm text-gray-500 mt-1">Select a device type first</p>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Device Model */}
-              <div>
-                <label htmlFor="deviceModel" className="label mb-2 block">
-                  Model *
-                </label>
-                {formData.deviceType && formData.deviceType !== 'ACCESSORIES' ? (
-                  <ModelAutocomplete
-                    models={availableModels}
-                    value={formData.deviceModel}
-                    onChange={(value) => updateFormData('deviceModel', value)}
-                    placeholder="Type to search models (e.g., iPhone 17)"
-                    disabled={!formData.deviceType}
-                  />
-                ) : formData.deviceType === 'ACCESSORIES' ? (
-                  <input
-                    id="deviceModel"
-                    type="text"
-                    value={formData.deviceModel}
-                    onChange={(e) => updateFormData('deviceModel', e.target.value)}
-                    placeholder="Enter accessory name"
-                    className="input"
-                  />
-                ) : null}
-                {!formData.deviceType && (
-                  <p className="text-sm text-gray-500 mt-1">Select a device type first</p>
-                )}
-              </div>
-
-              {/* Condition */}
-              <div>
-                <label className="label mb-2 block">Condition *</label>
-                <div className="space-y-2">
-                  {conditions.map((condition) => (
-                    <button
-                      key={condition.value}
-                      type="button"
-                      onClick={() => updateFormData('condition', condition.value)}
-                      className={`w-full p-3 rounded-lg border text-left transition-colors ${
-                        formData.condition === condition.value
-                          ? 'border-primary-500 bg-primary-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <span className="font-medium">{condition.label}</span>
-                      <span className="text-gray-500 text-sm ml-2">
-                        — {condition.description}
-                      </span>
-                    </button>
-                  ))}
+                {/* Right column - Condition */}
+                <div>
+                  <label className="label mb-2 block">Condition *</label>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2">
+                    {conditions.map((condition) => (
+                      <button
+                        key={condition.value}
+                        type="button"
+                        onClick={() => updateFormData('condition', condition.value)}
+                        className={`p-3 rounded-lg border text-left transition-colors ${
+                          formData.condition === condition.value
+                            ? 'border-primary-500 bg-primary-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <span className="font-medium block">{condition.label}</span>
+                        <span className="text-gray-500 text-xs">
+                          {condition.description}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -512,266 +554,277 @@ export default function NewListingPage() {
             <div className="space-y-6">
               <h2 className="text-lg font-semibold">Listing Details</h2>
 
-              {/* Title */}
-              <div>
-                <label htmlFor="title" className="label mb-2 block">
-                  Title *
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => updateFormData('title', e.target.value)}
-                  placeholder="e.g., iPhone 14 Pro Max 256GB - iOS 16.1.2"
-                  className="input"
-                  maxLength={100}
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  {formData.title.length}/100 characters
-                </p>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label htmlFor="description" className="label mb-2 block">
-                  Description *
-                </label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => updateFormData('description', e.target.value)}
-                  placeholder="Describe your device's condition, included accessories, and any relevant details..."
-                  className="input min-h-[150px]"
-                  maxLength={5000}
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  {formData.description.length}/5000 characters
-                </p>
-              </div>
-
-              {/* Storage & Color */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="label mb-2 block">Storage *</label>
-                  <select
-                    value={formData.storageGB}
-                    onChange={(e) => updateFormData('storageGB', e.target.value)}
-                    className="input"
-                    disabled={availableStorage.length === 0}
-                  >
-                    <option value="">
-                      {availableStorage.length === 0 ? 'Select model first' : 'Select storage'}
-                    </option>
-                    {availableStorage.map((size) => (
-                      <option key={size} value={size}>
-                        {size >= 1024 ? `${size / 1024}TB` : `${size}GB`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="color" className="label mb-2 block">
-                    Color
-                  </label>
-                  <input
-                    id="color"
-                    type="text"
-                    value={formData.color}
-                    onChange={(e) => updateFormData('color', e.target.value)}
-                    placeholder="e.g., Space Black"
-                    className="input"
-                  />
-                </div>
-              </div>
-
-              {/* Pricing Info - shows once model + storage selected */}
-              {formData.deviceModel && formData.storageGB && formData.deviceType !== 'ACCESSORIES' && (
-                <div className="space-y-3">
-                  {/* TechFare Market Value */}
-                  <div className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
-                      <span className="font-semibold text-blue-900">TechFare Market Value</span>
-                    </div>
-
-                    {priceValidation.isLoading && (
-                      <div className="flex items-center gap-2 text-blue-700">
-                        <span className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
-                        <span>Fetching market value...</span>
-                      </div>
-                    )}
-
-                    {!priceValidation.isLoading && priceValidation.marketValue && (
-                      <div className="space-y-2">
-                        <p className="text-2xl font-bold text-blue-900">
-                          ${priceValidation.marketValue.toFixed(2)}
-                        </p>
-                        <p className="text-sm text-blue-700">
-                          Maximum listing price:{' '}
-                          <span className="font-bold">${priceValidation.maxPrice?.toFixed(2)}</span>
-                          <span className="ml-1 text-gray-500">(1.5x market value)</span>
-                        </p>
-                      </div>
-                    )}
-
-                    {!priceValidation.isLoading && !priceValidation.marketValue && priceValidation.error && (
-                      <div className="text-red-600 text-sm">
-                        <AlertTriangle className="w-4 h-4 inline mr-1" />
-                        {priceValidation.error}
-                      </div>
-                    )}
-
-                    {!priceValidation.isLoading && !priceValidation.marketValue && !priceValidation.error && (
-                      <p className="text-blue-700 text-sm">
-                        No market data available for this device
-                      </p>
-                    )}
+              <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+                {/* Left column - Title, Description, Specs */}
+                <div className="space-y-5">
+                  {/* Title */}
+                  <div>
+                    <label htmlFor="title" className="label mb-2 block">
+                      Title *
+                    </label>
+                    <input
+                      id="title"
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => updateFormData('title', e.target.value)}
+                      placeholder="e.g., iPhone 14 Pro Max 256GB - iOS 16.1.2"
+                      className="input"
+                      maxLength={100}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      {formData.title.length}/100 characters
+                    </p>
                   </div>
 
-                  {/* GadgetSwap Last Sold Price */}
-                  <div className="p-4 rounded-lg border-2 border-green-200 bg-green-50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <DollarSign className="w-5 h-5 text-green-600" />
-                      <span className="font-semibold text-green-900">Last Sold on GadgetSwap</span>
-                    </div>
-
-                    {lastSold.isLoading && (
-                      <div className="flex items-center gap-2 text-green-700">
-                        <span className="w-4 h-4 border-2 border-green-300 border-t-green-600 rounded-full animate-spin" />
-                        <span>Checking sales history...</span>
-                      </div>
-                    )}
-
-                    {!lastSold.isLoading && lastSold.found && lastSold.lastSoldPrice && (
-                      <div className="space-y-1">
-                        <p className="text-2xl font-bold text-green-900">
-                          ${lastSold.lastSoldPrice.toFixed(2)}
-                        </p>
-                        <p className="text-sm text-green-700">
-                          {lastSold.condition && (
-                            <span>Condition: {lastSold.condition.replace('_', ' ')}</span>
-                          )}
-                          {lastSold.soldAt && (
-                            <span className="ml-2">
-                              ({new Date(lastSold.soldAt).toLocaleDateString()})
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    )}
-
-                    {!lastSold.isLoading && !lastSold.found && (
-                      <p className="text-green-700 text-sm">
-                        No previous sales on GadgetSwap for this device
-                      </p>
-                    )}
+                  {/* Description */}
+                  <div>
+                    <label htmlFor="description" className="label mb-2 block">
+                      Description *
+                    </label>
+                    <textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => updateFormData('description', e.target.value)}
+                      placeholder="Describe your device's condition, included accessories, and any relevant details..."
+                      className="input min-h-[120px] lg:min-h-[100px]"
+                      maxLength={5000}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      {formData.description.length}/5000 characters
+                    </p>
                   </div>
-                </div>
-              )}
 
-              {/* Price */}
-              <div>
-                <label htmlFor="price" className="label mb-2 block">
-                  Price *
-                </label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    id="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => updateFormData('price', e.target.value)}
-                    placeholder="0.00"
-                    className={`input pl-10 ${priceError ? 'border-red-500 focus:ring-red-500' : ''}`}
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-
-                {/* Price validation feedback */}
-                {priceError && (
-                  <div className="flex items-start gap-2 p-3 mt-2 bg-red-50 border border-red-200 rounded-lg">
-                    <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-700">{priceError}</p>
-                  </div>
-                )}
-
-                {!priceError && formData.price && priceValidation.maxPrice && parseFloat(formData.price) <= priceValidation.maxPrice && (
-                  <div className="flex items-center gap-2 text-green-600 mt-2">
-                    <Check className="w-4 h-4" />
-                    <span className="text-sm">Price is within allowed range</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Carrier */}
-              {['IPHONE', 'IPAD'].includes(formData.deviceType) && (
-                <div>
-                  <label className="label mb-2 block">Carrier</label>
-                  <div className="flex flex-wrap gap-2">
-                    {carriers.map((carrier) => (
-                      <button
-                        key={carrier}
-                        type="button"
-                        onClick={() => updateFormData('carrier', carrier)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                          formData.carrier === carrier
-                            ? 'border-primary-500 bg-primary-50 text-primary-700'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                  {/* Storage, Color, Battery in a row */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="label mb-2 block text-sm">Storage *</label>
+                      <select
+                        value={formData.storageGB}
+                        onChange={(e) => updateFormData('storageGB', e.target.value)}
+                        className="input text-sm"
+                        disabled={availableStorage.length === 0}
                       >
-                        {carrier}
-                      </button>
-                    ))}
+                        <option value="">
+                          {availableStorage.length === 0 ? 'Select model' : 'Select'}
+                        </option>
+                        {availableStorage.map((size) => (
+                          <option key={size} value={size}>
+                            {size >= 1024 ? `${size / 1024}TB` : `${size}GB`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="color" className="label mb-2 block text-sm">
+                        Color
+                      </label>
+                      <input
+                        id="color"
+                        type="text"
+                        value={formData.color}
+                        onChange={(e) => updateFormData('color', e.target.value)}
+                        placeholder="Space Black"
+                        className="input text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="batteryHealth" className="label mb-2 block text-sm">
+                        Battery %
+                      </label>
+                      <input
+                        id="batteryHealth"
+                        type="number"
+                        value={formData.batteryHealth}
+                        onChange={(e) => updateFormData('batteryHealth', e.target.value)}
+                        placeholder="96"
+                        className="input text-sm"
+                        min="0"
+                        max="100"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Carrier */}
+                  {['IPHONE', 'IPAD'].includes(formData.deviceType) && (
+                    <div>
+                      <label className="label mb-2 block text-sm">Carrier</label>
+                      <div className="flex flex-wrap gap-2">
+                        {carriers.map((carrier) => (
+                          <button
+                            key={carrier}
+                            type="button"
+                            onClick={() => updateFormData('carrier', carrier)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                              formData.carrier === carrier
+                                ? 'border-primary-500 bg-primary-50 text-primary-700'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            {carrier}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hardware checkboxes */}
+                  <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.originalParts}
+                        onChange={(e) => updateFormData('originalParts', e.target.checked)}
+                        className="rounded border-gray-300 text-primary-600"
+                      />
+                      <span className="text-sm">Original Parts</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.imeiClean}
+                        onChange={(e) => updateFormData('imeiClean', e.target.checked)}
+                        className="rounded border-gray-300 text-primary-600"
+                      />
+                      <span className="text-sm">Clean IMEI</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.icloudUnlocked}
+                        onChange={(e) => updateFormData('icloudUnlocked', e.target.checked)}
+                        className="rounded border-gray-300 text-primary-600"
+                      />
+                      <span className="text-sm">iCloud Unlocked</span>
+                    </label>
                   </div>
                 </div>
-              )}
 
-              {/* Battery & Hardware */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="batteryHealth" className="label mb-2 block">
-                    Battery Health %
-                  </label>
-                  <input
-                    id="batteryHealth"
-                    type="number"
-                    value={formData.batteryHealth}
-                    onChange={(e) => updateFormData('batteryHealth', e.target.value)}
-                    placeholder="e.g., 96"
-                    className="input"
-                    min="0"
-                    max="100"
-                  />
-                </div>
-                <div className="space-y-3 pt-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.originalParts}
-                      onChange={(e) => updateFormData('originalParts', e.target.checked)}
-                      className="rounded border-gray-300 text-primary-600"
-                    />
-                    <span className="text-sm">Original Parts</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.imeiClean}
-                      onChange={(e) => updateFormData('imeiClean', e.target.checked)}
-                      className="rounded border-gray-300 text-primary-600"
-                    />
-                    <span className="text-sm">Clean IMEI</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.icloudUnlocked}
-                      onChange={(e) => updateFormData('icloudUnlocked', e.target.checked)}
-                      className="rounded border-gray-300 text-primary-600"
-                    />
-                    <span className="text-sm">iCloud Unlocked</span>
-                  </label>
+                {/* Right column - Pricing */}
+                <div className="space-y-4">
+                  {/* Pricing Info - shows once model + storage selected */}
+                  {formData.deviceModel && formData.storageGB && formData.deviceType !== 'ACCESSORIES' && (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
+                      {/* TechFare Market Value */}
+                      <div className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <TrendingUp className="w-4 h-4 text-blue-600" />
+                          <span className="font-semibold text-blue-900 text-sm">Market Value</span>
+                        </div>
+
+                        {priceValidation.isLoading && (
+                          <div className="flex items-center gap-2 text-blue-700">
+                            <span className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                            <span className="text-sm">Loading...</span>
+                          </div>
+                        )}
+
+                        {!priceValidation.isLoading && priceValidation.marketValue && (
+                          <div>
+                            <p className="text-xl font-bold text-blue-900">
+                              ${priceValidation.marketValue.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-blue-700">
+                              Max: ${priceValidation.maxPrice?.toFixed(2)}
+                            </p>
+                          </div>
+                        )}
+
+                        {!priceValidation.isLoading && !priceValidation.marketValue && (
+                          <p className="text-blue-700 text-sm">No data</p>
+                        )}
+                      </div>
+
+                      {/* GadgetSwap Last Sold Price */}
+                      <div className="p-4 rounded-lg border-2 border-green-200 bg-green-50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <DollarSign className="w-4 h-4 text-green-600" />
+                          <span className="font-semibold text-green-900 text-sm">Last Sold</span>
+                        </div>
+
+                        {lastSold.isLoading && (
+                          <div className="flex items-center gap-2 text-green-700">
+                            <span className="w-4 h-4 border-2 border-green-300 border-t-green-600 rounded-full animate-spin" />
+                            <span className="text-sm">Loading...</span>
+                          </div>
+                        )}
+
+                        {!lastSold.isLoading && lastSold.found && lastSold.lastSoldPrice && (
+                          <div>
+                            <p className="text-xl font-bold text-green-900">
+                              ${lastSold.lastSoldPrice.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-green-700">
+                              {lastSold.condition?.replace('_', ' ')}
+                            </p>
+                          </div>
+                        )}
+
+                        {!lastSold.isLoading && !lastSold.found && (
+                          <p className="text-green-700 text-sm">No history</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Price Input */}
+                  <div>
+                    <label htmlFor="price" className="label mb-2 block">
+                      Your Price *
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        id="price"
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => updateFormData('price', e.target.value)}
+                        placeholder="0.00"
+                        className={`input pl-10 text-lg font-semibold ${priceError ? 'border-red-500 focus:ring-red-500' : ''}`}
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+
+                    {/* Price validation feedback */}
+                    {priceError && (
+                      <div className="flex items-start gap-2 p-3 mt-2 bg-red-50 border border-red-200 rounded-lg">
+                        <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-red-700">{priceError}</p>
+                      </div>
+                    )}
+
+                    {!priceError && formData.price && priceValidation.maxPrice && parseFloat(formData.price) <= priceValidation.maxPrice && (
+                      <div className="flex items-center gap-2 text-green-600 mt-2">
+                        <Check className="w-4 h-4" />
+                        <span className="text-sm">Price is within allowed range</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Fee preview */}
+                  {formData.price && parseFloat(formData.price) > 0 && (
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <h4 className="font-medium text-gray-900 mb-2 text-sm">Fee Breakdown</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Sale price</span>
+                          <span>${parseFloat(formData.price).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Platform fee (1%)</span>
+                          <span className="text-red-600">-${(parseFloat(formData.price) * 0.01).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Stripe fee (~3%)</span>
+                          <span className="text-red-600">-${(parseFloat(formData.price) * 0.03).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between pt-2 border-t border-gray-200 font-semibold">
+                          <span>You receive</span>
+                          <span className="text-green-600">${(parseFloat(formData.price) * 0.96).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -782,38 +835,40 @@ export default function NewListingPage() {
             <div className="space-y-6">
               <h2 className="text-lg font-semibold">iOS Version & Jailbreak Info</h2>
 
-              {/* iOS Version Input */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="osVersion" className="label mb-2 block">
-                    iOS/macOS Version *
-                  </label>
-                  <input
-                    id="osVersion"
-                    type="text"
-                    value={formData.osVersion}
-                    onChange={(e) => updateFormData('osVersion', e.target.value)}
-                    placeholder="e.g., 16.1.2"
-                    className="input"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Settings → General → About → iOS Version
-                  </p>
-                </div>
-                <div>
-                  <label htmlFor="buildNumber" className="label mb-2 block">
-                    Build Number
-                  </label>
-                  <input
-                    id="buildNumber"
-                    type="text"
-                    value={formData.buildNumber}
-                    onChange={(e) => updateFormData('buildNumber', e.target.value)}
-                    placeholder="e.g., 20B110"
-                    className="input"
-                  />
-                </div>
-              </div>
+              <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+                {/* Left column - iOS Version inputs */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="osVersion" className="label mb-2 block">
+                        iOS/macOS Version *
+                      </label>
+                      <input
+                        id="osVersion"
+                        type="text"
+                        value={formData.osVersion}
+                        onChange={(e) => updateFormData('osVersion', e.target.value)}
+                        placeholder="e.g., 16.1.2"
+                        className="input"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Settings → General → About
+                      </p>
+                    </div>
+                    <div>
+                      <label htmlFor="buildNumber" className="label mb-2 block">
+                        Build Number
+                      </label>
+                      <input
+                        id="buildNumber"
+                        type="text"
+                        value={formData.buildNumber}
+                        onChange={(e) => updateFormData('buildNumber', e.target.value)}
+                        placeholder="e.g., 20B110"
+                        className="input"
+                      />
+                    </div>
+                  </div>
 
               {/* Auto-detected Jailbreak Compatibility */}
               {['IPHONE', 'IPAD'].includes(formData.deviceType) && formData.osVersion && (
@@ -902,37 +957,58 @@ export default function NewListingPage() {
                 </div>
               )}
 
-              {/* Currently Jailbroken Toggle */}
-              {jailbreakCompat?.canJailbreak && (
-                <label className="flex items-center gap-3 cursor-pointer p-4 bg-purple-50 rounded-lg border border-purple-200">
-                  <input
-                    type="checkbox"
-                    checked={isCurrentlyJailbroken}
-                    onChange={(e) => setIsCurrentlyJailbroken(e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-purple-600"
-                  />
-                  <div>
-                    <span className="font-medium text-purple-900">This device is currently jailbroken</span>
-                    <p className="text-sm text-purple-700">
-                      Check this if the device has an active jailbreak installed
+                </div>
+
+                {/* Right column - Jailbreak toggle & info */}
+                <div className="space-y-4">
+                  {/* Currently Jailbroken Toggle */}
+                  {jailbreakCompat?.canJailbreak && (
+                    <label className="flex items-center gap-3 cursor-pointer p-4 bg-purple-50 rounded-lg border border-purple-200">
+                      <input
+                        type="checkbox"
+                        checked={isCurrentlyJailbroken}
+                        onChange={(e) => setIsCurrentlyJailbroken(e.target.checked)}
+                        className="w-5 h-5 rounded border-gray-300 text-purple-600"
+                      />
+                      <div>
+                        <span className="font-medium text-purple-900">This device is currently jailbroken</span>
+                        <p className="text-sm text-purple-700">
+                          Check this if the device has an active jailbreak installed
+                        </p>
+                      </div>
+                    </label>
+                  )}
+
+                  {/* Jailbreak info box */}
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 className="font-medium text-gray-900 mb-2 text-sm">Why iOS version matters</h4>
+                    <p className="text-sm text-gray-600">
+                      Buyers in the jailbreak community look for devices on specific iOS versions.
+                      Devices on jailbreakable firmware often sell for a premium.
                     </p>
                   </div>
-                </label>
-              )}
-
+                </div>
+              </div>
             </div>
           )}
 
           {/* Step 4: Photos */}
           {step === 4 && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold">Add Photos</h2>
-              <p className="text-gray-600">
-                Add up to 10 photos. The first photo will be the cover image.
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Add Photos</h2>
+                  <p className="text-gray-600 text-sm">
+                    Add up to 10 photos. The first photo will be the cover image.
+                  </p>
+                </div>
+                {images.length === 0 && (
+                  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Optional</span>
+                )}
+              </div>
 
-              {/* Image upload */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {/* Image upload - wider grid on desktop */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {images.map((image, index) => (
                   <div key={index} className="relative aspect-square">
                     <img
