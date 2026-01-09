@@ -91,15 +91,17 @@ export async function POST(request: NextRequest) {
           console.error('AI analysis failed:', error)
         }
 
-        // Run OCR to find verification code in the photo (8 second timeout)
+        // Run OCR to find verification code in the photo (12 second timeout - handwriting needs more time)
         if (verificationCode && verificationModule) {
           try {
-            console.log('Starting OCR detection...')
+            console.log('Starting OCR detection for code:', verificationCode)
             const detectedTexts = await withTimeout(
               visionModule.detectTextInImage(uploadResult.url),
-              8000,
+              12000,
               [] as string[]
             )
+
+            console.log('OCR detected texts:', detectedTexts.slice(0, 5))
 
             if (detectedTexts.length > 0) {
               const codeResult = verificationModule.findCodeInDetectedText(verificationCode, detectedTexts)
@@ -108,12 +110,16 @@ export async function POST(request: NextRequest) {
                 confidence: codeResult.confidence,
                 matchedText: codeResult.matchedText,
                 allDetectedText: detectedTexts.slice(0, 10),
+                expectedCode: verificationCode,
               }
+              console.log('Code verification result:', codeResult)
             } else {
               codeVerification = {
                 codeFound: false,
                 confidence: 0,
-                error: 'No text detected or OCR timed out',
+                error: 'No text detected in image - ensure the code is clearly written and visible',
+                allDetectedText: [],
+                expectedCode: verificationCode,
               }
             }
             console.log('OCR complete:', codeVerification)
@@ -122,13 +128,23 @@ export async function POST(request: NextRequest) {
             codeVerification = {
               codeFound: false,
               confidence: 0,
-              error: 'OCR analysis failed',
+              error: `OCR analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              expectedCode: verificationCode,
             }
           }
+        } else if (!verificationCode) {
+          console.log('No verification code provided, skipping OCR')
         }
       }
     } else if (type === 'verification' && !hasVisionCredentials) {
       console.log('Google Vision credentials not configured, skipping AI analysis')
+      // Still allow the upload to proceed, but mark as unknown
+      codeVerification = {
+        codeFound: false,
+        confidence: 0,
+        error: 'Verification service not configured - manual review required',
+        expectedCode: verificationCode,
+      }
     }
 
     // Determine overall verification status
