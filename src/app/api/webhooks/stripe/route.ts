@@ -58,6 +58,31 @@ export async function POST(request: NextRequest) {
         break
       }
 
+      // Chargeback/Dispute handling
+      case 'charge.dispute.created': {
+        const dispute = event.data.object as Stripe.Dispute
+        await handleDisputeCreated(dispute)
+        break
+      }
+
+      case 'charge.dispute.updated': {
+        const dispute = event.data.object as Stripe.Dispute
+        await handleDisputeUpdated(dispute)
+        break
+      }
+
+      case 'charge.dispute.closed': {
+        const dispute = event.data.object as Stripe.Dispute
+        await handleDisputeClosed(dispute)
+        break
+      }
+
+      case 'charge.refunded': {
+        const charge = event.data.object as Stripe.Charge
+        await handleChargeRefunded(charge)
+        break
+      }
+
       default:
         console.log(`Unhandled event type: ${event.type}`)
     }
@@ -201,4 +226,208 @@ async function handleAccountUpdate(account: Stripe.Account) {
   })
 
   console.log('Updated Stripe account status for user:', user.id, status)
+}
+
+/**
+ * Handle Stripe dispute/chargeback created
+ */
+async function handleDisputeCreated(dispute: Stripe.Dispute) {
+  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id
+
+  if (!chargeId) {
+    console.error('No charge ID in dispute:', dispute.id)
+    return
+  }
+
+  // Find transaction by charge ID
+  const transaction = await prisma.transaction.findFirst({
+    where: { stripeChargeId: chargeId },
+    include: {
+      listing: { select: { title: true } },
+      buyer: { select: { id: true, name: true } },
+      seller: { select: { id: true, name: true } },
+    },
+  })
+
+  if (!transaction) {
+    console.error('Transaction not found for charge:', chargeId)
+    return
+  }
+
+  // Update transaction with dispute info
+  await prisma.transaction.update({
+    where: { id: transaction.id },
+    data: {
+      status: 'DISPUTED',
+      disputeId: dispute.id,
+      disputeStatus: 'OPEN',
+      disputeReason: `Stripe chargeback: ${dispute.reason}`,
+      escrowReleaseAt: null, // Pause any pending fund release
+      fundsHeld: true,
+    },
+  })
+
+  // Notify both parties
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: transaction.buyerId,
+        type: 'DISPUTE_OPENED',
+        title: 'Chargeback Filed',
+        message: `A chargeback has been filed for "${transaction.listing.title}". We are reviewing the case.`,
+        link: `/transactions/${transaction.id}`,
+      },
+      {
+        userId: transaction.sellerId,
+        type: 'DISPUTE_OPENED',
+        title: 'Chargeback Alert',
+        message: `A chargeback has been filed for "${transaction.listing.title}". Funds are on hold pending resolution.`,
+        link: `/transactions/${transaction.id}`,
+      },
+    ],
+  })
+
+  console.log('Dispute created for transaction:', transaction.id, 'Reason:', dispute.reason)
+}
+
+/**
+ * Handle Stripe dispute updated
+ */
+async function handleDisputeUpdated(dispute: Stripe.Dispute) {
+  // Find transaction by dispute ID
+  const transaction = await prisma.transaction.findFirst({
+    where: { disputeId: dispute.id },
+  })
+
+  if (!transaction) {
+    console.log('No transaction found for dispute:', dispute.id)
+    return
+  }
+
+  // Map Stripe dispute status to our status
+  let disputeStatus: 'OPEN' | 'UNDER_REVIEW' | 'ESCALATED' = 'OPEN'
+  if (dispute.status === 'warning_needs_response' || dispute.status === 'needs_response') {
+    disputeStatus = 'UNDER_REVIEW'
+  }
+
+  await prisma.transaction.update({
+    where: { id: transaction.id },
+    data: { disputeStatus },
+  })
+
+  console.log('Dispute updated for transaction:', transaction.id, 'Status:', dispute.status)
+}
+
+/**
+ * Handle Stripe dispute closed
+ */
+async function handleDisputeClosed(dispute: Stripe.Dispute) {
+  const transaction = await prisma.transaction.findFirst({
+    where: { disputeId: dispute.id },
+    include: {
+      listing: { select: { title: true } },
+    },
+  })
+
+  if (!transaction) {
+    console.log('No transaction found for dispute:', dispute.id)
+    return
+  }
+
+  // Determine outcome
+  const buyerWon = dispute.status === 'lost' // From platform's perspective, 'lost' means buyer won
+  const sellerWon = dispute.status === 'won'
+
+  let newStatus: 'REFUNDED' | 'COMPLETED' | 'DISPUTED' = 'DISPUTED'
+  let disputeStatus: 'RESOLVED_BUYER' | 'RESOLVED_SELLER' | 'UNDER_REVIEW' = 'UNDER_REVIEW'
+
+  if (buyerWon) {
+    newStatus = 'REFUNDED'
+    disputeStatus = 'RESOLVED_BUYER'
+  } else if (sellerWon) {
+    newStatus = 'COMPLETED'
+    disputeStatus = 'RESOLVED_SELLER'
+  }
+
+  await prisma.transaction.update({
+    where: { id: transaction.id },
+    data: {
+      status: newStatus,
+      disputeStatus,
+      fundsHeld: false,
+      fundsReleasedAt: sellerWon ? new Date() : null,
+    },
+  })
+
+  // Notify both parties
+  const resultMessage = buyerWon
+    ? 'The chargeback was resolved in the buyer\'s favor. A refund has been issued.'
+    : sellerWon
+    ? 'The chargeback was resolved in the seller\'s favor. Funds have been released.'
+    : 'The chargeback review is complete.'
+
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: transaction.buyerId,
+        type: 'DISPUTE_RESOLVED',
+        title: 'Chargeback Resolved',
+        message: `${resultMessage} Order: "${transaction.listing.title}"`,
+        link: `/transactions/${transaction.id}`,
+      },
+      {
+        userId: transaction.sellerId,
+        type: 'DISPUTE_RESOLVED',
+        title: 'Chargeback Resolved',
+        message: `${resultMessage} Order: "${transaction.listing.title}"`,
+        link: `/transactions/${transaction.id}`,
+      },
+    ],
+  })
+
+  console.log('Dispute closed for transaction:', transaction.id, 'Status:', dispute.status)
+}
+
+/**
+ * Handle charge refunded (partial or full)
+ */
+async function handleChargeRefunded(charge: Stripe.Charge) {
+  // Find transaction by charge ID
+  const transaction = await prisma.transaction.findFirst({
+    where: { stripeChargeId: charge.id },
+    include: {
+      listing: { select: { title: true } },
+    },
+  })
+
+  if (!transaction) {
+    console.log('No transaction found for refunded charge:', charge.id)
+    return
+  }
+
+  const refundedAmount = charge.amount_refunded / 100 // Convert from cents
+
+  // Check if full refund
+  const isFullRefund = charge.refunded
+
+  await prisma.transaction.update({
+    where: { id: transaction.id },
+    data: {
+      status: isFullRefund ? 'REFUNDED' : transaction.status,
+      fundsHeld: false,
+    },
+  })
+
+  // Notify buyer
+  await prisma.notification.create({
+    data: {
+      userId: transaction.buyerId,
+      type: 'TRANSACTION_UPDATE',
+      title: isFullRefund ? 'Full Refund Issued' : 'Partial Refund Issued',
+      message: `A refund of $${refundedAmount.toFixed(2)} has been issued for "${transaction.listing.title}".`,
+      link: `/transactions/${transaction.id}`,
+    },
+  })
+
+  console.log('Refund processed for transaction:', transaction.id, 'Amount:', refundedAmount)
 }
