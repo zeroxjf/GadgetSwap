@@ -74,7 +74,7 @@ export function WelcomeBanner() {
               onClick={handleDismiss}
               className="block w-full bg-gradient-to-r from-primary-600 to-accent-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-accent-700 transition-all shadow-lg shadow-primary-500/25"
             >
-              Create the First Listing
+              Be One of the First Listings
             </Link>
             <button
               onClick={handleDismiss}
