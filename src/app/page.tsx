@@ -115,7 +115,7 @@ const features = [
 const competitorFees = [
   { name: 'eBay', fee: 13.25, color: 'bg-red-500' },
   { name: 'Mercari', fee: 10, color: 'bg-orange-500' },
-  { name: 'Swappa', fee: 6.5, note: '3% + 3.5% PayPal', color: 'bg-yellow-500', mainCompetitor: true },
+  { name: 'Swappa', fee: 6.5, note: '3% + 3.5% PayPal', color: 'bg-gray-500' },
   { name: 'GadgetSwap', fee: 4, note: '1% + ~3% Stripe', color: 'bg-green-500', highlight: true },
 ]
 
@@ -478,19 +478,16 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              {/* Swappa - Main Competitor */}
-              <div className="bg-gray-800 rounded-2xl p-6 border-2 border-yellow-500/50 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded-full">
-                  MAIN COMPETITOR
-                </div>
+              {/* Swappa */}
+              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
                 <div className="text-center">
-                  <h3 className="text-xl font-bold text-yellow-400 mb-2">Swappa</h3>
-                  <div className="text-5xl font-bold text-yellow-400 mb-2">~6%</div>
+                  <h3 className="text-xl font-bold text-gray-300 mb-2">Swappa</h3>
+                  <div className="text-5xl font-bold text-gray-300 mb-2">~6%</div>
                   <p className="text-sm text-gray-400 mb-1">3% platform fee</p>
                   <p className="text-sm text-gray-500 mb-4">+ ~3% Stripe</p>
-                  <div className="bg-yellow-900/30 rounded-lg p-3 text-sm">
+                  <div className="bg-gray-700/50 rounded-lg p-3 text-sm">
                     <p className="text-gray-300">On $800 sale:</p>
-                    <p className="text-yellow-400 font-bold text-lg">-$48 in fees</p>
+                    <p className="text-gray-300 font-bold text-lg">-$48 in fees</p>
                     <p className="text-gray-500">You keep: $752</p>
                   </div>
                 </div>
@@ -543,7 +540,7 @@ export default async function HomePage() {
             <div className="space-y-3">
               {competitorFees.map((competitor) => (
                 <div key={competitor.name} className="flex items-center gap-4">
-                  <div className={`w-28 text-right text-sm ${competitor.highlight ? 'text-white font-bold' : competitor.mainCompetitor ? 'text-yellow-400' : 'text-gray-400'}`}>
+                  <div className={`w-28 text-right text-sm ${competitor.highlight ? 'text-white font-bold' : 'text-gray-400'}`}>
                     {competitor.name}
                   </div>
                   <div className="flex-1 bg-gray-700 rounded-full h-8 overflow-hidden">
@@ -559,10 +556,7 @@ export default async function HomePage() {
                   {competitor.highlight && (
                     <span className="text-green-400 font-bold text-xs w-20">BEST</span>
                   )}
-                  {competitor.mainCompetitor && (
-                    <span className="text-yellow-400 text-xs w-20">vs this</span>
-                  )}
-                  {!competitor.highlight && !competitor.mainCompetitor && (
+                  {!competitor.highlight && (
                     <span className="w-20"></span>
                   )}
                 </div>
