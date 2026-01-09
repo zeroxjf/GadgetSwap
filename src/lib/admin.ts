@@ -131,6 +131,38 @@ export async function getAdminStats(): Promise<{
 }
 
 /**
+ * Get flagged messages stats for admin dashboard
+ */
+export async function getFlaggedMessagesStats(): Promise<{
+  totalFlagged: number
+  totalBlocked: number
+  pendingReview: number
+  highRiskCount: number
+}> {
+  const [totalFlagged, totalBlocked, pendingReview, highRiskCount] = await Promise.all([
+    prisma.message.count({
+      where: { flagged: true },
+    }),
+    prisma.message.count({
+      where: { blocked: true },
+    }),
+    prisma.messageFlag.count({
+      where: { reviewed: false },
+    }),
+    prisma.message.count({
+      where: { riskScore: { gte: 70 } },
+    }),
+  ])
+
+  return {
+    totalFlagged,
+    totalBlocked,
+    pendingReview,
+    highRiskCount,
+  }
+}
+
+/**
  * Set a user's role (admin only operation)
  */
 export async function setUserRole(
