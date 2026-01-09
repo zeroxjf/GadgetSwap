@@ -28,6 +28,16 @@ const jailbreakStatuses = [
   { value: 'NOT_JAILBROKEN', label: 'Not Jailbroken' },
 ]
 
+const iosVersions = [
+  { value: '', label: 'Any iOS version' },
+  { value: '18', label: 'iOS 18' },
+  { value: '17', label: 'iOS 17' },
+  { value: '16', label: 'iOS 16' },
+  { value: '15', label: 'iOS 15' },
+  { value: '14', label: 'iOS 14' },
+  { value: '13', label: 'iOS 13 & below' },
+]
+
 export default function NewAlertPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -38,9 +48,7 @@ export default function NewAlertPage() {
     name: '',
     deviceType: '',
     deviceModel: '',
-    osVersionMin: '',
-    osVersionMax: '',
-    osVersionExact: '',
+    osVersion: '',
     jailbreakStatus: '',
     bootromExploitOnly: false,
     storageMinGB: '',
@@ -206,46 +214,21 @@ export default function NewAlertPage() {
 
           {/* iOS Version */}
           <div className="card p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">iOS Version</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="label mb-1 block">Exact Version (optional)</label>
-                <input
-                  type="text"
-                  value={formData.osVersionExact}
-                  onChange={(e) => setFormData({ ...formData, osVersionExact: e.target.value })}
-                  placeholder="e.g., 16.1.2"
-                  className="input"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Leave blank to use a version range instead
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="label mb-1 block">Min Version</label>
-                  <input
-                    type="text"
-                    value={formData.osVersionMin}
-                    onChange={(e) => setFormData({ ...formData, osVersionMin: e.target.value })}
-                    placeholder="e.g., 15.0"
-                    className="input"
-                    disabled={!!formData.osVersionExact}
-                  />
-                </div>
-                <div>
-                  <label className="label mb-1 block">Max Version</label>
-                  <input
-                    type="text"
-                    value={formData.osVersionMax}
-                    onChange={(e) => setFormData({ ...formData, osVersionMax: e.target.value })}
-                    placeholder="e.g., 15.4.1"
-                    className="input"
-                    disabled={!!formData.osVersionExact}
-                  />
-                </div>
-              </div>
+            <h2 className="font-semibold text-gray-900 mb-4">iOS/iPadOS Version</h2>
+            <div>
+              <label className="label mb-1 block">Version</label>
+              <select
+                value={formData.osVersion}
+                onChange={(e) => setFormData({ ...formData, osVersion: e.target.value })}
+                className="input"
+              >
+                {iosVersions.map((version) => (
+                  <option key={version.value} value={version.value}>{version.label}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Select a major iOS version to filter listings
+              </p>
             </div>
           </div>
 
