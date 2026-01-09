@@ -68,8 +68,24 @@ export function WelcomeBanner() {
             <PartyPopper className="w-5 h-5 inline ml-1.5 -mt-1 text-accent-500" />
           </p>
 
+          <div className="space-y-3 mb-5">
+            <Link
+              href="/listings/new"
+              onClick={handleDismiss}
+              className="block w-full bg-gradient-to-r from-primary-600 to-accent-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-accent-700 transition-all shadow-lg shadow-primary-500/25"
+            >
+              Create the First Listing
+            </Link>
+            <button
+              onClick={handleDismiss}
+              className="block w-full text-gray-500 dark:text-gray-400 px-6 py-2 rounded-xl font-medium hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              Just Browsing
+            </button>
+          </div>
+
           {/* Trust badges */}
-          <div className="grid grid-cols-3 gap-2 mb-5">
+          <div className="grid grid-cols-3 gap-2 mb-4">
             <div className="flex flex-col items-center gap-1 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               <span className="text-xs font-medium text-blue-700 dark:text-blue-300">IMEI Verified</span>
@@ -85,25 +101,9 @@ export function WelcomeBanner() {
           </div>
 
           {/* Stripe badge */}
-          <div className="flex items-center justify-center gap-2 mb-5 text-gray-500 dark:text-gray-400">
+          <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
             <CreditCard className="w-4 h-4" />
             <span className="text-sm">Payments secured by <span className="font-semibold text-[#635BFF]">Stripe</span></span>
-          </div>
-
-          <div className="space-y-3">
-            <Link
-              href="/listings/new"
-              onClick={handleDismiss}
-              className="block w-full bg-gradient-to-r from-primary-600 to-accent-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-accent-700 transition-all shadow-lg shadow-primary-500/25"
-            >
-              Create the First Listing
-            </Link>
-            <button
-              onClick={handleDismiss}
-              className="block w-full text-gray-500 dark:text-gray-400 px-6 py-2 rounded-xl font-medium hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              Just Browsing
-            </button>
           </div>
         </div>
 
