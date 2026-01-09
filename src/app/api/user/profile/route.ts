@@ -33,6 +33,7 @@ export async function GET() {
         ratingCount: true,
         stripeAccountId: true,
         stripeOnboardingComplete: true,
+        onboardingComplete: true,
       },
     })
 
