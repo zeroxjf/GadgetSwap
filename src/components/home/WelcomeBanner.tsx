@@ -1,5 +1,6 @@
 'use client'
 
+// Welcome banner for new visitors - dismissible via localStorage
 import { useState, useEffect } from 'react'
 import { X, Rocket, PartyPopper } from 'lucide-react'
 import Link from 'next/link'
