@@ -20,6 +20,7 @@ import {
 import { ListingCard } from '@/components/listings/ListingCard'
 import { JailbreakSearch } from '@/components/search/JailbreakSearch'
 import { TrustBadges } from '@/components/home/TrustBadges'
+import { WelcomeBanner } from '@/components/home/WelcomeBanner'
 import { prisma } from '@/lib/prisma'
 
 // Fetch real listings from database
@@ -138,6 +139,9 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Welcome Banner for new visitors */}
+      <WelcomeBanner />
+
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4">
