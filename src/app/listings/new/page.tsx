@@ -761,6 +761,13 @@ function NewListingContent() {
       }
 
       // Build listing data with verification info
+      console.log('📸 Submitting listing - images:', {
+        imagesState: images,
+        blobImages: blobImages,
+        uploadedImageUrls,
+        finalImageUrls,
+      })
+
       const listingData: any = {
         ...formData,
         images: finalImageUrls.length > 0 ? finalImageUrls : undefined,
