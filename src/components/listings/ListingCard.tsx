@@ -41,10 +41,10 @@ const conditionLabels: Record<string, { label: string; color: string }> = {
 }
 
 const jailbreakLabels: Record<string, { label: string; color: string }> = {
-  JAILBROKEN: { label: 'Jailbroken', color: 'bg-green-100 text-green-800' },
+  JAILBROKEN: { label: 'Jailbreakable', color: 'bg-purple-100 text-purple-800' },
   JAILBREAKABLE: { label: 'Jailbreakable', color: 'bg-purple-100 text-purple-800' },
-  ROOTLESS_JB: { label: 'Rootless JB', color: 'bg-green-100 text-green-800' },
-  ROOTFUL_JB: { label: 'Rootful JB', color: 'bg-green-100 text-green-800' },
+  ROOTLESS_JB: { label: 'Jailbreakable', color: 'bg-purple-100 text-purple-800' },
+  ROOTFUL_JB: { label: 'Jailbreakable', color: 'bg-purple-100 text-purple-800' },
   NOT_JAILBROKEN: { label: 'Stock', color: 'bg-gray-100 text-gray-600' },
   UNKNOWN: { label: '', color: '' },
 }

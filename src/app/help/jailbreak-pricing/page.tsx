@@ -126,8 +126,7 @@ export default function JailbreakPricingPage() {
                 <div>
                   <h3 className="font-medium text-gray-900">We check if the device is jailbreakable</h3>
                   <p className="text-sm text-gray-600">
-                    If you select "Jailbreakable" or "Currently Jailbroken" as the status, you unlock
-                    the premium pricing tier.
+                    If the device is on a jailbreakable iOS version, you unlock the premium pricing tier.
                   </p>
                 </div>
               </li>
@@ -167,10 +166,8 @@ export default function JailbreakPricingPage() {
                   Qualifies (1.5x allowed)
                 </h3>
                 <ul className="text-sm text-green-700 space-y-1">
-                  <li>• Jailbreakable status</li>
-                  <li>• Currently Jailbroken</li>
-                  <li>• Rootless Jailbreak</li>
-                  <li>• Rootful Jailbreak</li>
+                  <li>• Device on jailbreakable iOS version</li>
+                  <li>• Verified by our compatibility checker</li>
                 </ul>
               </div>
 
@@ -180,9 +177,9 @@ export default function JailbreakPricingPage() {
                   Standard Pricing (1x max)
                 </h3>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Not Jailbroken</li>
+                  <li>• Stock (not on jailbreakable iOS)</li>
                   <li>• Unknown status</li>
-                  <li>• Devices not supported</li>
+                  <li>• Non-iOS devices</li>
                 </ul>
               </div>
             </div>

@@ -24,8 +24,7 @@ const deviceTypes = [
 const jailbreakStatuses = [
   { value: '', label: 'Any status' },
   { value: 'JAILBREAKABLE', label: 'Jailbreakable' },
-  { value: 'JAILBROKEN', label: 'Currently Jailbroken' },
-  { value: 'NOT_JAILBROKEN', label: 'Not Jailbroken' },
+  { value: 'NOT_JAILBROKEN', label: 'Stock (Not Jailbreakable)' },
 ]
 
 const iosVersions = [
