@@ -199,20 +199,23 @@ export default function ListingDetailPage() {
                 )}
               </div>
 
-              {/* Thumbnails */}
-              {listing.images.length > 1 && (
-                <div className="flex gap-2 p-3 overflow-x-auto">
+              {/* Thumbnails - always show if there are images */}
+              {listing.images.length > 0 && (
+                <div className="flex gap-2 p-3 overflow-x-auto border-t border-gray-100 dark:border-gray-700">
                   {listing.images.map((img, i) => (
                     <button
                       key={img.id}
                       onClick={() => setCurrentImageIndex(i)}
                       className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 ${
-                        i === currentImageIndex ? 'border-primary-500' : 'border-transparent'
+                        i === currentImageIndex ? 'border-primary-500' : 'border-transparent hover:border-gray-300'
                       }`}
                     >
                       <img src={img.url} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
+                  <div className="flex items-center justify-center px-2 text-xs text-gray-400">
+                    {listing.images.length} photo{listing.images.length !== 1 ? 's' : ''}
+                  </div>
                 </div>
               )}
             </div>

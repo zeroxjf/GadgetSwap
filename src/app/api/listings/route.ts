@@ -64,13 +64,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    // Debug: Log images being received
-    console.log('📸 Creating listing - images received:', {
-      imagesCount: body.images?.length || 0,
-      images: body.images,
-      hasVerificationPhoto: !!body.verificationPhotoUrl,
-    })
-
     const {
       title,
       description,
