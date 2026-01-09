@@ -104,10 +104,18 @@ export async function POST(request: NextRequest) {
     const totalAmount = Math.round((salePrice + taxAmount + shippingCost) * 100) / 100
 
     // Stripe fee (calculated on total)
-    const stripeFee = Math.round((totalAmount * STRIPE_FEE_PERCENT + STRIPE_FEE_FIXED) * 100) / 100
+    const rawStripeFee = Math.round((totalAmount * STRIPE_FEE_PERCENT + STRIPE_FEE_FIXED) * 100) / 100
+
+    // Plus and Pro sellers pay ZERO fees - GadgetSwap covers Stripe fees
+    const isPaidTier = subscriptionTier === 'PLUS' || subscriptionTier === 'PRO'
+    const sellerStripeFee = isPaidTier ? 0 : rawStripeFee
 
     // What seller receives (sale price minus fees)
-    const sellerPayout = Math.round((salePrice - platformFee - stripeFee) * 100) / 100
+    const sellerPayout = Math.round((salePrice - platformFee - sellerStripeFee) * 100) / 100
+
+    // Application fee: for FREE tier, we take platform fee + stripe fee
+    // For Plus/Pro, we only take platform fee (0%) - we absorb Stripe fees
+    const applicationFee = isPaidTier ? platformFee : (platformFee + rawStripeFee)
 
     // Create payment intent with Stripe Connect
     const paymentIntent = await stripe.paymentIntents.create({
@@ -119,7 +127,7 @@ export async function POST(request: NextRequest) {
       transfer_data: {
         destination: listing.seller.stripeAccountId,
       },
-      application_fee_amount: Math.round((platformFee + stripeFee) * 100), // Platform keeps platform fee + stripe fee
+      application_fee_amount: Math.round(applicationFee * 100), // Platform fee (+ stripe fee for FREE tier)
       metadata: {
         listingId: listing.id,
         buyerId: session.user.id,
@@ -128,7 +136,7 @@ export async function POST(request: NextRequest) {
         taxAmount: taxAmount.toString(),
         shippingCost: shippingCost.toString(),
         platformFee: platformFee.toString(),
-        stripeFee: stripeFee.toString(),
+        stripeFee: sellerStripeFee.toString(),
       },
     })
 
@@ -143,7 +151,7 @@ export async function POST(request: NextRequest) {
         taxRate,
         shippingCost,
         platformFee,
-        stripeFee,
+        stripeFee: sellerStripeFee,
         sellerPayout,
         totalAmount,
         stripePaymentIntentId: paymentIntent.id,
@@ -172,9 +180,10 @@ export async function POST(request: NextRequest) {
         shippingCost,
         freeShipping,
         platformFee,
-        stripeFee,
+        stripeFee: sellerStripeFee,
         sellerPayout,
         totalAmount,
+        zeroPlatformFees: isPaidTier,
       },
     })
   } catch (error: any) {

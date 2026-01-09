@@ -34,12 +34,12 @@ const plans = [
     tier: 'PLUS',
     price: 4.99,
     yearlyPrice: 40,
-    description: '0% platform fee - just Stripe',
-    feeHighlight: '~3%',
-    feeSavings: 'Save $24 per $800 sale vs Swappa',
+    description: 'ZERO fees - we cover Stripe too',
+    feeHighlight: '0%',
+    feeSavings: 'Save $52 per $800 sale vs Swappa',
     features: [
       { name: 'Up to 15 active listings', included: true },
-      { name: '0% platform fee (only ~3% Stripe)', included: true, highlight: true },
+      { name: '0% fees - GadgetSwap covers Stripe', included: true, highlight: true },
       { name: '3 device alerts', included: true },
       { name: 'Advanced search filters', included: true },
       { name: 'Priority support', included: true },
@@ -50,20 +50,21 @@ const plans = [
     ],
     cta: 'Upgrade to Plus',
     highlighted: false,
+    badge: '0% FEES',
   },
   {
     name: 'Pro',
     tier: 'PRO',
     price: 11.99,
     yearlyPrice: 100,
-    description: '100% cheaper - ZERO platform fees',
+    description: 'ZERO fees + Market Insights',
     feeHighlight: '0%',
-    feeSavings: 'Save $48 per $800 sale vs Swappa',
+    feeSavings: 'Save $52 per $800 sale vs Swappa',
     features: [
       { name: 'Unlimited active listings', included: true },
-      { name: '0% platform fee (only ~3% Stripe)', included: true, highlight: true },
+      { name: '0% fees - GadgetSwap covers Stripe', included: true, highlight: true },
       { name: 'Unlimited device alerts', included: true },
-      { name: 'All search filters', included: true },
+      { name: 'Market Insights dashboard', included: true },
       { name: 'Priority 24/7 support', included: true },
       { name: '10 featured listings/month', included: true },
       { name: 'Advanced analytics dashboard', included: true },
@@ -72,7 +73,7 @@ const plans = [
     ],
     cta: 'Go Pro',
     highlighted: true,
-    badge: '0% PLATFORM FEE',
+    badge: '0% FEES',
   },
 ]
 
@@ -86,8 +87,8 @@ const faqs = [
     answer: 'Yes, you can cancel your subscription at any time. Your benefits will continue until the end of your billing period.',
   },
   {
-    question: 'How does the 0% platform fee work?',
-    answer: 'Plus and Pro members pay no GadgetSwap platform fee on sales. You only pay Stripe\'s processing fee (~3%). Compare that to Swappa where you\'d pay 3% + 3.5% PayPal = 6.5% total. Paid members save over $28 per $800 sale vs Swappa.',
+    question: 'How does the 0% fee work for Plus/Pro?',
+    answer: 'Plus and Pro members pay ZERO fees on sales - not even Stripe processing fees. GadgetSwap covers all payment processing costs. You keep 100% of your sale price. Compare that to Swappa where you\'d pay 3% + 3.5% PayPal = 6.5% total. Paid members save over $52 per $800 sale vs Swappa.',
   },
   {
     question: 'What happens to my listings if I downgrade?',
@@ -201,8 +202,8 @@ function SubscriptionContent() {
             Pay Less Than Swappa & eBay
           </h1>
           <p className="text-xl text-green-100 max-w-2xl mx-auto mb-6">
-            We charge <span className="font-bold text-white">1% platform + ~3% Stripe = ~4% total</span>.<br/>
-            Swappa charges 3% + 3.5% PayPal = <span className="line-through">6.5% total</span>. Go Pro for <span className="font-bold text-white">0% platform fee</span>.
+            Free tier: <span className="font-bold text-white">~4% total</span> (1% platform + ~3% Stripe).<br/>
+            Plus/Pro: <span className="font-bold text-white">0% total</span> - we cover ALL fees including Stripe.
           </p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <div className="bg-white/10 backdrop-blur rounded-lg px-4 py-2 border border-yellow-400/50">
@@ -362,7 +363,7 @@ function SubscriptionContent() {
                     GadgetSwap Free (~4%)
                   </th>
                   <th className="px-4 py-4 text-center text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30">
-                    Plus/Pro (~3%)
+                    Plus/Pro (0%)
                   </th>
                 </tr>
               </thead>
@@ -380,7 +381,7 @@ function SubscriptionContent() {
                       ${(price * 0.04).toFixed(2)}
                     </td>
                     <td className="px-4 py-4 text-center text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 font-bold">
-                      ${(price * 0.03).toFixed(2)}
+                      $0.00
                     </td>
                   </tr>
                 ))}
@@ -391,7 +392,7 @@ function SubscriptionContent() {
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center space-y-1">
             <p>eBay: 13.25% final value fee (includes payment processing)</p>
             <p>Swappa: 3% platform + 3.5% PayPal = 6.5% total</p>
-            <p>GadgetSwap Free: 1% platform + ~3% Stripe = ~4% | Plus/Pro: 0% platform + ~3% Stripe = ~3%</p>
+            <p>GadgetSwap Free: 1% platform + ~3% Stripe = ~4% | Plus/Pro: 0% total (we cover Stripe fees)</p>
           </div>
         </div>
       </section>

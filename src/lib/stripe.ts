@@ -18,6 +18,7 @@ export const STRIPE_FEE_FIXED = 0.30
 
 /**
  * Calculate fees for a transaction
+ * Plus and Pro sellers pay 0% fees - GadgetSwap covers Stripe fees
  */
 export function calculateFees(
   salePrice: number,
@@ -27,9 +28,13 @@ export function calculateFees(
   const platformFee = Math.round(salePrice * platformFeeRate * 100) / 100
 
   // Stripe fee is calculated on the total amount charged
-  const stripeFee = Math.round((salePrice * STRIPE_FEE_PERCENT + STRIPE_FEE_FIXED) * 100) / 100
+  const rawStripeFee = Math.round((salePrice * STRIPE_FEE_PERCENT + STRIPE_FEE_FIXED) * 100) / 100
 
-  // Seller receives: sale price - platform fee - stripe fee
+  // Plus and Pro members pay ZERO fees - GadgetSwap covers Stripe fees
+  const sellerPaysStripeFee = subscriptionTier === 'FREE'
+  const stripeFee = sellerPaysStripeFee ? rawStripeFee : 0
+
+  // Seller receives: sale price - platform fee - stripe fee (if applicable)
   const sellerPayout = Math.round((salePrice - platformFee - stripeFee) * 100) / 100
 
   return {
@@ -37,6 +42,7 @@ export function calculateFees(
     platformFee,
     stripeFee,
     sellerPayout,
+    gadgetSwapCoversStripeFee: !sellerPaysStripeFee,
   }
 }
 
