@@ -128,7 +128,14 @@ interface VerificationState {
     adult: string | null
     violence: string | null
     racy: string | null
+    spoof: string | null
   } | null
+  // New verification fields
+  verificationStatus: 'unknown' | 'passed' | 'flagged' | null
+  verificationIssues: string[]
+  codeFound: boolean | null
+  codeConfidence: number | null
+  hasDevice: boolean | null
   error: string | null
 }
 
@@ -203,6 +210,11 @@ function NewListingContent() {
     aiScore: null,
     aiResult: null,
     safeSearch: null,
+    verificationStatus: null,
+    verificationIssues: [],
+    codeFound: null,
+    codeConfidence: null,
+    hasDevice: null,
     error: null,
   })
 
@@ -230,7 +242,7 @@ function NewListingContent() {
 
     // Hardware
     batteryHealth: '',
-    hasThirdPartyParts: false,
+    hasThirdPartyParts: true,
     replacedParts: [] as string[],
     imeiClean: true,
     icloudUnlocked: true,
@@ -620,8 +632,20 @@ function NewListingContent() {
   // Upload image to Cloudinary
   const uploadToCloudinary = async (
     imageData: string,
-    type: 'listing' | 'verification'
-  ): Promise<{ url: string; publicId: string; aiScore?: number; aiResult?: any; safeSearch?: any } | null> => {
+    type: 'listing' | 'verification',
+    verificationCode?: string
+  ): Promise<{
+    url: string
+    publicId: string
+    aiScore?: number
+    aiResult?: any
+    safeSearch?: any
+    verificationStatus?: string
+    verificationIssues?: string[]
+    codeFound?: boolean
+    codeConfidence?: number
+    hasDevice?: boolean
+  } | null> => {
     try {
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -630,6 +654,7 @@ function NewListingContent() {
           image: imageData,
           type,
           folder: type === 'verification' ? 'verification' : 'listings',
+          verificationCode: type === 'verification' ? verificationCode : undefined,
         }),
       })
       const data = await response.json()
@@ -644,6 +669,11 @@ function NewListingContent() {
         aiScore: data.aiAnalysis?.aiGeneratedScore,
         aiResult: data.aiAnalysis,
         safeSearch: data.aiAnalysis?.safeSearch,
+        verificationStatus: data.verificationStatus,
+        verificationIssues: data.verificationIssues,
+        codeFound: data.codeVerification?.codeFound,
+        codeConfidence: data.codeVerification?.confidence,
+        hasDevice: data.aiAnalysis?.hasDevice,
       }
     } catch (error) {
       console.error('Upload error:', error)
@@ -657,14 +687,15 @@ function NewListingContent() {
     if (!files || files.length === 0) return
 
     const file = files[0]
-    setVerification((prev) => ({ ...prev, isUploading: true, error: null }))
+    setVerification((prev) => ({ ...prev, isUploading: true, error: null, verificationIssues: [] }))
 
     try {
       // Convert to base64
       const reader = new FileReader()
       reader.onload = async () => {
         const base64 = reader.result as string
-        const result = await uploadToCloudinary(base64, 'verification')
+        // Pass the verification code for OCR checking
+        const result = await uploadToCloudinary(base64, 'verification', verification.code || undefined)
 
         if (!result) {
           throw new Error('Failed to upload verification photo')
@@ -680,7 +711,13 @@ function NewListingContent() {
             adult: result.safeSearch.adult,
             violence: result.safeSearch.violence,
             racy: result.safeSearch.racy,
+            spoof: result.safeSearch.spoof,
           } : null,
+          verificationStatus: (result.verificationStatus as 'unknown' | 'passed' | 'flagged') || null,
+          verificationIssues: result.verificationIssues || [],
+          codeFound: result.codeFound ?? null,
+          codeConfidence: result.codeConfidence ?? null,
+          hasDevice: result.hasDevice ?? null,
         }))
       }
       reader.onerror = () => {
@@ -879,7 +916,7 @@ function NewListingContent() {
                       buildNumber: '',
                       jailbreakStatus: 'NOT_JAILBROKEN',
                       batteryHealth: '',
-                      hasThirdPartyParts: false,
+                      hasThirdPartyParts: true,
                       replacedParts: [],
                       imeiClean: true,
                       icloudUnlocked: true,
@@ -1912,6 +1949,11 @@ function NewListingContent() {
                                 aiScore: null,
                                 aiResult: null,
                                 safeSearch: null,
+                                verificationStatus: null,
+                                verificationIssues: [],
+                                codeFound: null,
+                                codeConfidence: null,
+                                hasDevice: null,
                               }))
                             }
                             className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
@@ -1920,45 +1962,125 @@ function NewListingContent() {
                           </button>
                         </div>
 
-                        {/* AI Analysis Result */}
-                        {verification.aiScore !== null && (
-                          <div
-                            className={`p-3 rounded-lg ${
-                              verification.aiScore > 0.6
-                                ? 'bg-red-50 border border-red-200'
-                                : verification.aiScore > 0.3
-                                ? 'bg-yellow-50 border border-yellow-200'
-                                : 'bg-green-50 border border-green-200'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              {verification.aiScore > 0.6 ? (
-                                <AlertTriangle className="w-4 h-4 text-red-600" />
-                              ) : verification.aiScore > 0.3 ? (
-                                <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                              ) : (
-                                <Check className="w-4 h-4 text-green-600" />
-                              )}
-                              <span
-                                className={`text-sm font-medium ${
-                                  verification.aiScore > 0.6
-                                    ? 'text-red-700'
-                                    : verification.aiScore > 0.3
-                                    ? 'text-yellow-700'
-                                    : 'text-green-700'
-                                }`}
-                              >
-                                {verification.aiScore > 0.6
-                                  ? 'Photo may be AI-generated or manipulated'
-                                  : verification.aiScore > 0.3
-                                  ? 'Photo flagged for manual review'
-                                  : 'Photo looks authentic'}
-                              </span>
+                        {/* Verification Results */}
+                        {verification.verificationStatus && (
+                          <div className="space-y-2">
+                            {/* Overall Status */}
+                            <div
+                              className={`p-3 rounded-lg ${
+                                verification.verificationStatus === 'passed'
+                                  ? 'bg-green-50 border border-green-200'
+                                  : 'bg-yellow-50 border border-yellow-200'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                {verification.verificationStatus === 'passed' ? (
+                                  <Check className="w-5 h-5 text-green-600" />
+                                ) : (
+                                  <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                                )}
+                                <span
+                                  className={`text-sm font-semibold ${
+                                    verification.verificationStatus === 'passed'
+                                      ? 'text-green-700'
+                                      : 'text-yellow-700'
+                                  }`}
+                                >
+                                  {verification.verificationStatus === 'passed'
+                                    ? 'Verification Passed'
+                                    : 'Flagged for Review'}
+                                </span>
+                              </div>
                             </div>
-                            {verification.aiScore > 0.3 && (
-                              <p className="text-xs text-gray-600 mt-1">
-                                Your listing will still be submitted but will require admin review.
-                              </p>
+
+                            {/* Individual Checks */}
+                            <div className="grid grid-cols-1 gap-2 text-sm">
+                              {/* Code Detection */}
+                              <div className={`flex items-center gap-2 p-2 rounded ${
+                                verification.codeFound === true
+                                  ? 'bg-green-50 text-green-700'
+                                  : verification.codeFound === false
+                                  ? 'bg-red-50 text-red-700'
+                                  : 'bg-gray-50 text-gray-500'
+                              }`}>
+                                {verification.codeFound === true ? (
+                                  <Check className="w-4 h-4" />
+                                ) : verification.codeFound === false ? (
+                                  <X className="w-4 h-4" />
+                                ) : (
+                                  <Info className="w-4 h-4" />
+                                )}
+                                <span>
+                                  {verification.codeFound === true
+                                    ? `Code "${verification.code}" detected${verification.codeConfidence && verification.codeConfidence < 1 ? ` (${Math.round(verification.codeConfidence * 100)}% confidence)` : ''}`
+                                    : verification.codeFound === false
+                                    ? 'Verification code not found in photo'
+                                    : 'Code detection pending'}
+                                </span>
+                              </div>
+
+                              {/* Device Detection */}
+                              <div className={`flex items-center gap-2 p-2 rounded ${
+                                verification.hasDevice === true
+                                  ? 'bg-green-50 text-green-700'
+                                  : verification.hasDevice === false
+                                  ? 'bg-red-50 text-red-700'
+                                  : 'bg-gray-50 text-gray-500'
+                              }`}>
+                                {verification.hasDevice === true ? (
+                                  <Check className="w-4 h-4" />
+                                ) : verification.hasDevice === false ? (
+                                  <X className="w-4 h-4" />
+                                ) : (
+                                  <Info className="w-4 h-4" />
+                                )}
+                                <span>
+                                  {verification.hasDevice === true
+                                    ? 'Device detected in photo'
+                                    : verification.hasDevice === false
+                                    ? 'No device detected in photo'
+                                    : 'Device detection pending'}
+                                </span>
+                              </div>
+
+                              {/* Spoof Detection */}
+                              <div className={`flex items-center gap-2 p-2 rounded ${
+                                verification.safeSearch?.spoof === 'VERY_UNLIKELY' || verification.safeSearch?.spoof === 'UNLIKELY'
+                                  ? 'bg-green-50 text-green-700'
+                                  : verification.safeSearch?.spoof === 'LIKELY' || verification.safeSearch?.spoof === 'VERY_LIKELY'
+                                  ? 'bg-red-50 text-red-700'
+                                  : 'bg-gray-50 text-gray-500'
+                              }`}>
+                                {verification.safeSearch?.spoof === 'VERY_UNLIKELY' || verification.safeSearch?.spoof === 'UNLIKELY' ? (
+                                  <Check className="w-4 h-4" />
+                                ) : verification.safeSearch?.spoof === 'LIKELY' || verification.safeSearch?.spoof === 'VERY_LIKELY' ? (
+                                  <AlertTriangle className="w-4 h-4" />
+                                ) : (
+                                  <Info className="w-4 h-4" />
+                                )}
+                                <span>
+                                  {verification.safeSearch?.spoof === 'VERY_UNLIKELY' || verification.safeSearch?.spoof === 'UNLIKELY'
+                                    ? 'Photo appears authentic'
+                                    : verification.safeSearch?.spoof === 'LIKELY' || verification.safeSearch?.spoof === 'VERY_LIKELY'
+                                    ? 'Photo may be edited or a screenshot'
+                                    : 'Authenticity check pending'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Issues List */}
+                            {verification.verificationIssues.length > 0 && (
+                              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p className="text-xs font-medium text-yellow-800 mb-1">Issues detected:</p>
+                                <ul className="text-xs text-yellow-700 space-y-0.5">
+                                  {verification.verificationIssues.map((issue, i) => (
+                                    <li key={i}>• {issue}</li>
+                                  ))}
+                                </ul>
+                                <p className="text-xs text-yellow-600 mt-2">
+                                  Your listing can still be submitted but will require manual review.
+                                </p>
+                              </div>
                             )}
                           </div>
                         )}

@@ -32,6 +32,7 @@ interface Listing {
   price: number
   condition: string
   status: string
+  reviewStatus: string | null
   views: number
   featured: boolean
   deviceType: string
@@ -340,13 +341,26 @@ export default function ListingDetailPage() {
                 </div>
 
                 {/* Status messages */}
-                {listing.status !== 'ACTIVE' && (
+                {listing.reviewStatus === 'PENDING_REVIEW' && (
+                  <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg p-3 mb-4 text-sm flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>This listing is under review and will be visible once approved.</span>
+                  </div>
+                )}
+
+                {listing.reviewStatus === 'REJECTED' && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
+                    This listing was not approved. Please check your account for details.
+                  </div>
+                )}
+
+                {listing.status !== 'ACTIVE' && listing.reviewStatus !== 'PENDING_REVIEW' && listing.reviewStatus !== 'REJECTED' && (
                   <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
                     This listing is no longer available
                   </div>
                 )}
 
-                {isOwnListing && (
+                {isOwnListing && listing.reviewStatus !== 'PENDING_REVIEW' && (
                   <div className="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg p-3 mb-4 text-sm">
                     This is your listing
                   </div>
