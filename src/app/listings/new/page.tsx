@@ -257,8 +257,16 @@ function NewListingContent() {
   const [isSaving, setIsSaving] = useState(false)
   const [showDraftRestored, setShowDraftRestored] = useState(false)
 
-  // Load draft from database on mount
+  // Check if user wants to start fresh (skip draft loading)
+  const isStartingFresh = searchParams.get('new') === 'true'
+
+  // Load draft from database on mount (unless starting fresh)
   useEffect(() => {
+    if (isStartingFresh) {
+      // User explicitly wants a new listing, don't load draft
+      return
+    }
+
     const loadDraft = async () => {
       try {
         const response = await fetch('/api/listings/draft')
@@ -312,7 +320,7 @@ function NewListingContent() {
       }
     }
     loadDraft()
-  }, [])
+  }, [isStartingFresh])
 
   // Save draft to database
   const saveDraft = useCallback(async () => {
@@ -897,12 +905,20 @@ function NewListingContent() {
               <Save className="w-4 h-4" />
               <span className="text-sm">Draft restored from {lastSaved ? lastSaved.toLocaleString() : 'earlier'}</span>
             </div>
-            <button
-              onClick={() => setShowDraftRestored(false)}
-              className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/listings/new?new=true"
+                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 underline"
+              >
+                Start Fresh
+              </Link>
+              <button
+                onClick={() => setShowDraftRestored(false)}
+                className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 
