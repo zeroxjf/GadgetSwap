@@ -121,21 +121,6 @@ interface VerificationState {
   isGenerating: boolean
   photoUrl: string | null
   isUploading: boolean
-  aiScore: number | null
-  aiResult: any | null
-  safeSearch: {
-    adult: string | null
-    violence: string | null
-    racy: string | null
-    spoof: string | null
-  } | null
-  // New verification fields
-  verificationStatus: 'unknown' | 'passed' | 'flagged' | null
-  verificationIssues: string[]
-  codeFound: boolean | null
-  codeConfidence: number | null
-  hasDevice: boolean | null
-  detectedTexts: string[] | null  // What OCR actually detected
   error: string | null
 }
 
@@ -206,15 +191,6 @@ function NewListingContent() {
     isGenerating: false,
     photoUrl: null,
     isUploading: false,
-    aiScore: null,
-    aiResult: null,
-    safeSearch: null,
-    verificationStatus: null,
-    verificationIssues: [],
-    codeFound: null,
-    codeConfidence: null,
-    hasDevice: null,
-    detectedTexts: null,
     error: null,
   })
 
@@ -675,21 +651,8 @@ function NewListingContent() {
   // Upload image to Cloudinary
   const uploadToCloudinary = async (
     imageData: string,
-    type: 'listing' | 'verification',
-    verificationCode?: string
-  ): Promise<{
-    url: string
-    publicId: string
-    aiScore?: number
-    aiResult?: any
-    safeSearch?: any
-    verificationStatus?: string
-    verificationIssues?: string[]
-    codeFound?: boolean
-    codeConfidence?: number
-    hasDevice?: boolean
-    detectedTexts?: string[]
-  } | null> => {
+    type: 'listing' | 'verification'
+  ): Promise<{ url: string; publicId: string } | null> => {
     try {
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -698,7 +661,6 @@ function NewListingContent() {
           image: imageData,
           type,
           folder: type === 'verification' ? 'verification' : 'listings',
-          verificationCode: type === 'verification' ? verificationCode : undefined,
         }),
       })
       const data = await response.json()
@@ -710,15 +672,6 @@ function NewListingContent() {
       return {
         url: data.url,
         publicId: data.publicId,
-        aiScore: data.aiAnalysis?.aiGeneratedScore,
-        aiResult: data.aiAnalysis,
-        safeSearch: data.aiAnalysis?.safeSearch,
-        verificationStatus: data.verificationStatus,
-        verificationIssues: data.verificationIssues,
-        codeFound: data.codeVerification?.codeFound,
-        codeConfidence: data.codeVerification?.confidence,
-        hasDevice: data.aiAnalysis?.hasDevice,
-        detectedTexts: data.codeVerification?.allDetectedText,
       }
     } catch (error) {
       console.error('Upload error:', error)
@@ -732,15 +685,14 @@ function NewListingContent() {
     if (!files || files.length === 0) return
 
     const file = files[0]
-    setVerification((prev) => ({ ...prev, isUploading: true, error: null, verificationIssues: [] }))
+    setVerification((prev) => ({ ...prev, isUploading: true, error: null }))
 
     try {
       // Convert to base64
       const reader = new FileReader()
       reader.onload = async () => {
         const base64 = reader.result as string
-        // Pass the verification code for OCR checking
-        const result = await uploadToCloudinary(base64, 'verification', verification.code || undefined)
+        const result = await uploadToCloudinary(base64, 'verification')
 
         if (!result) {
           throw new Error('Failed to upload verification photo')
@@ -750,20 +702,6 @@ function NewListingContent() {
           ...prev,
           photoUrl: result.url,
           isUploading: false,
-          aiScore: result.aiScore || null,
-          aiResult: result.aiResult || null,
-          safeSearch: result.safeSearch ? {
-            adult: result.safeSearch.adult,
-            violence: result.safeSearch.violence,
-            racy: result.safeSearch.racy,
-            spoof: result.safeSearch.spoof,
-          } : null,
-          verificationStatus: (result.verificationStatus as 'unknown' | 'passed' | 'flagged') || null,
-          verificationIssues: result.verificationIssues || [],
-          codeFound: result.codeFound ?? null,
-          codeConfidence: result.codeConfidence ?? null,
-          hasDevice: result.hasDevice ?? null,
-          detectedTexts: result.detectedTexts || null,
         }))
       }
       reader.onerror = () => {
@@ -826,14 +764,9 @@ function NewListingContent() {
       const listingData: any = {
         ...formData,
         images: finalImageUrls.length > 0 ? finalImageUrls : undefined,
-        // Verification data
+        // Verification data (staff will manually review)
         verificationCode: verification.code,
         verificationPhotoUrl: verification.photoUrl,
-        aiDetectionScore: verification.aiScore,
-        aiDetectionResult: verification.aiResult,
-        safeSearchAdult: verification.safeSearch?.adult,
-        safeSearchViolence: verification.safeSearch?.violence,
-        safeSearchRacy: verification.safeSearch?.racy,
       }
 
       // Add IMEI data if verified
@@ -983,15 +916,6 @@ function NewListingContent() {
                       isGenerating: false,
                       photoUrl: null,
                       isUploading: false,
-                      aiScore: null,
-                      aiResult: null,
-                      safeSearch: null,
-                      verificationStatus: null,
-                      verificationIssues: [],
-                      codeFound: null,
-                      codeConfidence: null,
-                      hasDevice: null,
-                      detectedTexts: null,
                       error: null,
                     })
                     router.push('/listings/new?step=1', { scroll: false })
@@ -1911,179 +1835,20 @@ function NewListingContent() {
                               setVerification((prev) => ({
                                 ...prev,
                                 photoUrl: null,
-                                aiScore: null,
-                                aiResult: null,
-                                safeSearch: null,
-                                verificationStatus: null,
-                                verificationIssues: [],
-                                codeFound: null,
-                                codeConfidence: null,
-                                hasDevice: null,
-                                detectedTexts: null,
                               }))
                             }
                             className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
                           >
                             <X className="w-4 h-4" />
                           </button>
+
+                          {/* Photo uploaded indicator */}
+                          <div className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                            <Check className="w-3 h-3" />
+                            Uploaded
+                          </div>
                         </div>
 
-                        {/* Verification Results */}
-                        {verification.verificationStatus && (
-                          <div className="space-y-2">
-                            {/* Overall Status */}
-                            <div
-                              className={`p-3 rounded-lg ${
-                                verification.verificationStatus === 'passed'
-                                  ? 'bg-green-50 border border-green-200'
-                                  : 'bg-yellow-50 border border-yellow-200'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                {verification.verificationStatus === 'passed' ? (
-                                  <Check className="w-5 h-5 text-green-600" />
-                                ) : (
-                                  <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                                )}
-                                <span
-                                  className={`text-sm font-semibold ${
-                                    verification.verificationStatus === 'passed'
-                                      ? 'text-green-700'
-                                      : 'text-yellow-700'
-                                  }`}
-                                >
-                                  {verification.verificationStatus === 'passed'
-                                    ? 'Verification Passed'
-                                    : 'Flagged for Review'}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Individual Checks */}
-                            <div className="grid grid-cols-1 gap-2 text-sm">
-                              {/* Code Detection */}
-                              <div className={`flex items-center gap-2 p-2 rounded ${
-                                verification.codeFound === true
-                                  ? 'bg-green-50 text-green-700'
-                                  : verification.codeFound === false
-                                  ? 'bg-red-50 text-red-700'
-                                  : 'bg-gray-50 text-gray-500'
-                              }`}>
-                                {verification.codeFound === true ? (
-                                  <Check className="w-4 h-4" />
-                                ) : verification.codeFound === false ? (
-                                  <X className="w-4 h-4" />
-                                ) : (
-                                  <Info className="w-4 h-4" />
-                                )}
-                                <span>
-                                  {verification.codeFound === true
-                                    ? `Code "${verification.code}" detected${verification.codeConfidence && verification.codeConfidence < 1 ? ` (${Math.round(verification.codeConfidence * 100)}% confidence)` : ''}`
-                                    : verification.codeFound === false
-                                    ? 'Verification code not found in photo'
-                                    : 'Code detection pending'}
-                                </span>
-                              </div>
-
-                              {/* Show detected text when code not found - helps user troubleshoot */}
-                              {verification.codeFound === false && verification.detectedTexts && verification.detectedTexts.length > 0 && (
-                                <div className="p-2 bg-gray-50 rounded text-xs text-gray-600">
-                                  <p className="font-medium mb-1">Text detected in photo:</p>
-                                  <p className="font-mono break-all">
-                                    {verification.detectedTexts.slice(0, 3).map((t, i) => (
-                                      <span key={i}>{i > 0 ? ', ' : ''}&quot;{t.slice(0, 50)}{t.length > 50 ? '...' : ''}&quot;</span>
-                                    ))}
-                                  </p>
-                                  <p className="mt-1 text-gray-500">
-                                    Expected: <span className="font-mono font-bold">{verification.code}</span>
-                                  </p>
-                                  <p className="mt-1 text-gray-500 italic">
-                                    Tip: Write the code larger and clearer, with good lighting
-                                  </p>
-                                </div>
-                              )}
-
-                              {/* Show message when no text detected at all */}
-                              {verification.codeFound === false && (!verification.detectedTexts || verification.detectedTexts.length === 0) && (
-                                <div className="p-2 bg-gray-50 rounded text-xs text-gray-600">
-                                  <p className="font-medium text-red-600">No text could be detected in the photo</p>
-                                  <p className="mt-1 text-gray-500">
-                                    Make sure the code <span className="font-mono font-bold">{verification.code}</span> is:
-                                  </p>
-                                  <ul className="mt-1 text-gray-500 list-disc list-inside">
-                                    <li>Written in large, clear letters</li>
-                                    <li>On white paper with dark ink</li>
-                                    <li>Well-lit and in focus</li>
-                                    <li>Visible in the photo (not cut off)</li>
-                                  </ul>
-                                </div>
-                              )}
-
-                              {/* Device Detection */}
-                              <div className={`flex items-center gap-2 p-2 rounded ${
-                                verification.hasDevice === true
-                                  ? 'bg-green-50 text-green-700'
-                                  : verification.hasDevice === false
-                                  ? 'bg-red-50 text-red-700'
-                                  : 'bg-gray-50 text-gray-500'
-                              }`}>
-                                {verification.hasDevice === true ? (
-                                  <Check className="w-4 h-4" />
-                                ) : verification.hasDevice === false ? (
-                                  <X className="w-4 h-4" />
-                                ) : (
-                                  <Info className="w-4 h-4" />
-                                )}
-                                <span>
-                                  {verification.hasDevice === true
-                                    ? 'Device detected in photo'
-                                    : verification.hasDevice === false
-                                    ? 'No device detected in photo'
-                                    : 'Device detection pending'}
-                                </span>
-                              </div>
-
-                              {/* Spoof Detection */}
-                              <div className={`flex items-center gap-2 p-2 rounded ${
-                                verification.safeSearch?.spoof === 'VERY_UNLIKELY' || verification.safeSearch?.spoof === 'UNLIKELY'
-                                  ? 'bg-green-50 text-green-700'
-                                  : verification.safeSearch?.spoof === 'LIKELY' || verification.safeSearch?.spoof === 'VERY_LIKELY'
-                                  ? 'bg-red-50 text-red-700'
-                                  : 'bg-gray-50 text-gray-500'
-                              }`}>
-                                {verification.safeSearch?.spoof === 'VERY_UNLIKELY' || verification.safeSearch?.spoof === 'UNLIKELY' ? (
-                                  <Check className="w-4 h-4" />
-                                ) : verification.safeSearch?.spoof === 'LIKELY' || verification.safeSearch?.spoof === 'VERY_LIKELY' ? (
-                                  <AlertTriangle className="w-4 h-4" />
-                                ) : (
-                                  <Info className="w-4 h-4" />
-                                )}
-                                <span>
-                                  {verification.safeSearch?.spoof === 'VERY_UNLIKELY' || verification.safeSearch?.spoof === 'UNLIKELY'
-                                    ? 'Photo appears authentic'
-                                    : verification.safeSearch?.spoof === 'LIKELY' || verification.safeSearch?.spoof === 'VERY_LIKELY'
-                                    ? 'Photo may be edited or a screenshot'
-                                    : 'Authenticity check pending'}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Issues List */}
-                            {verification.verificationIssues.length > 0 && (
-                              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <p className="text-xs font-medium text-yellow-800 mb-1">Issues detected:</p>
-                                <ul className="text-xs text-yellow-700 space-y-0.5">
-                                  {verification.verificationIssues.map((issue, i) => (
-                                    <li key={i}>• {issue}</li>
-                                  ))}
-                                </ul>
-                                <p className="text-xs text-yellow-600 mt-2">
-                                  Your listing can still be submitted but will require manual review.
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
                     ) : (
                       <label className="block cursor-pointer">
@@ -2091,7 +1856,7 @@ function NewListingContent() {
                           {verification.isUploading ? (
                             <>
                               <Loader2 className="w-10 h-10 animate-spin mb-3" />
-                              <span className="text-sm">Uploading and analyzing...</span>
+                              <span className="text-sm">Uploading...</span>
                             </>
                           ) : (
                             <>
