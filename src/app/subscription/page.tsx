@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -107,7 +107,7 @@ const faqs = [
   },
 ]
 
-export default function SubscriptionPage() {
+function SubscriptionContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -544,5 +544,17 @@ export default function SubscriptionPage() {
         </div>
       </section>
     </div>
+  )
+}
+
+export default function SubscriptionPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+      </div>
+    }>
+      <SubscriptionContent />
+    </Suspense>
   )
 }
