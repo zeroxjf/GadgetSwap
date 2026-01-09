@@ -69,15 +69,26 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription
         const userId = subscription.metadata?.userId
+        const customerId = subscription.customer as string
         const periodEnd = (subscription as any).current_period_end
+        const priceId = subscription.items.data[0]?.price?.id
+        const newTier = getTierFromPriceId(priceId)
 
-        if (userId) {
+        // Try to find user by userId metadata first, then by stripeCustomerId
+        let user = userId
+          ? await prisma.user.findUnique({ where: { id: userId } })
+          : await prisma.user.findFirst({ where: { stripeCustomerId: customerId } })
+
+        if (user) {
           await prisma.user.update({
-            where: { id: userId },
+            where: { id: user.id },
             data: {
+              subscriptionTier: subscription.cancel_at_period_end ? user.subscriptionTier : newTier,
               subscriptionEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+              subscriptionStatus: subscription.status,
             },
           })
+          console.log(`Updated subscription for user ${user.id}: tier=${newTier}, status=${subscription.status}`)
         }
         break
       }
@@ -85,18 +96,25 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
         const userId = subscription.metadata?.userId
+        const customerId = subscription.customer as string
 
-        if (userId) {
+        // Try to find user by userId metadata first, then by stripeCustomerId
+        let user = userId
+          ? await prisma.user.findUnique({ where: { id: userId } })
+          : await prisma.user.findFirst({ where: { stripeCustomerId: customerId } })
+
+        if (user) {
           await prisma.user.update({
-            where: { id: userId },
+            where: { id: user.id },
             data: {
               subscriptionTier: 'FREE',
               subscriptionId: null,
               subscriptionEnd: null,
+              subscriptionStatus: 'canceled',
             },
           })
 
-          console.log(`User ${userId} subscription canceled`)
+          console.log(`User ${user.id} subscription canceled, reverted to FREE`)
         }
         break
       }
@@ -117,4 +135,26 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+/**
+ * Determine subscription tier from Stripe price ID
+ */
+function getTierFromPriceId(priceId: string | undefined): 'FREE' | 'PLUS' | 'PRO' {
+  if (!priceId) return 'FREE'
+
+  const plusPriceIds = [
+    process.env.STRIPE_PLUS_MONTHLY_PRICE_ID,
+    process.env.STRIPE_PLUS_YEARLY_PRICE_ID,
+  ]
+
+  const proPriceIds = [
+    process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
+    process.env.STRIPE_PRO_YEARLY_PRICE_ID,
+  ]
+
+  if (plusPriceIds.includes(priceId)) return 'PLUS'
+  if (proPriceIds.includes(priceId)) return 'PRO'
+
+  return 'FREE'
 }

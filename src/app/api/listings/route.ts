@@ -8,6 +8,13 @@ import { createNotification } from '@/lib/notifications'
 // AI detection threshold for flagging
 const AI_FLAG_THRESHOLD = 0.5
 
+// Active listing limits by subscription tier
+const LISTING_LIMITS = {
+  FREE: 3,
+  PLUS: 15,
+  PRO: Infinity,
+}
+
 /**
  * POST /api/listings
  * Create a new listing (goes to review queue)
@@ -21,6 +28,38 @@ export async function POST(request: NextRequest) {
         { error: 'You must be signed in to create a listing' },
         { status: 401 }
       )
+    }
+
+    // Check subscription tier listing limit
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { subscriptionTier: true, role: true },
+    })
+
+    // Admins bypass listing limits
+    if (user?.role !== 'ADMIN') {
+      const subscriptionTier = (user?.subscriptionTier || 'FREE') as keyof typeof LISTING_LIMITS
+      const listingLimit = LISTING_LIMITS[subscriptionTier]
+
+      const activeListingCount = await prisma.listing.count({
+        where: {
+          sellerId: session.user.id,
+          status: { in: ['ACTIVE', 'PENDING'] },
+        },
+      })
+
+      if (activeListingCount >= listingLimit) {
+        const upgradeMessage = subscriptionTier === 'FREE'
+          ? 'Upgrade to Plus for 15 listings or Pro for unlimited.'
+          : subscriptionTier === 'PLUS'
+          ? 'Upgrade to Pro for unlimited listings.'
+          : ''
+
+        return NextResponse.json(
+          { error: `You've reached your limit of ${listingLimit} active listing${listingLimit === 1 ? '' : 's'}. ${upgradeMessage}` },
+          { status: 403 }
+        )
+      }
     }
 
     const body = await request.json()
