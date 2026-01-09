@@ -251,54 +251,97 @@ function NewListingContent() {
   })
 
   // Draft saving state
-  const DRAFT_KEY = 'gadgetswap_listing_draft'
+  const [draftId, setDraftId] = useState<string | null>(null)
   const [hasDraft, setHasDraft] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [showDraftRestored, setShowDraftRestored] = useState(false)
 
-  // Load draft from localStorage on mount
+  // Load draft from database on mount
   useEffect(() => {
-    try {
-      const savedDraft = localStorage.getItem(DRAFT_KEY)
-      if (savedDraft) {
-        const draft = JSON.parse(savedDraft)
-        if (draft.formData) {
-          setFormData(draft.formData)
-          setHasDraft(true)
-          setShowDraftRestored(true)
-          // Hide the notification after 5 seconds
-          setTimeout(() => setShowDraftRestored(false), 5000)
+    const loadDraft = async () => {
+      try {
+        const response = await fetch('/api/listings/draft')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.draft) {
+            const draft = data.draft
+            setDraftId(draft.id)
+            setFormData({
+              title: draft.title || '',
+              description: draft.description || '',
+              price: draft.price ? String(draft.price) : '',
+              deviceType: draft.deviceType || '',
+              deviceModel: draft.deviceModel || '',
+              condition: draft.condition || '',
+              storageGB: draft.storageGB ? String(draft.storageGB) : '',
+              color: draft.color || '',
+              carrier: draft.carrier || '',
+              osVersion: draft.osVersion || '',
+              buildNumber: '',
+              jailbreakStatus: draft.jailbreakStatus || 'NOT_JAILBROKEN',
+              batteryHealth: draft.batteryHealth ? String(draft.batteryHealth) : '',
+              hasThirdPartyParts: !draft.originalParts,
+              replacedParts: [],
+              imeiClean: draft.imeiClean ?? true,
+              icloudUnlocked: draft.icloudUnlocked ?? true,
+              acceptsReturns: draft.acceptsReturns ?? false,
+              returnWindowDays: draft.returnWindowDays || 14,
+            })
+            // Load images from draft
+            if (draft.images && draft.images.length > 0) {
+              setImages(draft.images.map((img: { url: string }) => img.url))
+              setUploadedImageUrls(draft.images.map((img: { url: string }) => img.url))
+            }
+            // Load verification data
+            if (draft.verificationCode) {
+              setVerification(prev => ({
+                ...prev,
+                code: draft.verificationCode,
+                photoUrl: draft.verificationPhotoUrl || null,
+              }))
+            }
+            setHasDraft(true)
+            setLastSaved(new Date(draft.updatedAt))
+            setShowDraftRestored(true)
+            setTimeout(() => setShowDraftRestored(false), 5000)
+          }
         }
-        if (draft.images) {
-          setImages(draft.images)
-        }
-        if (draft.lastSaved) {
-          setLastSaved(new Date(draft.lastSaved))
-        }
+      } catch (e) {
+        console.error('Failed to load draft:', e)
       }
-    } catch (e) {
-      console.error('Failed to load draft:', e)
     }
+    loadDraft()
   }, [])
 
-  // Save draft to localStorage
-  const saveDraft = useCallback(() => {
+  // Save draft to database
+  const saveDraft = useCallback(async () => {
     setIsSaving(true)
     try {
-      const draft = {
-        formData,
-        images: images.filter(img => !img.startsWith('blob:')), // Only save uploaded URLs
-        lastSaved: new Date().toISOString(),
+      const response = await fetch('/api/listings/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          draftId,
+          formData,
+          images: uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined,
+          verificationCode: verification.code,
+          verificationPhotoUrl: verification.photoUrl,
+        }),
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.draft) {
+          setDraftId(data.draft.id)
+          setLastSaved(new Date())
+          setHasDraft(true)
+        }
       }
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
-      setLastSaved(new Date())
-      setHasDraft(true)
     } catch (e) {
       console.error('Failed to save draft:', e)
     }
     setIsSaving(false)
-  }, [formData, images])
+  }, [formData, uploadedImageUrls, verification.code, verification.photoUrl, draftId])
 
   // Auto-save draft every 30 seconds if there are changes
   useEffect(() => {
@@ -313,11 +356,18 @@ function NewListingContent() {
   }, [formData, saveDraft])
 
   // Clear draft
-  const clearDraft = useCallback(() => {
-    localStorage.removeItem(DRAFT_KEY)
+  const clearDraft = useCallback(async () => {
+    if (draftId) {
+      try {
+        await fetch(`/api/listings/draft?id=${draftId}`, { method: 'DELETE' })
+      } catch (e) {
+        console.error('Failed to delete draft:', e)
+      }
+    }
+    setDraftId(null)
     setHasDraft(false)
     setLastSaved(null)
-  }, [])
+  }, [draftId])
 
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => {
@@ -882,9 +932,9 @@ function NewListingContent() {
             </button>
             {hasDraft && (
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (confirm('Are you sure you want to clear your draft? This cannot be undone.')) {
-                    clearDraft()
+                    await clearDraft()
                     // Reset form to initial state
                     setFormData({
                       title: '',
@@ -908,6 +958,22 @@ function NewListingContent() {
                       returnWindowDays: 14,
                     })
                     setImages([])
+                    setUploadedImageUrls([])
+                    setVerification({
+                      code: null,
+                      isGenerating: false,
+                      photoUrl: null,
+                      isUploading: false,
+                      aiScore: null,
+                      aiResult: null,
+                      safeSearch: null,
+                      verificationStatus: null,
+                      verificationIssues: [],
+                      codeFound: null,
+                      codeConfidence: null,
+                      hasDevice: null,
+                      error: null,
+                    })
                     router.push('/listings/new?step=1', { scroll: false })
                   }
                 }}

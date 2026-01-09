@@ -16,6 +16,8 @@ import {
   XCircle,
   AlertCircle,
   Info,
+  FileEdit,
+  ArrowRight,
 } from 'lucide-react'
 
 interface Listing {
@@ -33,7 +35,7 @@ interface Listing {
   images: { url: string }[]
 }
 
-type FilterType = 'all' | 'active' | 'sold' | 'pending_review' | 'rejected' | 'needs_info'
+type FilterType = 'all' | 'draft' | 'active' | 'sold' | 'pending_review' | 'rejected' | 'needs_info'
 
 export default function MyListingsPage() {
   const { data: session, status } = useSession()
@@ -92,9 +94,10 @@ export default function MyListingsPage() {
 
   const filteredListings = listings.filter(l => {
     if (filter === 'all') return true
+    if (filter === 'draft') return l.status === 'DRAFT'
     if (filter === 'active') return l.status === 'ACTIVE' && l.reviewStatus === 'APPROVED'
     if (filter === 'sold') return l.status === 'SOLD'
-    if (filter === 'pending_review') return l.reviewStatus === 'PENDING_REVIEW'
+    if (filter === 'pending_review') return l.reviewStatus === 'PENDING_REVIEW' && l.status !== 'DRAFT'
     if (filter === 'rejected') return l.reviewStatus === 'REJECTED'
     if (filter === 'needs_info') return l.reviewStatus === 'NEEDS_INFO'
     return true
@@ -102,9 +105,10 @@ export default function MyListingsPage() {
 
   const statusCounts: Record<FilterType, number> = {
     all: listings.length,
+    draft: listings.filter(l => l.status === 'DRAFT').length,
     active: listings.filter(l => l.status === 'ACTIVE' && l.reviewStatus === 'APPROVED').length,
     sold: listings.filter(l => l.status === 'SOLD').length,
-    pending_review: listings.filter(l => l.reviewStatus === 'PENDING_REVIEW').length,
+    pending_review: listings.filter(l => l.reviewStatus === 'PENDING_REVIEW' && l.status !== 'DRAFT').length,
     rejected: listings.filter(l => l.reviewStatus === 'REJECTED').length,
     needs_info: listings.filter(l => l.reviewStatus === 'NEEDS_INFO').length,
   }
@@ -143,6 +147,7 @@ export default function MyListingsPage() {
 
   const filterLabels: Record<FilterType, string> = {
     all: 'All',
+    draft: 'Drafts',
     active: 'Active',
     sold: 'Sold',
     pending_review: 'Pending',
@@ -173,7 +178,7 @@ export default function MyListingsPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {(['all', 'active', 'sold', 'pending_review', 'rejected', 'needs_info'] as FilterType[]).map((f) => (
+          {(['all', 'draft', 'active', 'sold', 'pending_review', 'rejected', 'needs_info'] as FilterType[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -210,6 +215,7 @@ export default function MyListingsPage() {
           <div className="card divide-y divide-gray-100 dark:divide-gray-700">
             {filteredListings.map((listing) => {
               const reviewConfig = reviewStatusConfig[listing.reviewStatus]
+              const isDraft = listing.status === 'DRAFT'
               return (
                 <div key={listing.id} className="p-4">
                   <div className="flex items-start gap-4">
@@ -219,7 +225,7 @@ export default function MyListingsPage() {
                         <img src={listing.images[0].url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                          No image
+                          {isDraft ? <FileEdit className="w-8 h-8" /> : 'No image'}
                         </div>
                       )}
                     </div>
@@ -227,11 +233,24 @@ export default function MyListingsPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Link href={`/listings/${listing.id}`} className="font-medium text-gray-900 dark:text-white hover:text-primary-600 truncate">
-                          {listing.title}
-                        </Link>
+                        {isDraft ? (
+                          <span className="font-medium text-gray-900 dark:text-white truncate">
+                            {listing.title || 'Untitled Draft'}
+                          </span>
+                        ) : (
+                          <Link href={`/listings/${listing.id}`} className="font-medium text-gray-900 dark:text-white hover:text-primary-600 truncate">
+                            {listing.title}
+                          </Link>
+                        )}
+                        {/* Draft Badge */}
+                        {isDraft && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border bg-gray-100 text-gray-700 border-gray-200">
+                            <FileEdit className="w-3.5 h-3.5" />
+                            Draft
+                          </span>
+                        )}
                         {/* Review Status Badge */}
-                        {reviewConfig && (
+                        {!isDraft && reviewConfig && (
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${reviewConfig.color}`}>
                             {reviewConfig.icon}
                             {reviewConfig.label}
@@ -245,29 +264,43 @@ export default function MyListingsPage() {
                         )}
                       </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {listing.deviceModel} · {listing.condition}
+                        {listing.deviceModel || 'No device selected'} {listing.condition ? `· ${listing.condition}` : ''}
                       </p>
                       <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        <span className="font-semibold text-gray-900 dark:text-white">${listing.price.toLocaleString()}</span>
-                        {listing.reviewStatus === 'APPROVED' && (
+                        {listing.price > 0 ? (
+                          <span className="font-semibold text-gray-900 dark:text-white">${listing.price.toLocaleString()}</span>
+                        ) : (
+                          <span className="text-gray-400">No price set</span>
+                        )}
+                        {!isDraft && listing.reviewStatus === 'APPROVED' && (
                           <span className="flex items-center gap-1">
                             <Eye className="w-4 h-4" />
                             {listing.views} views
                           </span>
                         )}
-                        <span>Listed {new Date(listing.createdAt).toLocaleDateString()}</span>
+                        <span>{isDraft ? 'Last edited' : 'Listed'} {new Date(listing.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
 
                     {/* Actions */}
                     <div className="flex items-center gap-2">
-                      <Link
-                        href={`/listings/${listing.id}/edit`}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                        title="Edit"
-                      >
-                        <Edit2 className="w-5 h-5 text-gray-400" />
-                      </Link>
+                      {isDraft ? (
+                        <Link
+                          href="/listings/new"
+                          className="btn-primary text-sm flex items-center gap-1"
+                        >
+                          Continue
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      ) : (
+                        <Link
+                          href={`/listings/${listing.id}/edit`}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-5 h-5 text-gray-400" />
+                        </Link>
+                      )}
                       <button
                         onClick={() => deleteListing(listing.id)}
                         className="p-2 hover:bg-red-50 rounded-lg"
@@ -279,7 +312,7 @@ export default function MyListingsPage() {
                   </div>
 
                   {/* Rejection Reason / Needs Info Message */}
-                  {(listing.reviewStatus === 'REJECTED' || listing.reviewStatus === 'NEEDS_INFO') && listing.rejectionReason && (
+                  {!isDraft && (listing.reviewStatus === 'REJECTED' || listing.reviewStatus === 'NEEDS_INFO') && listing.rejectionReason && (
                     <div className={`mt-3 p-3 rounded-lg flex items-start gap-2 ${
                       listing.reviewStatus === 'REJECTED'
                         ? 'bg-red-50 border border-red-200'
@@ -312,11 +345,21 @@ export default function MyListingsPage() {
                   )}
 
                   {/* Pending Review Message */}
-                  {listing.reviewStatus === 'PENDING_REVIEW' && (
+                  {listing.reviewStatus === 'PENDING_REVIEW' && !isDraft && (
                     <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
                       <Clock className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
                       <p className="text-sm text-yellow-700">
                         Your listing is being reviewed by our team. This usually takes less than 24 hours.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Draft Message */}
+                  {isDraft && (
+                    <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-start gap-2">
+                      <FileEdit className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-gray-600">
+                        This listing is saved as a draft. Click &quot;Continue&quot; to complete and submit it for review.
                       </p>
                     </div>
                   )}
