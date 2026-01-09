@@ -170,7 +170,7 @@ export function ModelAutocomplete({
             <button
               type="button"
               onClick={handleClear}
-              className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X className="w-4 h-4" />
             </button>
@@ -182,10 +182,10 @@ export function ModelAutocomplete({
       {isOpen && (
         <ul
           ref={listRef}
-          className="absolute z-50 w-full mt-1 max-h-60 overflow-auto bg-white border border-gray-200 rounded-lg shadow-lg"
+          className="absolute z-50 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg"
         >
           {sortedModels.length === 0 ? (
-            <li className="px-4 py-3 text-gray-500 text-sm">
+            <li className="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">
               No models found for "{inputValue}"
             </li>
           ) : (
@@ -196,9 +196,9 @@ export function ModelAutocomplete({
                 onMouseEnter={() => setHighlightedIndex(index)}
                 className={`px-4 py-2 cursor-pointer text-sm ${
                   index === highlightedIndex
-                    ? 'bg-primary-50 text-primary-900'
-                    : 'hover:bg-gray-50'
-                } ${model.value === value ? 'font-medium bg-primary-50' : ''}`}
+                    ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-900 dark:text-primary-100'
+                    : 'text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'
+                } ${model.value === value ? 'font-medium bg-primary-100 dark:bg-primary-900/50' : ''}`}
               >
                 <HighlightMatch text={model.label} query={inputValue} />
               </li>
@@ -222,7 +222,7 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) =>
         part.toLowerCase() === query.toLowerCase() ? (
-          <span key={i} className="font-semibold text-primary-600">{part}</span>
+          <span key={i} className="font-semibold text-primary-600 dark:text-primary-400">{part}</span>
         ) : (
           <span key={i}>{part}</span>
         )
