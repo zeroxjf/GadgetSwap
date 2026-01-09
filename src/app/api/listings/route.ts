@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
       originalParts,
       imeiClean,
       icloudUnlocked,
+      acceptsReturns,
+      returnWindowDays,
       images,
     } = body
 
@@ -73,6 +75,8 @@ export async function POST(request: NextRequest) {
         originalParts: originalParts ?? true,
         imeiClean: imeiClean ?? true,
         icloudUnlocked: icloudUnlocked ?? true,
+        acceptsReturns: acceptsReturns ?? false,
+        returnWindowDays: acceptsReturns ? (returnWindowDays || 14) : null,
         status: 'ACTIVE',
         sellerId: session.user.id,
         // Create images if provided
