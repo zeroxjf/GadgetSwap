@@ -22,7 +22,8 @@ import {
   Cpu,
   Info,
   Loader2,
-  Package
+  Package,
+  Edit2,
 } from 'lucide-react'
 
 interface Listing {
@@ -358,9 +359,16 @@ export default function ListingDetailPage() {
                   </div>
                 )}
 
-                {isOwnListing && listing.reviewStatus !== 'PENDING_REVIEW' && (
-                  <div className="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg p-3 mb-4 text-sm">
-                    This is your listing
+                {isOwnListing && (
+                  <div className="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg p-3 mb-4 text-sm flex items-center justify-between">
+                    <span>This is your listing</span>
+                    <Link
+                      href={`/listings/${listing.id}/edit`}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      Edit
+                    </Link>
                   </div>
                 )}
 
