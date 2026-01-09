@@ -79,7 +79,7 @@ export async function PUT(
     // Verify ownership
     const listing = await prisma.listing.findUnique({
       where: { id },
-      select: { sellerId: true, status: true, price: true },
+      select: { sellerId: true, status: true, reviewStatus: true, price: true },
     })
 
     if (!listing) {
@@ -137,6 +137,13 @@ export async function PUT(
       updateData.status = status
     }
 
+    // If listing was rejected or needs_info, resubmit for review when edited
+    if (listing.reviewStatus === 'REJECTED' || listing.reviewStatus === 'NEEDS_INFO') {
+      updateData.reviewStatus = 'PENDING_REVIEW'
+      updateData.status = 'PENDING'
+      updateData.rejectionReason = null // Clear old rejection reason
+    }
+
     // Update listing
     const updatedListing = await prisma.listing.update({
       where: { id },
@@ -182,9 +189,16 @@ export async function PUT(
       })
     }
 
+    // Check if listing was resubmitted for review
+    const wasResubmitted = listing.reviewStatus === 'REJECTED' || listing.reviewStatus === 'NEEDS_INFO'
+
     return NextResponse.json({
       success: true,
       listing: updatedListing,
+      resubmitted: wasResubmitted,
+      message: wasResubmitted
+        ? 'Listing updated and resubmitted for review'
+        : 'Listing updated successfully',
     })
   } catch (error) {
     console.error('Update listing error:', error)
