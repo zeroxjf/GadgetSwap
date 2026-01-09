@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   HelpCircle,
@@ -47,7 +48,7 @@ const categories = [
   },
 ]
 
-const faqs: Record<string, Array<{ q: string; a: string }>> = {
+const faqs: Record<string, Array<{ q: string; a: string; id?: string }>> = {
   buying: [
     {
       q: 'How do I know if a device is jailbreakable?',
@@ -104,16 +105,21 @@ const faqs: Record<string, Array<{ q: string; a: string }>> = {
   ],
   payments: [
     {
+      q: 'How does GadgetSwap protect my purchase?',
+      a: 'GadgetSwap uses a multi-layer protection system to keep your transactions safe:\n\n1. **24-Hour Escrow**: When you pay, funds are held securely by Stripe — not released to the seller immediately. After delivery is confirmed (via carrier tracking or your manual confirmation), there\'s an additional 24-hour hold before the seller receives payment. This gives you time to inspect the device.\n\n2. **Stripe Dispute Protection**: If something goes wrong, you can file a dispute directly with your bank or through our platform. Stripe\'s dispute system automatically pauses any fund release while the case is reviewed.\n\n3. **Automatic Delivery Tracking**: We monitor carrier tracking (UPS, FedEx, USPS) automatically. Once delivery is confirmed, the 24-hour inspection window begins — no action needed from you.\n\n4. **Chargeback Support**: If you need to dispute a charge with your bank, our system automatically syncs with Stripe to pause seller payouts and protect your funds during the review.\n\nThis means sellers can\'t disappear with your money, and you always have time to verify your device matches the listing.',
+      id: 'buyer-protection',
+    },
+    {
       q: 'What payment methods are accepted?',
       a: 'We accept all major credit/debit cards (Visa, Mastercard, Amex, Discover) and Apple Pay through our secure Stripe payment system.',
     },
     {
       q: 'How does escrow protection work?',
-      a: 'When you buy, payment is held securely by Stripe. After delivery is confirmed (either manually or via tracking), funds are held for 24 hours before being released to the seller.',
+      a: 'When you buy, payment is held securely by Stripe. After delivery is confirmed (either manually or via tracking), funds are held for 24 hours before being released to the seller. This gives you time to inspect the device and open a dispute if needed.',
     },
     {
       q: 'Can I get a refund?',
-      a: 'If the item doesn\'t match the description, you can open a dispute within 24 hours of delivery. Our team will review and process refunds for valid claims.',
+      a: 'If the item doesn\'t match the description, you can open a dispute within 24 hours of delivery. Our team will review and process refunds for valid claims. If you file a chargeback with your bank, funds are automatically held until the dispute is resolved.',
     },
     {
       q: 'Is my payment information secure?',
@@ -123,9 +129,32 @@ const faqs: Record<string, Array<{ q: string; a: string }>> = {
 }
 
 export default function HelpPage() {
+  const searchParams = useSearchParams()
   const [activeCategory, setActiveCategory] = useState('buying')
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Handle URL parameters for direct linking to specific FAQs
+  useEffect(() => {
+    const category = searchParams.get('category')
+    const faqId = searchParams.get('faq')
+
+    if (category && faqs[category]) {
+      setActiveCategory(category)
+
+      if (faqId) {
+        // Find the FAQ by id
+        const faqIndex = faqs[category].findIndex(f => f.id === faqId)
+        if (faqIndex !== -1) {
+          setExpandedFaq(`${category}-${faqIndex}`)
+          // Scroll to the FAQ section after a short delay
+          setTimeout(() => {
+            document.getElementById(`faq-${category}-${faqIndex}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }, 100)
+        }
+      }
+    }
+  }, [searchParams])
 
   const filteredFaqs = searchQuery
     ? Object.entries(faqs).flatMap(([category, items]) =>
@@ -216,7 +245,7 @@ export default function HelpPage() {
                 </h2>
               </div>
               {faqs[activeCategory]?.map((faq, index) => (
-                <div key={index} className="p-4">
+                <div key={index} id={`faq-${activeCategory}-${index}`} className="p-4">
                   <button
                     onClick={() => setExpandedFaq(expandedFaq === `${activeCategory}-${index}` ? null : `${activeCategory}-${index}`)}
                     className="w-full flex items-center justify-between text-left"
@@ -229,7 +258,19 @@ export default function HelpPage() {
                     )}
                   </button>
                   {expandedFaq === `${activeCategory}-${index}` && (
-                    <p className="text-gray-600 mt-3 text-sm">{faq.a}</p>
+                    <div className="text-gray-600 mt-3 text-sm whitespace-pre-line">
+                      {faq.a.split('\n').map((line, i) => {
+                        // Handle markdown-style bold
+                        const parts = line.split(/\*\*(.*?)\*\*/g)
+                        return (
+                          <p key={i} className={line === '' ? 'h-2' : ''}>
+                            {parts.map((part, j) =>
+                              j % 2 === 1 ? <strong key={j}>{part}</strong> : part
+                            )}
+                          </p>
+                        )
+                      })}
+                    </div>
                   )}
                 </div>
               ))}
@@ -270,7 +311,7 @@ export default function HelpPage() {
             Our support team is here to help you with any questions.
           </p>
           <a
-            href="mailto:support@gadgetswap.com"
+            href="mailto:jf.tech.team@gmail.com"
             className="btn-primary inline-flex items-center gap-2"
           >
             <Mail className="w-4 h-4" />
