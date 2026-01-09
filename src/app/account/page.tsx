@@ -17,18 +17,36 @@ import {
   Shield,
   ChevronRight,
   Edit2,
-  Camera
+  Camera,
+  Wallet,
+  ArrowRight
 } from 'lucide-react'
 
 export default function AccountPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [payoutsSetup, setPayoutsSetup] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin?callbackUrl=/account')
     }
+    if (status === 'authenticated') {
+      fetchPayoutStatus()
+    }
   }, [status, router])
+
+  const fetchPayoutStatus = async () => {
+    try {
+      const response = await fetch('/api/payouts/info')
+      if (response.ok) {
+        const data = await response.json()
+        setPayoutsSetup(data.stripeOnboardingComplete)
+      }
+    } catch (error) {
+      console.error('Failed to fetch payout status:', error)
+    }
+  }
 
   if (status === 'loading') {
     return (
@@ -52,6 +70,26 @@ export default function AccountPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Account</h1>
           <p className="text-gray-600 dark:text-gray-400">Manage your profile, listings, and settings</p>
         </div>
+
+        {/* Payout setup warning */}
+        {payoutsSetup === false && (
+          <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start gap-3">
+            <Wallet className="w-5 h-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium text-yellow-800 dark:text-yellow-200">Set up payouts to make your listings visible</p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                Your listings won't appear in search results or on the homepage until you connect your bank account for payouts.
+              </p>
+              <Link
+                href="/account/payouts"
+                className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100"
+              >
+                Set up payouts
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-3 gap-6">
           {/* Profile Card */}
@@ -149,6 +187,19 @@ export default function AccountPage() {
                   <div>
                     <p className="font-medium dark:text-white">My Listings</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Manage your active and sold listings</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </Link>
+
+              <Link href="/account/sales" className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900 rounded-lg">
+                    <ShoppingBag className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium dark:text-white">My Sales</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Manage orders and add tracking</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400" />
