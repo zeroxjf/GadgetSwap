@@ -231,6 +231,7 @@ function NewListingContent() {
   // Draft saving state
   const [draftId, setDraftId] = useState<string | null>(null)
   const [hasDraft, setHasDraft] = useState(false)
+  const [draftLoadingComplete, setDraftLoadingComplete] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [showDraftRestored, setShowDraftRestored] = useState(false)
@@ -242,6 +243,7 @@ function NewListingContent() {
   useEffect(() => {
     if (isStartingFresh) {
       // User explicitly wants a new listing, don't load draft
+      setDraftLoadingComplete(true)
       return
     }
 
@@ -293,8 +295,10 @@ function NewListingContent() {
             setTimeout(() => setShowDraftRestored(false), 5000)
           }
         }
+        setDraftLoadingComplete(true)
       } catch (e) {
         console.error('Failed to load draft:', e)
+        setDraftLoadingComplete(true)
       }
     }
     loadDraft()
@@ -825,11 +829,12 @@ function NewListingContent() {
   }
 
   // Generate verification code when entering step 3 (Photos & Verification)
+  // Only generate if draft loading is complete and no code exists yet
   useEffect(() => {
-    if (step === 3 && !verification.code && !verification.isGenerating) {
+    if (step === 3 && draftLoadingComplete && !verification.code && !verification.isGenerating) {
       generateVerificationCode()
     }
-  }, [step, verification.code, verification.isGenerating])
+  }, [step, draftLoadingComplete, verification.code, verification.isGenerating])
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 lg:py-6">

@@ -56,6 +56,8 @@ interface Listing {
   icloudUnlocked: boolean
   images: { id: string; url: string; order: number }[]
   createdAt: string
+  verificationCode: string | null
+  sellerId: string
   seller: {
     id: string
     name: string | null
@@ -354,6 +356,22 @@ export default function ListingDetailPage() {
                   )}
                 </div>
 
+                {/* Verification Code - visible to all for verification */}
+                {listing.verificationCode && (
+                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg p-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Verification Code</span>
+                    </div>
+                    <code className="block mt-2 text-2xl font-mono font-bold tracking-[0.3em] text-emerald-800 dark:text-emerald-200">
+                      {listing.verificationCode}
+                    </code>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                      Check that this code matches the handwritten code in the photos
+                    </p>
+                  </div>
+                )}
+
                 {/* Status messages */}
                 {listing.reviewStatus === 'PENDING_REVIEW' && (
                   <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg p-3 mb-4 text-sm flex items-center gap-2">
@@ -375,7 +393,7 @@ export default function ListingDetailPage() {
                 )}
 
                 {isOwnListing && (
-                  <div className="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg p-3 mb-4 text-sm flex items-center justify-between">
+                  <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-lg p-3 mb-4 text-sm flex items-center justify-between">
                     <span>This is your listing</span>
                     <Link
                       href={`/listings/${listing.id}/edit`}
