@@ -82,32 +82,102 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">6. Payments and Fees</h2>
               <p className="text-gray-600 mb-4">
-                All payments are processed securely through Stripe. Sellers are charged a commission on successful sales:
+                All payments are processed exclusively through Stripe, a third-party payment processor.
+                By using GadgetSwap, you agree to Stripe&apos;s{' '}
+                <a href="https://stripe.com/legal/consumer" className="text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                  Terms of Service
+                </a>
+                {' '}and{' '}
+                <a href="https://stripe.com/privacy" className="text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                  Privacy Policy
+                </a>.
               </p>
+              <p className="text-gray-600 mb-4">Platform fees on successful sales:</p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
-                <li>Free accounts: 10% commission</li>
-                <li>Plus subscribers: 7% commission</li>
-                <li>Pro subscribers: 5% commission</li>
+                <li>Free accounts: 1% platform fee + ~3% Stripe processing fee</li>
+                <li>Plus/Pro subscribers: 0% platform fee (GadgetSwap covers Stripe fees)</li>
               </ul>
               <p className="text-gray-600 mt-4">
-                Funds are held in escrow and released 24 hours after delivery confirmation.
+                <strong>Important:</strong> GadgetSwap does not process, store, or have access to your payment
+                card information. All payment data is handled directly by Stripe in accordance with PCI-DSS standards.
+                Funds are held by Stripe and released to sellers 24 hours after delivery confirmation.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">7. Escrow and Buyer Protection</h2>
               <p className="text-gray-600 mb-4">
-                Our escrow system protects both buyers and sellers. Payment is held until:
+                Our escrow system provides a holding period for payments. Funds are held by Stripe until:
               </p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
                 <li>The item is delivered (confirmed via tracking or manual confirmation)</li>
                 <li>24 hours have passed since delivery confirmation</li>
                 <li>Any disputes have been resolved</li>
               </ul>
+              <p className="text-gray-600 mt-4">
+                This escrow period is a courtesy service. Ultimate payment protection is provided by Stripe
+                and your card issuer, not GadgetSwap.
+              </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">8. Prohibited Items and Conduct</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">8. Disputes, Chargebacks, and Refunds</h2>
+              <p className="text-gray-600 mb-4">
+                <strong>Payment disputes and chargebacks are handled by Stripe.</strong> GadgetSwap is a marketplace
+                platform that facilitates transactions between buyers and sellers, but we are not a party to the
+                payment transaction itself.
+              </p>
+
+              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Dispute Resolution Process</h3>
+              <ul className="list-disc pl-6 text-gray-600 space-y-2">
+                <li>
+                  <strong>Step 1:</strong> Buyers and sellers should first attempt to resolve issues directly
+                  through our messaging system.
+                </li>
+                <li>
+                  <strong>Step 2:</strong> If unresolved, buyers may file a dispute through Stripe or their
+                  card issuer. Stripe will manage the dispute process according to their policies and card
+                  network rules (Visa, Mastercard, etc.).
+                </li>
+                <li>
+                  <strong>Step 3:</strong> GadgetSwap may provide transaction records to Stripe upon request
+                  to assist in dispute resolution, but the final decision rests with Stripe and/or the card networks.
+                </li>
+              </ul>
+
+              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Important Disclaimers</h3>
+              <ul className="list-disc pl-6 text-gray-600 space-y-2">
+                <li>
+                  GadgetSwap does not guarantee the outcome of any dispute. Dispute decisions are made solely
+                  by Stripe, card networks, or issuing banks.
+                </li>
+                <li>
+                  Sellers are responsible for responding to Stripe disputes with appropriate evidence
+                  (shipping tracking, delivery confirmation, communication records).
+                </li>
+                <li>
+                  Chargebacks and dispute fees assessed by Stripe or card networks are the responsibility
+                  of the seller, not GadgetSwap.
+                </li>
+                <li>
+                  For buyer protection details, refer to{' '}
+                  <a href="https://stripe.com/docs/disputes" className="text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                    Stripe&apos;s Dispute Documentation
+                  </a>
+                  {' '}and your card issuer&apos;s policies.
+                </li>
+              </ul>
+
+              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Refunds</h3>
+              <p className="text-gray-600 mb-4">
+                Refunds for eligible transactions are processed through Stripe. Refund timing depends on
+                your card issuer and may take 5-10 business days to appear. GadgetSwap may facilitate refund
+                requests but does not directly control refund processing.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">9. Prohibited Items and Conduct</h2>
               <p className="text-gray-600 mb-4">The following are prohibited on GadgetSwap:</p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
                 <li>Stolen devices or devices with activation lock</li>
@@ -120,7 +190,7 @@ export default function TermsPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">9. Intellectual Property</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">10. Intellectual Property</h2>
               <p className="text-gray-600 mb-4">
                 Apple, iPhone, iPad, and iOS are trademarks of Apple Inc. GadgetSwap is not affiliated with
                 or endorsed by Apple Inc. All jailbreak tools mentioned are the property of their respective developers.
@@ -128,20 +198,60 @@ export default function TermsPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">10. Limitation of Liability</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">11. Limitation of Liability</h2>
               <p className="text-gray-600 mb-4">
-                GadgetSwap provides a platform for transactions but is not responsible for:
+                <strong>GadgetSwap is a marketplace platform only.</strong> We facilitate connections between
+                buyers and sellers but are not a party to transactions. To the maximum extent permitted by law:
               </p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
-                <li>The quality, safety, or legality of items listed</li>
-                <li>The accuracy of listings or user content</li>
-                <li>The ability of sellers to sell or buyers to pay</li>
-                <li>Any damages resulting from jailbreaking devices</li>
+                <li>GadgetSwap is not responsible for the quality, safety, legality, or accuracy of any listing</li>
+                <li>GadgetSwap is not responsible for the ability of sellers to sell or buyers to pay</li>
+                <li>GadgetSwap is not responsible for any damages resulting from transactions, including
+                    items not received, items not as described, or defective items</li>
+                <li>GadgetSwap is not responsible for any damages resulting from jailbreaking devices</li>
+                <li>GadgetSwap is not responsible for payment disputes, chargebacks, or their outcomes -
+                    these are governed by Stripe&apos;s policies and card network rules</li>
+                <li>GadgetSwap&apos;s total liability for any claim shall not exceed the platform fees you paid
+                    to GadgetSwap in the 12 months preceding the claim</li>
+              </ul>
+              <p className="text-gray-600 mt-4">
+                <strong>Payment protection is provided by Stripe and your card issuer, not GadgetSwap.</strong>{' '}
+                By using our platform, you acknowledge that any recourse for payment issues must be pursued
+                through Stripe&apos;s dispute process or your card issuer&apos;s chargeback process.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">12. Indemnification</h2>
+              <p className="text-gray-600 mb-4">
+                You agree to indemnify and hold harmless GadgetSwap, its officers, directors, employees, and
+                agents from any claims, damages, losses, or expenses (including reasonable attorney fees)
+                arising from:
+              </p>
+              <ul className="list-disc pl-6 text-gray-600 space-y-2">
+                <li>Your use of the Service</li>
+                <li>Your violation of these Terms</li>
+                <li>Your violation of any rights of another party</li>
+                <li>Any dispute between you and another user</li>
+                <li>Any dispute related to payments processed through Stripe</li>
               </ul>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">11. Termination</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">13. Disclaimer of Warranties</h2>
+              <p className="text-gray-600 mb-4">
+                THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND,
+                EXPRESS OR IMPLIED. GADGETSWAP DISCLAIMS ALL WARRANTIES, INCLUDING IMPLIED WARRANTIES OF
+                MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+              </p>
+              <p className="text-gray-600 mb-4">
+                We do not warrant that the Service will be uninterrupted, secure, or error-free. We do not
+                warrant the accuracy of listings, user content, or jailbreak compatibility information.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">14. Termination</h2>
               <p className="text-gray-600 mb-4">
                 We reserve the right to suspend or terminate accounts that violate these terms or
                 engage in fraudulent activity. Users may delete their accounts at any time, subject
@@ -150,7 +260,16 @@ export default function TermsPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">12. Changes to Terms</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">15. Governing Law</h2>
+              <p className="text-gray-600 mb-4">
+                These Terms shall be governed by and construed in accordance with the laws of the
+                United States. Any disputes arising from these Terms or your use of the Service
+                shall be resolved through binding arbitration, except where prohibited by law.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">16. Changes to Terms</h2>
               <p className="text-gray-600 mb-4">
                 We may update these terms from time to time. Continued use of the Service after
                 changes constitutes acceptance of the new terms.
@@ -158,7 +277,7 @@ export default function TermsPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">13. Contact</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">17. Contact</h2>
               <p className="text-gray-600">
                 For questions about these terms, please contact us at{' '}
                 <a href="mailto:legal@gadgetswap.com" className="text-primary-600 hover:underline">
