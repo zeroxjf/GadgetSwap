@@ -888,7 +888,7 @@ function NewListingContent() {
   }, [step, verification.code, verification.isGenerating])
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 lg:py-6">
       <div className="max-w-6xl mx-auto px-4">
         {/* Draft restored notification */}
         {showDraftRestored && (
@@ -907,13 +907,13 @@ function NewListingContent() {
         )}
 
         {/* Header */}
-        <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-2">
           <div>
-            <Link href="/" className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm mb-2 inline-block">
+            <Link href="/" className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm mb-1 inline-block">
               ← Back to home
             </Link>
             <h1 className="text-2xl font-bold dark:text-white">Create a Listing</h1>
-            <p className="text-gray-600 dark:text-gray-400">List your device in a few simple steps</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">List your device in a few simple steps</p>
           </div>
 
           {/* Save/Clear draft buttons */}
@@ -992,7 +992,7 @@ function NewListingContent() {
         </div>
 
         {/* Step navigation arrows */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-3">
           <button
             onClick={() => step > 1 && setStep(step - 1)}
             disabled={step === 1}
@@ -1025,7 +1025,7 @@ function NewListingContent() {
         </div>
 
         {/* Progress steps - horizontal on desktop */}
-        <div className="hidden lg:flex items-center gap-2 mb-8 justify-center">
+        <div className="hidden lg:flex items-center gap-2 mb-4 justify-center">
             {[
               { num: 1, label: 'Device' },
               { num: 2, label: 'Details' },
@@ -1061,7 +1061,7 @@ function NewListingContent() {
         </div>
 
         {/* Mobile progress steps */}
-        <div className="lg:hidden mb-8">
+        <div className="lg:hidden mb-4">
           <div className="flex items-center justify-between">
             {[
               { num: 1, label: 'Device' },
