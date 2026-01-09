@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { ListingCard } from '@/components/listings/ListingCard'
 import { JailbreakSearch } from '@/components/search/JailbreakSearch'
+import { TrustBadges } from '@/components/home/TrustBadges'
 import { prisma } from '@/lib/prisma'
 
 // Fetch real listings from database
@@ -184,25 +185,8 @@ export default async function HomePage() {
               </div>
 
               {/* Trust badges */}
-              <div className="flex flex-wrap items-center gap-4 md:gap-6 mt-8 text-sm text-primary-200">
-                <Link
-                  href="/help?category=payments&faq=imei-verification"
-                  className="flex items-center gap-2 hover:text-white transition-colors"
-                >
-                  <Shield className="w-4 h-4 text-green-400" />
-                  <span className="underline underline-offset-2">IMEI Verified</span>
-                </Link>
-                <Link
-                  href="/help?category=payments&faq=buyer-protection"
-                  className="flex items-center gap-2 hover:text-white transition-colors"
-                >
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                  <span className="underline underline-offset-2">24h Escrow</span>
-                </Link>
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-yellow-400" />
-                  <span>Instant Alerts</span>
-                </div>
+              <div className="mt-8">
+                <TrustBadges />
               </div>
             </div>
 
