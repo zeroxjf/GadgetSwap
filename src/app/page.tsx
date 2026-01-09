@@ -143,7 +143,7 @@ export default async function HomePage() {
       <WelcomeBanner />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white py-16 md:py-24">
+      <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white pt-8 pb-16 md:pt-12 md:pb-24">
         <div className="max-w-7xl mx-auto px-4">
           {/* Alert Feature Callout Banner */}
           <div className="flex justify-center mb-8">

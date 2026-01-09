@@ -61,10 +61,10 @@ export function TrustBadges() {
             onClick={() => setExpanded(expanded === 'imei' ? null : 'imei')}
             className="flex items-center gap-2 hover:text-white transition-colors group"
           >
-            <Shield className="w-4 h-4 text-green-400" />
+            <Shield className="w-4 h-4 text-blue-400" />
             <span className="underline underline-offset-2">IMEI Verified</span>
           </button>
-          <ArrowDown className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-4 h-4 text-green-400 animate-bounce" />
+          <ArrowDown className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-4 h-4 text-blue-400 animate-bounce" />
         </div>
 
         {/* 24h Escrow */}
@@ -102,16 +102,16 @@ export function TrustBadges() {
                 ? 'bg-yellow-50 dark:bg-yellow-900/30'
                 : expanded === 'alerts'
                 ? 'bg-yellow-50 dark:bg-yellow-900/30'
-                : 'bg-green-50 dark:bg-green-900/30'
+                : 'bg-blue-50 dark:bg-blue-900/30'
             }`}>
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                   expanded === 'escrow' || expanded === 'alerts'
                     ? 'bg-yellow-100 dark:bg-yellow-900'
-                    : 'bg-green-100 dark:bg-green-900'
+                    : 'bg-blue-100 dark:bg-blue-900'
                 }`}>
                   {expanded === 'imei' && (
-                    <Fingerprint className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    <Fingerprint className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   )}
                   {expanded === 'escrow' && (
                     <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
@@ -150,7 +150,7 @@ export function TrustBadges() {
                 {content.bullets.map((bullet, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
                     <CheckCircle className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
-                      expanded === 'escrow' || expanded === 'alerts' ? 'text-yellow-500' : 'text-green-500'
+                      expanded === 'escrow' || expanded === 'alerts' ? 'text-yellow-500' : 'text-blue-500'
                     }`} />
                     <span>{bullet}</span>
                   </li>
