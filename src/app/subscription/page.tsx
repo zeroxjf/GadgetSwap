@@ -169,7 +169,7 @@ function SubscriptionContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Canceled notice */}
       {canceled && (
         <div className="bg-yellow-50 border-b border-yellow-200 py-3">
@@ -223,13 +223,13 @@ function SubscriptionContent() {
       <section className="py-8">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-center">
-            <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+            <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg inline-flex">
               <button
                 onClick={() => setBillingPeriod('monthly')}
                 className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                   billingPeriod === 'monthly'
-                    ? 'bg-white text-gray-900 shadow'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 Monthly
@@ -238,12 +238,12 @@ function SubscriptionContent() {
                 onClick={() => setBillingPeriod('yearly')}
                 className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                   billingPeriod === 'yearly'
-                    ? 'bg-white text-gray-900 shadow'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 Yearly
-                <span className="ml-2 text-xs text-green-600 font-bold">Save 17%</span>
+                <span className="ml-2 text-xs text-green-600 dark:text-green-400 font-bold">Save 17%</span>
               </button>
             </div>
           </div>
@@ -280,20 +280,20 @@ function SubscriptionContent() {
                 )}
 
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">{plan.name}</h2>
-                  <p className="text-gray-500 mt-1">{plan.description}</p>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{plan.name}</h2>
+                  <p className="text-gray-500 dark:text-gray-400 mt-1">{plan.description}</p>
 
                   <div className="mt-4">
-                    <span className="text-4xl font-bold text-gray-900">
+                    <span className="text-4xl font-bold text-gray-900 dark:text-white">
                       ${billingPeriod === 'monthly' ? plan.price : (plan.yearlyPrice / 12).toFixed(2)}
                     </span>
                     {plan.price > 0 && (
-                      <span className="text-gray-500">/month</span>
+                      <span className="text-gray-500 dark:text-gray-400">/month</span>
                     )}
                   </div>
 
                   {plan.yearlyPrice > 0 && billingPeriod === 'yearly' && (
-                    <p className="text-sm text-green-600 mt-1">
+                    <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                       Billed ${plan.yearlyPrice}/year (save ${(plan.price * 12 - plan.yearlyPrice).toFixed(0)})
                     </p>
                   )}
@@ -305,9 +305,9 @@ function SubscriptionContent() {
                       {feature.included ? (
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                       ) : (
-                        <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
+                        <X className="w-5 h-5 text-gray-300 dark:text-gray-600 flex-shrink-0 mt-0.5" />
                       )}
-                      <span className={feature.included ? 'text-gray-700' : 'text-gray-400'}>
+                      <span className={feature.included ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}>
                         {feature.name}
                       </span>
                     </li>
@@ -319,12 +319,12 @@ function SubscriptionContent() {
                   disabled={isButtonDisabled(plan)}
                   className={`w-full py-3 rounded-lg font-medium transition-colors ${
                     plan.tier === userTier
-                      ? 'bg-green-100 text-green-700 cursor-default'
+                      ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 cursor-default'
                       : plan.highlighted
                       ? 'bg-gradient-to-r from-primary-600 to-accent-600 text-white hover:from-primary-700 hover:to-accent-700 disabled:opacity-50'
                       : plan.tier === 'FREE'
-                      ? 'bg-gray-100 text-gray-500 cursor-default'
-                      : 'bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50'
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-default'
+                      : 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50'
                   }`}
                 >
                   {getButtonText(plan)}
@@ -336,50 +336,50 @@ function SubscriptionContent() {
       </section>
 
       {/* Fee comparison */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white dark:bg-gray-900">
         <div className="max-w-5xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">
+          <h2 className="text-3xl font-bold text-center mb-4 text-gray-900 dark:text-white">
             See How Much You Save
           </h2>
-          <p className="text-gray-600 text-center mb-8">
+          <p className="text-gray-600 dark:text-gray-400 text-center mb-8">
             Compare total fees across platforms (platform fee + payment processing)
           </p>
 
           <div className="card overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-4 py-4 text-left text-sm font-medium text-gray-500">
+                  <th className="px-4 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
                     Sale Price
                   </th>
-                  <th className="px-4 py-4 text-center text-sm font-medium text-red-500">
+                  <th className="px-4 py-4 text-center text-sm font-medium text-red-500 dark:text-red-400">
                     eBay (13.25%)
                   </th>
-                  <th className="px-4 py-4 text-center text-sm font-medium text-yellow-600">
+                  <th className="px-4 py-4 text-center text-sm font-medium text-yellow-600 dark:text-yellow-400">
                     Swappa (6.5%)
                   </th>
-                  <th className="px-4 py-4 text-center text-sm font-medium text-green-600 bg-green-50">
+                  <th className="px-4 py-4 text-center text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30">
                     GadgetSwap Free (~4%)
                   </th>
-                  <th className="px-4 py-4 text-center text-sm font-medium text-primary-600 bg-primary-50">
+                  <th className="px-4 py-4 text-center text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30">
                     Plus/Pro (~3%)
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {[500, 800, 1000, 1500].map((price) => (
                   <tr key={price}>
-                    <td className="px-4 py-4 font-medium">${price}</td>
-                    <td className="px-4 py-4 text-center text-red-500">
+                    <td className="px-4 py-4 font-medium text-gray-900 dark:text-white">${price}</td>
+                    <td className="px-4 py-4 text-center text-red-500 dark:text-red-400">
                       ${(price * 0.1325).toFixed(2)}
                     </td>
-                    <td className="px-4 py-4 text-center text-yellow-600">
+                    <td className="px-4 py-4 text-center text-yellow-600 dark:text-yellow-400">
                       ${(price * 0.065).toFixed(2)}
                     </td>
-                    <td className="px-4 py-4 text-center text-green-600 bg-green-50">
+                    <td className="px-4 py-4 text-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30">
                       ${(price * 0.04).toFixed(2)}
                     </td>
-                    <td className="px-4 py-4 text-center text-primary-600 bg-primary-50 font-bold">
+                    <td className="px-4 py-4 text-center text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 font-bold">
                       ${(price * 0.03).toFixed(2)}
                     </td>
                   </tr>
@@ -388,7 +388,7 @@ function SubscriptionContent() {
             </table>
           </div>
 
-          <div className="mt-4 text-sm text-gray-500 text-center space-y-1">
+          <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center space-y-1">
             <p>eBay: 13.25% final value fee (includes payment processing)</p>
             <p>Swappa: 3% platform + 3.5% PayPal = 6.5% total</p>
             <p>GadgetSwap Free: 1% platform + ~3% Stripe = ~4% | Plus/Pro: 0% platform + ~3% Stripe = ~3%</p>
@@ -497,17 +497,17 @@ function SubscriptionContent() {
       </section>
 
       {/* FAQs */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-3xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-8">
+          <h2 className="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-white">
             Frequently Asked Questions
           </h2>
 
           <div className="space-y-4">
             {faqs.map((faq, i) => (
               <div key={i} className="card p-6">
-                <h3 className="font-medium text-gray-900 mb-2">{faq.question}</h3>
-                <p className="text-gray-600">{faq.answer}</p>
+                <h3 className="font-medium text-gray-900 dark:text-white mb-2">{faq.question}</h3>
+                <p className="text-gray-600 dark:text-gray-400">{faq.answer}</p>
               </div>
             ))}
           </div>
@@ -515,12 +515,12 @@ function SubscriptionContent() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white dark:bg-gray-800">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
             Ready to Start Saving?
           </h2>
-          <p className="text-gray-600 mb-8">
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
             Join thousands of sellers who've upgraded to Pro and saved on fees.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -550,7 +550,7 @@ function SubscriptionContent() {
 export default function SubscriptionPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
       </div>
     }>
