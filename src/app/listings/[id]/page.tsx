@@ -24,6 +24,8 @@ import {
   Loader2,
   Package,
   Edit2,
+  Wallet,
+  ArrowRight,
 } from 'lucide-react'
 
 interface Listing {
@@ -369,6 +371,27 @@ export default function ListingDetailPage() {
                       <Edit2 className="w-3.5 h-3.5" />
                       Edit
                     </Link>
+                  </div>
+                )}
+
+                {isOwnListing && !listing.seller.stripeOnboardingComplete && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                      <Wallet className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-medium text-yellow-800">This listing is hidden from buyers</p>
+                        <p className="text-sm text-yellow-700 mt-1">
+                          Set up payouts to make your listings visible to potential buyers.
+                        </p>
+                        <Link
+                          href="/account/payouts"
+                          className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900"
+                        >
+                          Set up payouts
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </div>
                   </div>
                 )}
 
