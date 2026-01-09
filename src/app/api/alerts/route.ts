@@ -33,6 +33,13 @@ export async function GET() {
   }
 }
 
+// Alert limits by subscription tier
+const ALERT_LIMITS = {
+  FREE: 1,
+  PLUS: 3,
+  PRO: Infinity,
+}
+
 /**
  * POST /api/alerts
  * Create a new device alert
@@ -45,6 +52,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
+      )
+    }
+
+    // Check subscription tier alert limit
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { subscriptionTier: true },
+    })
+
+    const subscriptionTier = (user?.subscriptionTier || 'FREE') as keyof typeof ALERT_LIMITS
+    const alertLimit = ALERT_LIMITS[subscriptionTier]
+
+    const existingAlertCount = await prisma.deviceAlert.count({
+      where: { userId: session.user.id },
+    })
+
+    if (existingAlertCount >= alertLimit) {
+      const upgradeMessage = subscriptionTier === 'FREE'
+        ? 'Upgrade to Plus for 3 alerts or Pro for unlimited alerts.'
+        : subscriptionTier === 'PLUS'
+        ? 'Upgrade to Pro for unlimited alerts.'
+        : ''
+
+      return NextResponse.json(
+        { error: `You've reached your limit of ${alertLimit} alert${alertLimit === 1 ? '' : 's'}. ${upgradeMessage}` },
+        { status: 403 }
       )
     }
 
