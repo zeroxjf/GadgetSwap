@@ -35,10 +35,11 @@ model User {
   role          UserRole  @default(USER)
 
   // Subscription
-  subscriptionTier SubscriptionTier @default(FREE)
-  subscriptionId   String?
-  subscriptionEnd  DateTime?
-  stripeCustomerId String?         // Stripe customer ID for subscriptions
+  subscriptionTier   SubscriptionTier @default(FREE)
+  subscriptionId     String?           // Stripe subscription ID
+  subscriptionStatus String?           // Subscription status: active, canceled, past_due, etc.
+  subscriptionEnd    DateTime?
+  stripeCustomerId   String?           // Stripe customer ID for subscriptions
 
   // Onboarding
   onboardingComplete    Boolean   @default(false) // Has seen/completed initial setup flow
