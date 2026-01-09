@@ -193,6 +193,10 @@ model Listing {
   imeiClean         Boolean?
   icloudUnlocked    Boolean         @default(true)
 
+  // Return policy
+  acceptsReturns    Boolean         @default(false)
+  returnWindowDays  Int?            // 7, 14, or 30 days
+
   // Media
   images    ListingImage[]
 
@@ -326,6 +330,19 @@ model Transaction {
   disputeReason   String?
   disputeStatus   DisputeStatus?
 
+  // Returns
+  returnStatus          ReturnStatus?
+  returnReason          String?
+  returnRequestedAt     DateTime?
+  returnApprovedAt      DateTime?
+  returnRejectedAt      DateTime?
+  returnRejectionReason String?
+  returnTrackingNumber  String?
+  returnCarrier         String?
+  returnShippedAt       DateTime?
+  returnReceivedAt      DateTime?
+  returnRefundedAt      DateTime?
+
   @@index([buyerId])
   @@index([sellerId])
   @@index([status])
@@ -349,6 +366,15 @@ enum DisputeStatus {
   RESOLVED_BUYER
   RESOLVED_SELLER
   ESCALATED
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  SHIPPED
+  RECEIVED
+  REFUNDED
 }
 
 // ============================================

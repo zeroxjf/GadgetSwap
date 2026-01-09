@@ -17,11 +17,17 @@ import {
   X,
   Eye,
   EyeOff,
+  Sun,
+  Moon,
+  Monitor,
+  Palette,
 } from 'lucide-react'
+import { useTheme } from '@/components/ThemeProvider'
 
 export default function SettingsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { preference, setPreference, theme } = useTheme()
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
@@ -167,6 +173,67 @@ export default function SettingsPage() {
             <button onClick={openEmailModal} className="btn-secondary text-sm">
               Change Email
             </button>
+          </div>
+
+          {/* Appearance */}
+          <div className="card p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <Palette className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-gray-900 dark:text-gray-100">Appearance</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {preference === 'auto'
+                    ? `Auto mode (currently ${theme})`
+                    : `${preference.charAt(0).toUpperCase() + preference.slice(1)} mode`}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => setPreference('light')}
+                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                  preference === 'light'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <Sun className={`w-6 h-6 ${preference === 'light' ? 'text-primary-600' : 'text-gray-500 dark:text-gray-400'}`} />
+                <span className={`text-sm font-medium ${preference === 'light' ? 'text-primary-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                  Light
+                </span>
+              </button>
+              <button
+                onClick={() => setPreference('dark')}
+                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                  preference === 'dark'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <Moon className={`w-6 h-6 ${preference === 'dark' ? 'text-primary-600' : 'text-gray-500 dark:text-gray-400'}`} />
+                <span className={`text-sm font-medium ${preference === 'dark' ? 'text-primary-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                  Dark
+                </span>
+              </button>
+              <button
+                onClick={() => setPreference('auto')}
+                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                  preference === 'auto'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <Monitor className={`w-6 h-6 ${preference === 'auto' ? 'text-primary-600' : 'text-gray-500 dark:text-gray-400'}`} />
+                <span className={`text-sm font-medium ${preference === 'auto' ? 'text-primary-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                  Auto
+                </span>
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+              Auto mode switches between light and dark based on sunrise/sunset in Eastern Time.
+            </p>
           </div>
 
           {/* Notifications */}
