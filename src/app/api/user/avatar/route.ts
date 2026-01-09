@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { uploadImage } from '@/lib/cloudinary'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -50,16 +51,26 @@ export async function POST(request: NextRequest) {
         }, { status: 400 })
       }
 
-      // Store the base64 image directly
-      // In production, you'd upload to S3/Cloudinary and store the URL
+      // Upload to Cloudinary
+      const uploadResult = await uploadImage(image, {
+        folder: 'avatars',
+        transformation: {
+          width: 400,
+          height: 400,
+          crop: 'fill',
+          gravity: 'face',
+        },
+      })
+
+      // Store the Cloudinary URL
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { image },
+        data: { image: uploadResult.url },
       })
 
       return NextResponse.json({
         success: true,
-        image,
+        image: uploadResult.url,
         message: 'Profile photo updated'
       })
     }
