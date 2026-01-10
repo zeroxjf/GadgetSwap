@@ -366,7 +366,7 @@ export default function ListingDetailPage() {
                 {/* iOS Version & Jailbreak Status - PROMINENT */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="bg-gradient-to-br from-gray-900 to-gray-700 dark:from-gray-700 dark:to-gray-600 text-white rounded-xl p-4 text-center">
-                    <p className="text-xs uppercase tracking-wide text-gray-300 mb-1">iOS Version</p>
+                    <p className="text-xs tracking-wide text-gray-300 mb-1">iOS Version</p>
                     <p className="text-2xl font-bold">{listing.osVersion || 'N/A'}</p>
                     {listing.buildNumber && (
                       <p className="text-xs text-gray-400 mt-1">Build {listing.buildNumber}</p>
@@ -377,7 +377,7 @@ export default function ListingDetailPage() {
                       ? 'bg-gradient-to-br from-purple-600 to-purple-500 text-white'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
                   }`}>
-                    <p className={`text-xs uppercase tracking-wide mb-1 ${
+                    <p className={`text-xs tracking-wide mb-1 ${
                       ['JAILBROKEN', 'JAILBREAKABLE', 'ROOTLESS_JB', 'ROOTFUL_JB'].includes(listing.jailbreakStatus)
                         ? 'text-purple-200'
                         : 'text-gray-500 dark:text-gray-400'
