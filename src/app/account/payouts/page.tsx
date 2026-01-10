@@ -70,16 +70,20 @@ export default function PayoutsPage() {
         method: 'POST',
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        throw new Error('Failed to create connect account')
+        throw new Error(data.error || 'Failed to create connect account')
       }
 
-      const { url } = await response.json()
-      if (url) {
-        window.location.href = url
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error('No onboarding URL returned from Stripe')
       }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to connect Stripe. Please try again.' })
+    } catch (error: any) {
+      console.error('Stripe connect error:', error)
+      setMessage({ type: 'error', text: error.message || 'Failed to connect Stripe. Please try again.' })
       setConnecting(false)
     }
   }

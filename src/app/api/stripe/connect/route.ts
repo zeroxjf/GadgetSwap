@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       accountId: stripeAccountId,
-      onboardingUrl,
+      url: onboardingUrl,
     })
   } catch (error: any) {
     console.error('Create connect account error:', error)
