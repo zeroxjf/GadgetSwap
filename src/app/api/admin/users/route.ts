@@ -58,7 +58,10 @@ export async function GET(request: NextRequest) {
           ratingCount: true,
           createdAt: true,
           stripeOnboardingComplete: true,
-          lastIpHash: true,
+          banned: true,
+          bannedAt: true,
+          bannedReason: true,
+          // Note: lastIpHash intentionally excluded for security
           _count: {
             select: { listings: true },
           },
