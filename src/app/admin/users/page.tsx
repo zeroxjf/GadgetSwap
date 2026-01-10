@@ -232,7 +232,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
@@ -264,7 +264,7 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {users.map((user) => (
+              {users.map((user, index) => (
                 <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
@@ -325,7 +325,7 @@ export default function AdminUsersPage() {
                       </button>
 
                       {actionMenuOpen === user.id && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+                        <div className={`absolute right-0 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 ${index >= users.length - 3 ? 'bottom-full mb-2' : 'mt-2'}`}>
                           <div className="py-1">
                             {/* Subscription Tier */}
                             <div className="px-4 py-1.5 text-xs font-semibold text-gray-400 uppercase">
