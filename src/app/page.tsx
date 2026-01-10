@@ -120,7 +120,7 @@ const features = [
   {
     icon: Zap,
     title: 'Industry-Low 4% Fee',
-    description: 'Save up to 70% on fees vs eBay. Keep more of your sale. Go Plus/Pro for 0%.',
+    description: 'Save up to 70% on fees vs eBay. Keep more of your sale. Go Pro for 0% total.',
   },
 ]
 
