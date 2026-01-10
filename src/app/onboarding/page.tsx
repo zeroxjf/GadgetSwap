@@ -188,7 +188,7 @@ export default function OnboardingPage() {
                 {!proClaimed && (
                   <div className="flex flex-wrap gap-2 mb-4">
                     <span className="text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded-full text-gray-600 dark:text-gray-400">
-                      <Crown className="w-3 h-3 inline mr-1 text-yellow-500" /> 0.5% seller fees
+                      <Crown className="w-3 h-3 inline mr-1 text-yellow-500" /> 0% seller fees
                     </span>
                     <span className="text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded-full text-gray-600 dark:text-gray-400">
                       Unlimited listings

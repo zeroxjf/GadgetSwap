@@ -125,7 +125,7 @@ export function WelcomeBanner() {
                     <p className="text-sm text-purple-800 dark:text-purple-200 mb-3">
                       As an early adopter, claim your{' '}
                       <span className="font-bold">free lifetime Pro membership</span> — that's{' '}
-                      <span className="font-bold">0.5% seller fees forever</span>, unlimited listings, and priority support.
+                      <span className="font-bold">0% seller fees forever</span>, unlimited listings, and priority support.
                     </p>
                     <button
                       onClick={handleClaimPro}
