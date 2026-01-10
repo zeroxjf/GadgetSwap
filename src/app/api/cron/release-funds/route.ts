@@ -7,10 +7,12 @@ const CRON_SECRET = process.env.CRON_SECRET
 
 /**
  * POST /api/cron/release-funds
+ * GET  /api/cron/release-funds (for Vercel Cron)
+ *
  * Release funds for transactions where 24h escrow has passed
  *
  * Call this via:
- * - Vercel Cron (add to vercel.json)
+ * - Vercel Cron (automatically authenticated)
  * - External cron service with Bearer token
  */
 export async function POST(request: NextRequest) {
@@ -21,9 +23,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
     }
 
-    // Verify authorization header
+    // Verify request is from Vercel Cron or has valid Bearer token
     const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    const vercelCronHeader = request.headers.get('x-vercel-cron')
+
+    // Vercel Cron sets x-vercel-cron header automatically
+    // For manual calls, require Bearer token
+    const isVercelCron = vercelCronHeader === '1'
+    const hasValidToken = authHeader === `Bearer ${CRON_SECRET}`
+
+    if (!isVercelCron && !hasValidToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -125,4 +134,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET method disabled for security - use POST only
+// GET method for Vercel Cron (uses GET requests)
+export async function GET(request: NextRequest) {
+  return POST(request)
+}
