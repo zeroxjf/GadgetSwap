@@ -34,12 +34,12 @@ const plans = [
     tier: 'PLUS',
     price: 4.99,
     yearlyPrice: 40,
-    description: 'ZERO fees - we cover Stripe too',
-    feeHighlight: '0%',
-    feeSavings: 'Save $52 per $800 sale vs Swappa',
+    description: '0% platform fee, just Stripe',
+    feeHighlight: '~3%',
+    feeSavings: 'Save $24 per $800 sale vs Swappa',
     features: [
       { name: 'Up to 15 active listings', included: true },
-      { name: '0% fees - GadgetSwap covers Stripe', included: true, highlight: true },
+      { name: '~3% total (0% platform + ~3% Stripe)', included: true, highlight: true },
       { name: '3 device alerts', included: true },
       { name: 'Advanced search filters', included: true },
       { name: 'Priority support', included: true },
@@ -50,7 +50,7 @@ const plans = [
     ],
     cta: 'Upgrade to Plus',
     highlighted: false,
-    badge: '0% FEES',
+    badge: 'NO PLATFORM FEE',
   },
   {
     name: 'Pro',
@@ -87,8 +87,8 @@ const faqs = [
     answer: 'Yes, you can cancel your subscription at any time. Your benefits will continue until the end of your billing period.',
   },
   {
-    question: 'How does the 0% fee work for Plus/Pro?',
-    answer: 'Plus and Pro members pay ZERO fees on sales - not even Stripe processing fees. GadgetSwap covers all payment processing costs. You keep 100% of your sale price. Compare that to Swappa where you\'d pay 3% + 3.5% PayPal = 6.5% total. Paid members save over $52 per $800 sale vs Swappa.',
+    question: 'How do fees work for Plus vs Pro?',
+    answer: 'Plus members pay 0% platform fee (reduced from 1%), but Stripe processing fees (~3%) still apply. Pro members pay 0% total - GadgetSwap covers Stripe fees too. You keep 100% of your sale price on Pro. Compare that to Swappa where you\'d pay 3% + 3.5% PayPal = 6.5% total.',
   },
   {
     question: 'What happens to my listings if I downgrade?',
@@ -202,8 +202,9 @@ function SubscriptionContent() {
             Pay Less Than Swappa & eBay
           </h1>
           <p className="text-xl text-green-100 max-w-2xl mx-auto mb-6">
-            Free tier: <span className="font-bold text-white">~4% total</span> (1% platform + ~3% Stripe).<br/>
-            Plus/Pro: <span className="font-bold text-white">0% total</span> - we cover ALL fees including Stripe.
+            Free: <span className="font-bold text-white">~4% total</span> (1% platform + ~3% Stripe).<br/>
+            Plus: <span className="font-bold text-white">~3%</span> (0% platform, just Stripe).<br/>
+            Pro: <span className="font-bold text-white">0% total</span> - we cover Stripe too!
           </p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <div className="bg-white/10 backdrop-blur rounded-lg px-4 py-2 border border-yellow-400/50">
@@ -362,8 +363,11 @@ function SubscriptionContent() {
                   <th className="px-4 py-4 text-center text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30">
                     GadgetSwap Free (~4%)
                   </th>
+                  <th className="px-4 py-4 text-center text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30">
+                    Plus (~3%)
+                  </th>
                   <th className="px-4 py-4 text-center text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30">
-                    Plus/Pro (0%)
+                    Pro (0%)
                   </th>
                 </tr>
               </thead>
@@ -380,6 +384,9 @@ function SubscriptionContent() {
                     <td className="px-4 py-4 text-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30">
                       ${(price * 0.04).toFixed(2)}
                     </td>
+                    <td className="px-4 py-4 text-center text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30">
+                      ${(price * 0.03).toFixed(2)}
+                    </td>
                     <td className="px-4 py-4 text-center text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 font-bold">
                       $0.00
                     </td>
@@ -392,7 +399,7 @@ function SubscriptionContent() {
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center space-y-1">
             <p>eBay: 13.25% final value fee (includes payment processing)</p>
             <p>Swappa: 3% platform + 3.5% PayPal = 6.5% total</p>
-            <p>GadgetSwap Free: 1% platform + ~3% Stripe = ~4% | Plus/Pro: 0% total (we cover Stripe fees)</p>
+            <p>GadgetSwap Free: 1% platform + ~3% Stripe = ~4% | Plus: 0% platform + ~3% Stripe | Pro: 0% total (we cover Stripe)</p>
           </div>
         </div>
       </section>
