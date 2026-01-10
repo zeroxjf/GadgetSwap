@@ -13,9 +13,10 @@ import {
   Bell,
   Plus,
   ChevronDown,
-  Zap,
   LogOut,
-  Settings
+  Settings,
+  ClipboardList,
+  LayoutDashboard
 } from 'lucide-react'
 
 const deviceCategories = [
@@ -163,6 +164,28 @@ export function Header() {
                         <p className="font-medium text-gray-900 dark:text-gray-100">{session?.user?.name || 'User'}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">{session?.user?.email}</p>
                       </div>
+                      {/* Admin-only links */}
+                      {session?.user?.role === 'ADMIN' && (
+                        <>
+                          <Link
+                            href="/admin"
+                            className="flex items-center gap-2 px-4 py-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <LayoutDashboard className="w-4 h-4" />
+                            Admin Dashboard
+                          </Link>
+                          <Link
+                            href="/admin/reviews"
+                            className="flex items-center gap-2 px-4 py-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <ClipboardList className="w-4 h-4" />
+                            Review Queue
+                          </Link>
+                          <div className="border-b border-gray-100 dark:border-gray-700 my-1"></div>
+                        </>
+                      )}
                       <Link
                         href="/account"
                         className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"

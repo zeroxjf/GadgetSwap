@@ -250,7 +250,210 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Trust & Safety Section - Prominent */}
+      {/* Jailbreak-Focused Section */}
+      <section className="py-12 bg-gradient-to-r from-accent-600 to-purple-600 text-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-4">Built for the Jailbreak Community</h2>
+            <p className="text-lg text-purple-100 max-w-2xl mx-auto">
+              Unlike other marketplaces, we understand what jailbreakers need.
+              Search by iOS version, find checkm8-compatible devices, and know
+              exactly what you're getting.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <h3 className="font-semibold text-lg mb-2">iOS Version Search</h3>
+              <p className="text-purple-100 text-sm mb-4">
+                Find devices on specific iOS versions. Perfect for targeting
+                jailbreak-compatible firmware.
+              </p>
+              <Link href="/search" className="text-white hover:underline text-sm font-medium">
+                Search by iOS →
+              </Link>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <h3 className="font-semibold text-lg mb-2">Jailbreak Status</h3>
+              <p className="text-purple-100 text-sm mb-4">
+                Every listing shows jailbreak status, tool used, and bootrom
+                exploit availability.
+              </p>
+              <Link href="/search?jailbreakStatus=JAILBREAKABLE" className="text-white hover:underline text-sm font-medium">
+                Find Jailbreakable →
+              </Link>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <h3 className="font-semibold text-lg mb-2">Compatibility Checker</h3>
+              <p className="text-purple-100 text-sm mb-4">
+                Our database knows which iOS versions work with which jailbreak
+                tools. No more guessing.
+              </p>
+              <Link href="/tools/jailbreak-checker" className="text-white hover:underline text-sm font-medium">
+                Check Compatibility →
+              </Link>
+            </div>
+          </div>
+
+          {/* Fair Pricing for Jailbreakable Devices */}
+          <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 border border-white/30 max-w-3xl mx-auto">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-green-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-6 h-6 text-green-900" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg mb-2">Fair Jailbreak Pricing: Up to 1.5x Market Value</h3>
+                <p className="text-purple-100 text-sm mb-3">
+                  We know devices on jailbreakable iOS versions are worth more — they're rare and in high demand.
+                  That's why sellers can list jailbreakable iPhones at up to <span className="text-white font-semibold">1.5x the standard market value</span>.
+                </p>
+                <p className="text-purple-200 text-sm">
+                  But we also believe in keeping things accessible. This cap prevents extreme price gouging
+                  while still rewarding sellers for preserving valuable firmware. Fair for everyone.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Fee Comparison - Major Section */}
+      <section data-tour="fees" className="py-16 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <span className="inline-block bg-green-500 text-white text-sm font-bold px-4 py-1 rounded-full mb-4">
+              LOWER FEES THAN SWAPPA & EBAY
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Keep More Money From Every Sale
+            </h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              We charge just 1% platform fee + ~3% Stripe = ~4% total.
+              That's 33% less than Swappa and 70% less than eBay.
+            </p>
+          </div>
+
+          {/* Main competitor comparison - Swappa & eBay focus */}
+          <div className="max-w-4xl mx-auto mb-12">
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* eBay */}
+              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-red-400 mb-2">eBay</h3>
+                  <div className="text-5xl font-bold text-red-400 mb-2">13.25%</div>
+                  <p className="text-sm text-gray-400 mb-1">Final value fee</p>
+                  <p className="text-sm text-gray-500 mb-4">(includes payment processing)</p>
+                  <div className="bg-red-900/30 rounded-lg p-3 text-sm">
+                    <p className="text-gray-300">On $800 sale:</p>
+                    <p className="text-red-400 font-bold text-lg">-$106 in fees</p>
+                    <p className="text-gray-500">You keep: $694</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Swappa */}
+              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-gray-300 mb-2">Swappa</h3>
+                  <div className="text-5xl font-bold text-gray-300 mb-2">~6%</div>
+                  <p className="text-sm text-gray-400 mb-1">3% platform fee</p>
+                  <p className="text-sm text-gray-500 mb-4">+ ~3% Stripe</p>
+                  <div className="bg-gray-700/50 rounded-lg p-3 text-sm">
+                    <p className="text-gray-300">On $800 sale:</p>
+                    <p className="text-gray-300 font-bold text-lg">-$48 in fees</p>
+                    <p className="text-gray-500">You keep: $752</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* GadgetSwap */}
+              <div className="bg-gradient-to-b from-green-900/50 to-green-900/30 rounded-2xl p-6 border-2 border-green-500 relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  LOWEST FEES
+                </div>
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-green-400 mb-2">GadgetSwap</h3>
+                  <div className="text-5xl font-bold text-green-400 mb-2">~4%</div>
+                  <p className="text-sm text-green-300 mb-1">1% platform fee</p>
+                  <p className="text-sm text-gray-400 mb-4">+ ~3% Stripe</p>
+                  <div className="bg-green-900/50 rounded-lg p-3 text-sm">
+                    <p className="text-gray-300">On $800 sale:</p>
+                    <p className="text-green-400 font-bold text-lg">-$32 in fees</p>
+                    <p className="text-white font-medium">You keep: $768</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Savings highlight */}
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-green-900/30 rounded-2xl p-6 border border-green-700">
+              <div className="grid md:grid-cols-2 gap-6 text-center">
+                <div>
+                  <p className="text-gray-400 mb-1">Save vs Swappa</p>
+                  <p className="text-3xl font-bold text-green-400">$16</p>
+                  <p className="text-sm text-gray-500">per $800 sale</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 mb-1">Save vs eBay</p>
+                  <p className="text-3xl font-bold text-green-400">$74</p>
+                  <p className="text-sm text-gray-500">per $800 sale</p>
+                </div>
+              </div>
+              <p className="text-center text-gray-400 mt-4 text-sm">
+                Sell 10 devices a month? That's <span className="text-green-400 font-bold">$160+ more</span> in your pocket vs Swappa.
+              </p>
+            </div>
+          </div>
+
+          {/* Visual bar comparison */}
+          <div className="max-w-3xl mx-auto mt-12">
+            <h3 className="text-center text-lg font-semibold mb-6 text-gray-300">Total Seller Fees Comparison</h3>
+            <div className="space-y-3">
+              {competitorFees.map((competitor) => (
+                <div key={competitor.name} className="flex items-center gap-4">
+                  <div className={`w-28 text-right text-sm ${competitor.highlight ? 'text-white font-bold' : 'text-gray-400'}`}>
+                    {competitor.name}
+                  </div>
+                  <div className="flex-1 bg-gray-700 rounded-full h-8 overflow-hidden">
+                    <div
+                      className={`h-full ${competitor.color} flex items-center justify-end pr-3 transition-all`}
+                      style={{ width: `${(competitor.fee / 15) * 100}%` }}
+                    >
+                      <span className="font-bold text-sm text-white">
+                        {competitor.fee}%
+                      </span>
+                    </div>
+                  </div>
+                  {competitor.highlight && (
+                    <span className="text-green-400 font-bold text-xs w-20">BEST</span>
+                  )}
+                  {!competitor.highlight && (
+                    <span className="w-20"></span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pro upsell */}
+          <div className="text-center mt-12">
+            <div className="inline-block bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <p className="text-gray-300 mb-2">Power sellers: Go Pro for</p>
+              <p className="text-4xl font-bold text-green-400 mb-2">0% fees</p>
+              <p className="text-gray-400 text-sm mb-4">Unlimited listings, premium features</p>
+              <Link href="/subscription" className="btn bg-green-500 text-white hover:bg-green-600 px-8 py-3 font-semibold">
+                See Pro Plans →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Safety Section - Trade With Confidence */}
       <section className="py-16 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-y border-green-100 dark:border-green-900">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
@@ -395,75 +598,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Jailbreak-Focused Section */}
-      <section className="py-12 bg-gradient-to-r from-accent-600 to-purple-600 text-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-4">Built for the Jailbreak Community</h2>
-            <p className="text-lg text-purple-100 max-w-2xl mx-auto">
-              Unlike other marketplaces, we understand what jailbreakers need.
-              Search by iOS version, find checkm8-compatible devices, and know
-              exactly what you're getting.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <h3 className="font-semibold text-lg mb-2">iOS Version Search</h3>
-              <p className="text-purple-100 text-sm mb-4">
-                Find devices on specific iOS versions. Perfect for targeting
-                jailbreak-compatible firmware.
-              </p>
-              <Link href="/search" className="text-white hover:underline text-sm font-medium">
-                Search by iOS →
-              </Link>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <h3 className="font-semibold text-lg mb-2">Jailbreak Status</h3>
-              <p className="text-purple-100 text-sm mb-4">
-                Every listing shows jailbreak status, tool used, and bootrom
-                exploit availability.
-              </p>
-              <Link href="/search?jailbreakStatus=JAILBREAKABLE" className="text-white hover:underline text-sm font-medium">
-                Find Jailbreakable →
-              </Link>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-              <h3 className="font-semibold text-lg mb-2">Compatibility Checker</h3>
-              <p className="text-purple-100 text-sm mb-4">
-                Our database knows which iOS versions work with which jailbreak
-                tools. No more guessing.
-              </p>
-              <Link href="/tools/jailbreak-checker" className="text-white hover:underline text-sm font-medium">
-                Check Compatibility →
-              </Link>
-            </div>
-          </div>
-
-          {/* Fair Pricing for Jailbreakable Devices */}
-          <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 border border-white/30 max-w-3xl mx-auto">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-green-400 rounded-xl flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-6 h-6 text-green-900" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg mb-2">Fair Jailbreak Pricing: Up to 1.5x Market Value</h3>
-                <p className="text-purple-100 text-sm mb-3">
-                  We know devices on jailbreakable iOS versions are worth more — they're rare and in high demand.
-                  That's why sellers can list jailbreakable iPhones at up to <span className="text-white font-semibold">1.5x the standard market value</span>.
-                </p>
-                <p className="text-purple-200 text-sm">
-                  But we also believe in keeping things accessible. This cap prevents extreme price gouging
-                  while still rewarding sellers for preserving valuable firmware. Fair for everyone.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Device Alerts Section */}
       <section className="py-16 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4">
@@ -545,7 +679,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* Why GadgetSwap */}
       <section className="py-16 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
@@ -566,140 +700,6 @@ export default async function HomePage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Fee Comparison - Major Section */}
-      <section data-tour="fees" className="py-16 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <span className="inline-block bg-green-500 text-white text-sm font-bold px-4 py-1 rounded-full mb-4">
-              LOWER FEES THAN SWAPPA & EBAY
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Keep More Money From Every Sale
-            </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              We charge just 1% platform fee + ~3% Stripe = ~4% total.
-              That's 33% less than Swappa and 70% less than eBay.
-            </p>
-          </div>
-
-          {/* Main competitor comparison - Swappa & eBay focus */}
-          <div className="max-w-4xl mx-auto mb-12">
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* eBay */}
-              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-red-400 mb-2">eBay</h3>
-                  <div className="text-5xl font-bold text-red-400 mb-2">13.25%</div>
-                  <p className="text-sm text-gray-400 mb-1">Final value fee</p>
-                  <p className="text-sm text-gray-500 mb-4">(includes payment processing)</p>
-                  <div className="bg-red-900/30 rounded-lg p-3 text-sm">
-                    <p className="text-gray-300">On $800 sale:</p>
-                    <p className="text-red-400 font-bold text-lg">-$106 in fees</p>
-                    <p className="text-gray-500">You keep: $694</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Swappa */}
-              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-gray-300 mb-2">Swappa</h3>
-                  <div className="text-5xl font-bold text-gray-300 mb-2">~6%</div>
-                  <p className="text-sm text-gray-400 mb-1">3% platform fee</p>
-                  <p className="text-sm text-gray-500 mb-4">+ ~3% Stripe</p>
-                  <div className="bg-gray-700/50 rounded-lg p-3 text-sm">
-                    <p className="text-gray-300">On $800 sale:</p>
-                    <p className="text-gray-300 font-bold text-lg">-$48 in fees</p>
-                    <p className="text-gray-500">You keep: $752</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* GadgetSwap */}
-              <div className="bg-gradient-to-b from-green-900/50 to-green-900/30 rounded-2xl p-6 border-2 border-green-500 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  LOWEST FEES
-                </div>
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-green-400 mb-2">GadgetSwap</h3>
-                  <div className="text-5xl font-bold text-green-400 mb-2">~4%</div>
-                  <p className="text-sm text-green-300 mb-1">1% platform fee</p>
-                  <p className="text-sm text-gray-400 mb-4">+ ~3% Stripe</p>
-                  <div className="bg-green-900/50 rounded-lg p-3 text-sm">
-                    <p className="text-gray-300">On $800 sale:</p>
-                    <p className="text-green-400 font-bold text-lg">-$32 in fees</p>
-                    <p className="text-white font-medium">You keep: $768</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Savings highlight */}
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-green-900/30 rounded-2xl p-6 border border-green-700">
-              <div className="grid md:grid-cols-2 gap-6 text-center">
-                <div>
-                  <p className="text-gray-400 mb-1">Save vs Swappa</p>
-                  <p className="text-3xl font-bold text-green-400">$16</p>
-                  <p className="text-sm text-gray-500">per $800 sale</p>
-                </div>
-                <div>
-                  <p className="text-gray-400 mb-1">Save vs eBay</p>
-                  <p className="text-3xl font-bold text-green-400">$74</p>
-                  <p className="text-sm text-gray-500">per $800 sale</p>
-                </div>
-              </div>
-              <p className="text-center text-gray-400 mt-4 text-sm">
-                Sell 10 devices a month? That's <span className="text-green-400 font-bold">$160+ more</span> in your pocket vs Swappa.
-              </p>
-            </div>
-          </div>
-
-          {/* Visual bar comparison */}
-          <div className="max-w-3xl mx-auto mt-12">
-            <h3 className="text-center text-lg font-semibold mb-6 text-gray-300">Total Seller Fees Comparison</h3>
-            <div className="space-y-3">
-              {competitorFees.map((competitor) => (
-                <div key={competitor.name} className="flex items-center gap-4">
-                  <div className={`w-28 text-right text-sm ${competitor.highlight ? 'text-white font-bold' : 'text-gray-400'}`}>
-                    {competitor.name}
-                  </div>
-                  <div className="flex-1 bg-gray-700 rounded-full h-8 overflow-hidden">
-                    <div
-                      className={`h-full ${competitor.color} flex items-center justify-end pr-3 transition-all`}
-                      style={{ width: `${(competitor.fee / 15) * 100}%` }}
-                    >
-                      <span className="font-bold text-sm text-white">
-                        {competitor.fee}%
-                      </span>
-                    </div>
-                  </div>
-                  {competitor.highlight && (
-                    <span className="text-green-400 font-bold text-xs w-20">BEST</span>
-                  )}
-                  {!competitor.highlight && (
-                    <span className="w-20"></span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Pro upsell */}
-          <div className="text-center mt-12">
-            <div className="inline-block bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <p className="text-gray-300 mb-2">Power sellers: Go Pro for</p>
-              <p className="text-4xl font-bold text-green-400 mb-2">0% fees</p>
-              <p className="text-gray-400 text-sm mb-4">Unlimited listings, premium features</p>
-              <Link href="/subscription" className="btn bg-green-500 text-white hover:bg-green-600 px-8 py-3 font-semibold">
-                See Pro Plans →
-              </Link>
-            </div>
           </div>
         </div>
       </section>
