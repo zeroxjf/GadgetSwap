@@ -211,10 +211,10 @@ export default async function HomePage() {
             </div>
 
             {/* Quick iOS Search */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div data-tour="ios-search" className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               <h2 className="text-xl font-semibold mb-4">Find by iOS/iPadOS Version</h2>
               <JailbreakSearch />
-              <div className="mt-4 pt-4 border-t border-white/20">
+              <div data-tour="alerts" className="mt-4 pt-4 border-t border-white/20">
                 <Link
                   href="/alerts"
                   className="flex items-center justify-between text-sm text-primary-200 hover:text-white transition-colors"
@@ -234,7 +234,7 @@ export default async function HomePage() {
       {/* Categories */}
       <section className="py-12 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div data-tour="categories" className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {categories.map((category) => (
               <Link
                 key={category.name}
@@ -363,7 +363,7 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Listings */}
-      <section className="py-12 bg-gray-50 dark:bg-gray-900">
+      <section data-tour="listings" className="py-12 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <div>
@@ -571,7 +571,7 @@ export default async function HomePage() {
       </section>
 
       {/* Fee Comparison - Major Section */}
-      <section className="py-16 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+      <section data-tour="fees" className="py-16 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
             <span className="inline-block bg-green-500 text-white text-sm font-bold px-4 py-1 rounded-full mb-4">
