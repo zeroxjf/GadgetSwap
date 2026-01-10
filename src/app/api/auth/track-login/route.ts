@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import crypto from 'crypto'
 
 function getClientIP(request: NextRequest): string | null {
   // Check various headers for client IP (in order of reliability)
@@ -24,6 +25,10 @@ function getClientIP(request: NextRequest): string | null {
   return null
 }
 
+function hashIP(ip: string): string {
+  return crypto.createHash('sha256').update(ip).digest('hex')
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -34,20 +39,22 @@ export async function POST(request: NextRequest) {
     const ip = getClientIP(request)
 
     if (ip) {
-      // Check if this IP is banned
+      const ipHash = hashIP(ip)
+
+      // Check if this IP hash is banned
       const bannedIP = await prisma.bannedIP.findUnique({
-        where: { ipAddress: ip },
+        where: { ipHash },
       })
 
       if (bannedIP) {
         // IP is banned - could sign them out here, but for now just flag it
-        console.warn(`Banned IP ${ip} logged in as user ${session.user.id}`)
+        console.warn(`Banned IP hash ${ipHash.slice(0, 8)}... logged in as user ${session.user.id}`)
       }
 
-      // Update user's last IP address
+      // Update user's last IP hash
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { lastIpAddress: ip },
+        data: { lastIpHash: ipHash },
       })
     }
 

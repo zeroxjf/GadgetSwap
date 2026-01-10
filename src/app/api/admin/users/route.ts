@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
           ratingCount: true,
           createdAt: true,
           stripeOnboardingComplete: true,
-          lastIpAddress: true,
+          lastIpHash: true,
           _count: {
             select: { listings: true },
           },
