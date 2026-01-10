@@ -1,17 +1,16 @@
 /**
  * Fetch analytics data from Vercel Web Analytics API
  * Requires VERCEL_API_TOKEN and VERCEL_PROJECT_ID env vars
+ *
+ * To get these:
+ * 1. VERCEL_API_TOKEN: Go to Vercel Dashboard -> Settings -> Tokens -> Create
+ * 2. VERCEL_PROJECT_ID: Go to your project -> Settings -> General -> Project ID
+ * 3. VERCEL_TEAM_ID: Go to Team Settings -> General -> Team ID (only for team projects)
  */
 
 const VERCEL_API_TOKEN = process.env.VERCEL_API_TOKEN
 const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID
-
-interface AnalyticsDataPoint {
-  key: string
-  total: number
-  devices: number
-}
 
 interface TimeSeriesPoint {
   timestamp: number
@@ -35,42 +34,71 @@ export interface VercelAnalyticsData {
   topPages: Array<{ path: string; views: number; visitors: number }>
   topReferrers: Array<{ referrer: string; views: number; visitors: number }>
   timeSeries: TimeSeriesPoint[]
+  debug?: {
+    hasToken: boolean
+    hasProjectId: boolean
+    hasTeamId: boolean
+    error?: string
+  }
 }
 
-async function fetchVercelAPI(endpoint: string, params: Record<string, string> = {}) {
+async function fetchVercelAPI(endpoint: string, params: Record<string, string> = {}): Promise<any> {
   if (!VERCEL_API_TOKEN || !VERCEL_PROJECT_ID) {
-    return null
+    console.log('Missing Vercel credentials:', {
+      hasToken: !!VERCEL_API_TOKEN,
+      hasProjectId: !!VERCEL_PROJECT_ID,
+      hasTeamId: !!VERCEL_TEAM_ID
+    })
+    return { error: 'Missing credentials' }
   }
 
+  // Build query params - teamId goes in query for team projects
   const searchParams = new URLSearchParams({
-    projectId: VERCEL_PROJECT_ID,
-    ...(VERCEL_TEAM_ID ? { teamId: VERCEL_TEAM_ID } : {}),
     ...params,
   })
 
-  const url = `https://vercel.com/api/web/insights/${endpoint}?${searchParams}`
+  // Add teamId if present (required for team projects)
+  if (VERCEL_TEAM_ID) {
+    searchParams.set('teamId', VERCEL_TEAM_ID)
+  }
+
+  // Vercel Web Analytics API endpoint
+  // Format: https://api.vercel.com/v1/web-analytics/{projectId}/{endpoint}
+  const url = `https://api.vercel.com/v1/web-analytics/${VERCEL_PROJECT_ID}/${endpoint}?${searchParams}`
+
+  console.log('Fetching Vercel Analytics:', endpoint)
 
   try {
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${VERCEL_API_TOKEN}`,
+        'Content-Type': 'application/json',
       },
       next: { revalidate: 300 }, // Cache for 5 minutes
     })
 
     if (!response.ok) {
-      console.error('Vercel Analytics API error:', response.status, await response.text())
-      return null
+      const errorText = await response.text()
+      console.error('Vercel Analytics API error:', response.status, errorText)
+      return { error: `API returned ${response.status}: ${errorText.slice(0, 100)}` }
     }
 
-    return response.json()
+    const data = await response.json()
+    return data
   } catch (error) {
     console.error('Failed to fetch Vercel Analytics:', error)
-    return null
+    return { error: String(error) }
   }
 }
 
 export async function getVercelAnalytics(): Promise<VercelAnalyticsData | null> {
+  const debug = {
+    hasToken: !!VERCEL_API_TOKEN,
+    hasProjectId: !!VERCEL_PROJECT_ID,
+    hasTeamId: !!VERCEL_TEAM_ID,
+    error: undefined as string | undefined
+  }
+
   if (!VERCEL_API_TOKEN || !VERCEL_PROJECT_ID) {
     console.log('Vercel Analytics API not configured (missing VERCEL_API_TOKEN or VERCEL_PROJECT_ID)')
     return null
@@ -84,68 +112,105 @@ export async function getVercelAnalytics(): Promise<VercelAnalyticsData | null> 
 
   try {
     // Fetch data for different time periods in parallel
-    const [todayData, yesterdayData, weekData, monthData, topPages, topReferrers] = await Promise.all([
-      // Today
-      fetchVercelAPI('stats', {
+    // Using the timeseries endpoint which gives us page views and visitors
+    const [todayData, yesterdayData, weekData, monthData, pathsData, referrersData] = await Promise.all([
+      // Today's stats
+      fetchVercelAPI('timeseries', {
         from: startOfToday.getTime().toString(),
         to: now.getTime().toString(),
+        environment: 'production',
       }),
-      // Yesterday
-      fetchVercelAPI('stats', {
+      // Yesterday's stats
+      fetchVercelAPI('timeseries', {
         from: startOfYesterday.getTime().toString(),
         to: startOfToday.getTime().toString(),
+        environment: 'production',
       }),
-      // This week
-      fetchVercelAPI('stats', {
+      // This week's stats
+      fetchVercelAPI('timeseries', {
         from: startOfWeek.getTime().toString(),
         to: now.getTime().toString(),
+        environment: 'production',
       }),
-      // This month
-      fetchVercelAPI('stats', {
+      // This month's stats
+      fetchVercelAPI('timeseries', {
         from: startOfMonth.getTime().toString(),
         to: now.getTime().toString(),
+        environment: 'production',
       }),
       // Top pages
-      fetchVercelAPI('path', {
+      fetchVercelAPI('top-pages', {
         from: startOfWeek.getTime().toString(),
         to: now.getTime().toString(),
+        environment: 'production',
         limit: '10',
       }),
       // Top referrers
-      fetchVercelAPI('referrer', {
+      fetchVercelAPI('top-referrers', {
         from: startOfWeek.getTime().toString(),
         to: now.getTime().toString(),
+        environment: 'production',
         limit: '10',
       }),
     ])
 
+    // Check for errors
+    if (todayData?.error) {
+      debug.error = todayData.error
+    }
+
+    // Sum up timeseries data
+    const sumTimeseries = (data: any) => {
+      if (!data?.data || !Array.isArray(data.data)) return { pageViews: 0, visitors: 0 }
+      return data.data.reduce(
+        (acc: { pageViews: number; visitors: number }, point: any) => ({
+          pageViews: acc.pageViews + (point.pageViews || point.total || 0),
+          visitors: acc.visitors + (point.visitors || point.devices || 0),
+        }),
+        { pageViews: 0, visitors: 0 }
+      )
+    }
+
+    const todayStats = sumTimeseries(todayData)
+    const yesterdayStats = sumTimeseries(yesterdayData)
+    const weekStats = sumTimeseries(weekData)
+    const monthStats = sumTimeseries(monthData)
+
     return {
       pageViews: {
-        today: todayData?.pageViews || 0,
-        yesterday: yesterdayData?.pageViews || 0,
-        thisWeek: weekData?.pageViews || 0,
-        thisMonth: monthData?.pageViews || 0,
+        today: todayStats.pageViews,
+        yesterday: yesterdayStats.pageViews,
+        thisWeek: weekStats.pageViews,
+        thisMonth: monthStats.pageViews,
       },
       visitors: {
-        today: todayData?.visitors || 0,
-        yesterday: yesterdayData?.visitors || 0,
-        thisWeek: weekData?.visitors || 0,
-        thisMonth: monthData?.visitors || 0,
+        today: todayStats.visitors,
+        yesterday: yesterdayStats.visitors,
+        thisWeek: weekStats.visitors,
+        thisMonth: monthStats.visitors,
       },
-      topPages: (topPages?.data || []).map((item: any) => ({
-        path: item.key,
-        views: item.total,
-        visitors: item.devices,
+      topPages: (pathsData?.data || []).map((item: any) => ({
+        path: item.key || item.path || item.page || 'Unknown',
+        views: item.total || item.pageViews || item.views || 0,
+        visitors: item.devices || item.visitors || 0,
       })),
-      topReferrers: (topReferrers?.data || []).map((item: any) => ({
-        referrer: item.key || 'Direct',
-        views: item.total,
-        visitors: item.devices,
+      topReferrers: (referrersData?.data || []).map((item: any) => ({
+        referrer: item.key || item.referrer || 'Direct',
+        views: item.total || item.pageViews || item.views || 0,
+        visitors: item.devices || item.visitors || 0,
       })),
       timeSeries: [],
+      debug,
     }
   } catch (error) {
     console.error('Failed to get Vercel Analytics:', error)
-    return null
+    return {
+      pageViews: { today: 0, yesterday: 0, thisWeek: 0, thisMonth: 0 },
+      visitors: { today: 0, yesterday: 0, thisWeek: 0, thisMonth: 0 },
+      topPages: [],
+      topReferrers: [],
+      timeSeries: [],
+      debug: { ...debug, error: String(error) },
+    }
   }
 }
