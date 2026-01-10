@@ -29,6 +29,21 @@ import {
   Eye,
 } from 'lucide-react'
 
+// Device type display names
+const deviceTypeLabels: Record<string, string> = {
+  IPHONE: 'iPhone',
+  IPAD: 'iPad',
+  MACBOOK: 'MacBook',
+  MAC_MINI: 'Mac mini',
+  MAC_STUDIO: 'Mac Studio',
+  MAC_PRO: 'Mac Pro',
+  IMAC: 'iMac',
+  APPLE_WATCH: 'Apple Watch',
+  APPLE_TV: 'Apple TV',
+  AIRPODS: 'AirPods',
+  ACCESSORIES: 'Accessories',
+}
+
 interface Listing {
   id: string
   title: string
@@ -151,8 +166,8 @@ export default function ListingDetailPage() {
           <nav className="text-sm text-gray-500 dark:text-gray-400">
             <Link href="/" className="hover:text-primary-600">Home</Link>
             <span className="mx-2">/</span>
-            <Link href={`/browse?deviceType=${listing.deviceType}`} className="hover:text-primary-600">
-              {listing.deviceType.replace('_', ' ')}
+            <Link href={`/search?deviceType=${listing.deviceType}`} className="hover:text-primary-600">
+              {deviceTypeLabels[listing.deviceType] || listing.deviceType}
             </Link>
             <span className="mx-2">/</span>
             <span className="text-gray-900 dark:text-white">{listing.deviceModel}</span>
