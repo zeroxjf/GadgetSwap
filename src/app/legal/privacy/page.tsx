@@ -17,7 +17,7 @@ export default function PrivacyPage() {
 
         <div className="card p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
-          <p className="text-gray-500 mb-8">Last updated: January 9, 2025</p>
+          <p className="text-gray-500 mb-8">Last updated: January 10, 2025</p>
 
           <div className="prose prose-gray max-w-none">
             <section className="mb-8">
@@ -70,14 +70,18 @@ export default function PrivacyPage() {
                 <li>Listing view counts</li>
               </ul>
 
-              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Automated Image Analysis</h3>
-              <p className="text-gray-600 mb-4">To prevent fraud, we use Google Cloud Vision to analyze uploaded images:</p>
+              <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Security &amp; Fraud Prevention Data</h3>
+              <p className="text-gray-600 mb-4">To protect our users and prevent fraud, we collect:</p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
-                <li>OCR to verify handwritten verification codes</li>
-                <li>Detection of manipulated or AI-generated images</li>
-                <li>SafeSearch moderation for inappropriate content</li>
-                <li>Object detection to verify device presence in photos</li>
+                <li>IP address hashes (cryptographically hashed for privacy - we do not store raw IP addresses)</li>
+                <li>Login timestamps and activity logs</li>
+                <li>Device/browser information for session management</li>
               </ul>
+              <p className="text-gray-600 mt-4">
+                IP addresses are immediately converted to irreversible SHA-256 hashes before storage.
+                This allows us to detect and prevent abuse while protecting your privacy - we cannot
+                recover the original IP address from the stored hash.
+              </p>
             </section>
 
             <section className="mb-8">
@@ -109,11 +113,11 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
                 <li><strong>Stripe</strong> - Payment processing and seller payouts (PCI-DSS compliant)</li>
                 <li><strong>Cloudinary</strong> - Image hosting and storage for listing photos</li>
-                <li><strong>Google Cloud Vision</strong> - Image analysis for fraud prevention and content moderation</li>
                 <li><strong>Google OAuth</strong> - Optional sign-in with Google</li>
+                <li><strong>Apple Sign-In</strong> - Optional sign-in with Apple</li>
                 <li><strong>Shipping carriers</strong> (UPS, FedEx, USPS) - Package tracking via their APIs</li>
-                <li><strong>Vercel</strong> - Website hosting</li>
-                <li><strong>PostgreSQL database</strong> - Data storage (hosted on Neon/Supabase)</li>
+                <li><strong>Vercel</strong> - Website hosting and analytics</li>
+                <li><strong>PostgreSQL database</strong> - Data storage (hosted securely)</li>
               </ul>
 
               <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">IMEI Verification</h3>
@@ -136,8 +140,10 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
                 <li>SSL/TLS encryption for all data transmission</li>
                 <li>Secure payment processing through Stripe (PCI-DSS compliant)</li>
+                <li>Cryptographic hashing for sensitive identifiers (IP addresses, IMEI numbers)</li>
                 <li>Regular security audits and monitoring</li>
                 <li>Access controls and authentication requirements</li>
+                <li>Activity logging for abuse detection (retained for 90 days)</li>
               </ul>
               <p className="text-gray-600 mt-4">
                 While we strive to protect your information, no method of transmission over the Internet
@@ -174,8 +180,9 @@ export default function PrivacyPage() {
                 <li>Track listing view counts</li>
               </ul>
               <p className="text-gray-600 mt-4">
-                We do not currently use third-party analytics or advertising trackers. You can control cookies
-                through your browser settings, though signing in requires session cookies.
+                We use Vercel Analytics to understand how visitors use our site. This collects anonymous,
+                aggregated data about page views and does not track individual users or use cookies.
+                You can control cookies through your browser settings, though signing in requires session cookies.
               </p>
             </section>
 
@@ -186,6 +193,15 @@ export default function PrivacyPage() {
                 After account deletion, we may retain certain information as required by law or for legitimate
                 business purposes (e.g., transaction records for tax purposes).
               </p>
+              <p className="text-gray-600 mt-4">
+                Specific retention periods:
+              </p>
+              <ul className="list-disc pl-6 text-gray-600 space-y-2 mt-2">
+                <li>Activity logs (login history, actions): 90 days</li>
+                <li>Transaction records: 7 years (tax/legal requirements)</li>
+                <li>Messages between users: Duration of account plus 30 days</li>
+                <li>IP address hashes: Duration of account (used for abuse prevention)</li>
+              </ul>
             </section>
 
             <section className="mb-8">
