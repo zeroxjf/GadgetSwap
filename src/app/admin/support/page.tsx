@@ -41,30 +41,6 @@ interface Report {
   } | null
 }
 
-// Simulated reports for now - in production this would come from a Report model
-const mockReports: Report[] = [
-  {
-    id: '1',
-    type: 'listing',
-    reason: 'Suspicious listing',
-    description: 'This listing appears to have fake photos and the price is too good to be true.',
-    status: 'OPEN',
-    createdAt: new Date().toISOString(),
-    reporter: { id: '1', name: 'John Doe', email: 'john@example.com' },
-    targetListing: { id: 'l1', title: 'iPhone 15 Pro Max 256GB' },
-  },
-  {
-    id: '2',
-    type: 'user',
-    reason: 'Scam attempt',
-    description: 'This seller tried to take payment outside the platform.',
-    status: 'IN_PROGRESS',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    reporter: { id: '2', name: 'Jane Smith', email: 'jane@example.com' },
-    targetUser: { id: 'u1', name: 'Suspicious Seller', email: 'seller@example.com' },
-  },
-]
-
 export default function AdminSupportPage() {
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
@@ -73,11 +49,9 @@ export default function AdminSupportPage() {
   const [responseText, setResponseText] = useState('')
 
   useEffect(() => {
-    // In production, fetch from API
-    setTimeout(() => {
-      setReports(mockReports)
-      setLoading(false)
-    }, 500)
+    // TODO: Fetch from /api/admin/reports when Report model is implemented
+    setReports([])
+    setLoading(false)
   }, [])
 
   const handleUpdateStatus = (reportId: string, newStatus: Report['status']) => {
