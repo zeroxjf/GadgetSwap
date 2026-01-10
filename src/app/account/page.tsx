@@ -33,6 +33,8 @@ export default function AccountPage() {
     }
     if (status === 'authenticated') {
       fetchPayoutStatus()
+      // Track login IP in background (for OAuth logins that land here)
+      fetch('/api/auth/track-login', { method: 'POST' }).catch(() => {})
     }
   }, [status, router])
 
