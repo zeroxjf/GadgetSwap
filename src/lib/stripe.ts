@@ -102,17 +102,17 @@ export function calculateTotal(
 }
 
 // =============================================================================
-// STRIPE CONNECT V2 API - ACCOUNT MANAGEMENT
+// STRIPE CONNECT - EXPRESS ACCOUNTS (Simple Marketplace Onboarding)
 // =============================================================================
 
 /**
- * Create a Stripe Connect account for a seller using V2 API
+ * Create a Stripe Connect Express account for a seller
  *
- * This uses the V2 accounts API with the following configuration:
- * - dashboard: 'full' - Sellers get full Stripe Dashboard access
- * - fees_collector: 'stripe' - Stripe handles fee collection
- * - losses_collector: 'stripe' - Stripe handles loss management
- * - card_payments capability requested
+ * Express accounts have simplified onboarding - sellers only need to:
+ * - Verify identity (basic info)
+ * - Add bank account for payouts
+ *
+ * Much simpler than Standard or full accounts - perfect for marketplaces.
  *
  * @param displayName - The seller's display name
  * @param email - The seller's email address
@@ -123,46 +123,33 @@ export async function createConnectAccount(
   email: string,
   userId: string
 ) {
-  // Using V2 API for account creation
-  // Note: Do NOT use type: 'express' or type: 'standard' - V2 API doesn't use top-level type
-  const account = await stripeClient.v2.core.accounts.create({
-    display_name: displayName,
-    contact_email: email,
-    identity: {
-      country: 'us',
+  const account = await stripeClient.accounts.create({
+    type: 'express',
+    country: 'US',
+    email: email,
+    capabilities: {
+      card_payments: { requested: true },
+      transfers: { requested: true },
     },
-    dashboard: 'full',
-    defaults: {
-      responsibilities: {
-        fees_collector: 'stripe',
-        losses_collector: 'stripe',
-      },
-    },
-    configuration: {
-      customer: {},
-      merchant: {
-        capabilities: {
-          card_payments: {
-            requested: true,
-          },
-        },
-      },
+    business_type: 'individual',
+    business_profile: {
+      name: displayName,
+      product_description: 'Selling electronics on GadgetSwap marketplace',
     },
     metadata: {
       userId,
       platform: 'gadgetswap',
     },
-  } as any) // Type assertion needed as V2 types may not be fully available
+  })
 
   return account
 }
 
 /**
- * Create an onboarding link for a Connect account using V2 API
+ * Create an onboarding link for a Connect Express account
  *
- * This redirects the seller to Stripe's hosted onboarding experience.
- * After onboarding, they'll be redirected to returnUrl.
- * If they need to restart, they'll be sent to refreshUrl.
+ * This redirects the seller to Stripe's hosted Express onboarding.
+ * Simple flow: verify identity -> add bank account -> done!
  *
  * @param accountId - The Stripe Connect account ID (acct_xxx)
  * @param returnUrl - URL to redirect to after successful onboarding
@@ -173,109 +160,72 @@ export async function createConnectOnboardingLink(
   returnUrl: string,
   refreshUrl: string
 ) {
-  // Using V2 API for account links
-  const accountLink = await stripeClient.v2.core.accountLinks.create({
+  const accountLink = await stripeClient.accountLinks.create({
     account: accountId,
-    use_case: {
-      type: 'account_onboarding',
-      account_onboarding: {
-        configurations: ['merchant', 'customer'],
-        refresh_url: refreshUrl,
-        return_url: `${returnUrl}?accountId=${accountId}`,
-      },
-    },
-  } as any)
+    refresh_url: refreshUrl,
+    return_url: returnUrl,
+    type: 'account_onboarding',
+  })
 
   return accountLink.url
 }
 
 /**
- * Check if a Connect account is fully onboarded using V2 API
- *
- * Uses the V2 accounts API with includes to get merchant configuration
- * and requirements status in a single call.
+ * Check if a Connect Express account is fully onboarded
  *
  * @param accountId - The Stripe Connect account ID (acct_xxx)
  */
 export async function checkConnectAccountStatus(accountId: string) {
-  // Retrieve account with merchant configuration and requirements included
-  const account = await stripeClient.v2.core.accounts.retrieve(accountId, {
-    include: ['configuration.merchant', 'requirements'],
-  } as any)
-
-  // Check if card payments capability is active
-  const readyToProcessPayments = (account as any)?.configuration
-    ?.merchant?.capabilities?.card_payments?.status === 'active'
-
-  // Check requirements status
-  const requirementsStatus = (account as any).requirements?.summary?.minimum_deadline?.status
-  const onboardingComplete = requirementsStatus !== 'currently_due' && requirementsStatus !== 'past_due'
+  const account = await stripeClient.accounts.retrieve(accountId)
 
   return {
     id: account.id,
-    chargesEnabled: readyToProcessPayments,
-    payoutsEnabled: readyToProcessPayments, // V2 combines these
-    detailsSubmitted: onboardingComplete,
-    onboardingComplete,
-    requirementsStatus,
-    status: readyToProcessPayments ? 'active' : 'pending',
+    chargesEnabled: account.charges_enabled,
+    payoutsEnabled: account.payouts_enabled,
+    detailsSubmitted: account.details_submitted,
+    onboardingComplete: account.charges_enabled && account.details_submitted,
+    requirementsStatus: account.requirements?.currently_due?.length === 0 ? 'complete' : 'pending',
+    status: account.charges_enabled ? 'active' : 'pending',
   }
 }
 
+/**
+ * Create an Express dashboard login link for a connected account
+ *
+ * Allows sellers to access their Express dashboard to view payouts, etc.
+ *
+ * @param accountId - The Stripe Connect account ID
+ */
+export async function createExpressDashboardLink(accountId: string) {
+  const loginLink = await stripeClient.accounts.createLoginLink(accountId)
+  return loginLink.url
+}
+
 // =============================================================================
-// WEBHOOK HANDLING - V2 THIN EVENTS
+// WEBHOOK HANDLING - EXPRESS ACCOUNT EVENTS
 // =============================================================================
 
 /**
- * Verify and parse a thin event from Stripe webhook
+ * Verify and parse a Stripe webhook event
  *
- * V2 accounts use "thin" events which contain minimal data.
- * You must fetch the full event data using the event ID.
- *
- * To set up webhooks for V2 accounts:
- * 1. Go to Stripe Dashboard > Developers > Webhooks
- * 2. Click "+ Add destination"
- * 3. In "Events from" section, select "Connected accounts"
- * 4. Click "Show advanced options" and select "Thin" payload style
- * 5. Search for "v2" events and select:
- *    - v2.account[requirements].updated
- *    - v2.account[configuration.merchant].capability_status_updated
+ * For Express accounts, listen for these events:
+ * - account.updated (onboarding status changes)
+ * - account.application.authorized
+ * - account.application.deauthorized
  *
  * Local testing with Stripe CLI:
- * stripe listen --thin-events 'v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated' --forward-thin-to http://localhost:3000/api/webhooks/stripe-connect
+ * stripe listen --forward-to localhost:3000/api/webhooks/stripe-connect
  *
  * @param payload - Raw request body
  * @param signature - Stripe-Signature header
  * @param webhookSecret - Your webhook signing secret
  */
-export function parseThinEvent(
+export function parseWebhookEvent(
   payload: string | Buffer,
   signature: string,
   webhookSecret: string
-): { id: string; type: string; created: string; related_object?: { id: string; type: string } } {
-  // Verify the webhook signature using standard method
-  // Thin events have the same signature verification as regular events
-  const event = stripeClient.webhooks.constructEvent(payload, signature, webhookSecret)
-
-  // Return thin event structure
-  return {
-    id: event.id,
-    type: event.type,
-    created: new Date((event as any).created * 1000).toISOString(),
-    related_object: (event as any).data?.object ? {
-      id: (event as any).data.object.id || (event as any).data.object.account,
-      type: (event as any).data.object.object || 'account',
-    } : undefined,
-  }
-}
-
-/**
- * Retrieve full event data from a thin event
- *
- * @param eventId - The event ID from the thin event
- */
-export async function retrieveV2Event(eventId: string) {
-  return stripeClient.v2.core.events.retrieve(eventId)
+) {
+  return stripeClient.webhooks.constructEvent(payload, signature, webhookSecret)
 }
 
 // =============================================================================
@@ -450,61 +400,14 @@ export async function listProductsOnConnectedAccount(
 // =============================================================================
 
 /**
- * Create a subscription checkout for a connected account
+ * Create a subscription checkout session for platform subscriptions (Plus/Pro)
  *
- * V2 accounts use customer_account instead of customer for subscriptions.
- * This allows the connected account ID to be used directly.
+ * This is for users subscribing to GadgetSwap Plus or Pro plans.
+ * The subscription is on the platform's Stripe account, not the connected account.
  *
- * @param connectedAccountId - The connected account ID (acct_xxx)
  * @param priceId - The Stripe price ID for the subscription
- */
-export async function createSubscriptionCheckoutForConnectedAccount(
-  connectedAccountId: string,
-  priceId: string
-) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-
-  // V2 accounts: use customer_account instead of customer
-  const session = await stripeClient.checkout.sessions.create({
-    customer_account: connectedAccountId, // V2: Use connected account ID directly
-    mode: 'subscription',
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
-      },
-    ],
-    success_url: `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/subscription/cancel`,
-  } as any) // Type assertion for V2 fields
-
-  return session
-}
-
-/**
- * Create a billing portal session for a connected account
- *
- * Allows the connected account to manage their subscription.
- *
- * @param connectedAccountId - The connected account ID
- * @param returnUrl - URL to return to after portal session
- */
-export async function createBillingPortalSession(
-  connectedAccountId: string,
-  returnUrl: string
-) {
-  const session = await stripeClient.billingPortal.sessions.create({
-    customer_account: connectedAccountId, // V2: Use connected account ID directly
-    return_url: returnUrl,
-  } as any)
-
-  return session
-}
-
-/**
- * Legacy subscription checkout (for backward compatibility)
- *
- * @deprecated Use createSubscriptionCheckoutForConnectedAccount for V2 accounts
+ * @param userId - Your internal user ID
+ * @param customerEmail - Customer's email for prefilling
  */
 export async function createSubscriptionCheckout(
   priceId: string,
@@ -537,6 +440,24 @@ export async function createSubscriptionCheckout(
  */
 export async function cancelSubscription(subscriptionId: string) {
   return stripeClient.subscriptions.cancel(subscriptionId)
+}
+
+/**
+ * Create a billing portal session for managing subscriptions
+ *
+ * @param customerId - The Stripe customer ID
+ * @param returnUrl - URL to return to after portal session
+ */
+export async function createBillingPortalSession(
+  customerId: string,
+  returnUrl: string
+) {
+  const session = await stripeClient.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: returnUrl,
+  })
+
+  return session
 }
 
 // =============================================================================
