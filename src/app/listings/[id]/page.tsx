@@ -406,14 +406,21 @@ export default function ListingDetailPage() {
                 )}
 
                 {isOwnListing && !listing.seller.stripeOnboardingComplete && (
-                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                     <div className="flex items-start gap-3">
-                      <Wallet className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                      <Wallet className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <p className="font-medium text-amber-800 dark:text-amber-300">Payments coming soon</p>
-                        <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
-                          Stripe integration is awaiting approval. Payouts will be available once approved.
+                        <p className="font-medium text-yellow-800">This listing is hidden from buyers</p>
+                        <p className="text-sm text-yellow-700 mt-1">
+                          Set up payouts to make your listings visible to potential buyers.
                         </p>
+                        <Link
+                          href="/account/payouts"
+                          className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900"
+                        >
+                          Set up payouts
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
                       </div>
                     </div>
                   </div>
