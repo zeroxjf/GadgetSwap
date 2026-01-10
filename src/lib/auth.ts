@@ -5,6 +5,7 @@ import GoogleProvider from 'next-auth/providers/google'
 import AppleProvider from 'next-auth/providers/apple'
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
+import { logActivity } from './activity'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -114,6 +115,17 @@ export const authOptions: NextAuthOptions = {
     },
   },
   events: {
+    async signIn({ user, account }) {
+      // Log login activity
+      if (user.id) {
+        await logActivity({
+          userId: user.id,
+          type: 'LOGIN',
+          description: `Signed in via ${account?.provider || 'credentials'}`,
+          metadata: { provider: account?.provider },
+        })
+      }
+    },
     async createUser({ user }) {
       // Generate a unique username for new users
       const baseUsername = user.email?.split('@')[0] || 'user'
@@ -128,6 +140,13 @@ export const authOptions: NextAuthOptions = {
       await prisma.user.update({
         where: { id: user.id },
         data: { username },
+      })
+
+      // Log signup activity
+      await logActivity({
+        userId: user.id,
+        type: 'SIGNUP',
+        description: 'Created a new account',
       })
     },
   },

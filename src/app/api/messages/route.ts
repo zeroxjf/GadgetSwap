@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { moderateMessage, getFlagExplanation } from '@/lib/message-moderation'
 import { createNotification } from '@/lib/notifications'
+import { logActivity } from '@/lib/activity'
 
 /**
  * GET /api/messages
@@ -244,6 +245,14 @@ export async function POST(request: NextRequest) {
       title: 'New Message',
       message: `${session.user.name || 'Someone'} sent you a message`,
       link: '/messages',
+    })
+
+    // Log activity
+    await logActivity({
+      userId: session.user.id,
+      type: 'MESSAGE_SENT',
+      description: `Sent a message to ${receiver.name || 'a user'}`,
+      metadata: { receiverId, listingId: listingId || null },
     })
 
     return NextResponse.json({

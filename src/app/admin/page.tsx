@@ -55,9 +55,43 @@ interface RecentActivity {
   link?: string
 }
 
+interface ActivityMetrics {
+  activeUsers: {
+    today: number
+    week: number
+    month: number
+  }
+  today: {
+    logins: number
+    listingsCreated: number
+    purchases: number
+    messagesSent: number
+    total: number
+  }
+  week: {
+    logins: number
+    listingsCreated: number
+    purchases: number
+    messagesSent: number
+    total: number
+  }
+}
+
+interface ActivityFeedItem {
+  id: string
+  type: string
+  description: string
+  userId: string
+  userName: string
+  time: string
+  metadata?: any
+}
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
+  const [activityMetrics, setActivityMetrics] = useState<ActivityMetrics | null>(null)
+  const [activityFeed, setActivityFeed] = useState<ActivityFeedItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -71,6 +105,8 @@ export default function AdminDashboardPage() {
       if (res.ok) {
         setStats(data.stats)
         setRecentActivity(data.recentActivity || [])
+        setActivityMetrics(data.activityMetrics || null)
+        setActivityFeed(data.activityFeed || [])
       }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error)
@@ -213,6 +249,89 @@ export default function AdminDashboardPage() {
           <p className="text-xs text-green-600 mt-1">${stats.revenueToday} today</p>
         </div>
       </div>
+
+      {/* User Activity Metrics */}
+      {activityMetrics && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">User Activity</h2>
+            <Activity className="w-5 h-5 text-gray-400" />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {/* Active Users Today */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4">
+              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Active Today</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{activityMetrics.activeUsers.today}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">unique users</p>
+            </div>
+
+            {/* Active Users Week */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-4">
+              <p className="text-sm text-green-600 dark:text-green-400 font-medium">Active This Week</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{activityMetrics.activeUsers.week}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">unique users</p>
+            </div>
+
+            {/* Active Users Month */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-4">
+              <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Active This Month</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{activityMetrics.activeUsers.month}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">unique users</p>
+            </div>
+
+            {/* Total Actions Today */}
+            <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-lg p-4">
+              <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">Actions Today</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{activityMetrics.today.total}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">total events</p>
+            </div>
+          </div>
+
+          {/* Activity Breakdown */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{activityMetrics.today.logins}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Logins today</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                <Package className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{activityMetrics.today.listingsCreated}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Listings created</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                <ShoppingCart className="w-4 h-4 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{activityMetrics.today.purchases}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Purchases today</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <div className="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{activityMetrics.today.messagesSent}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Messages sent</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Revenue & Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

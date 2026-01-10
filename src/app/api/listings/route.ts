@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import crypto from 'crypto'
 import { createNotification } from '@/lib/notifications'
+import { logActivity } from '@/lib/activity'
 
 // AI detection threshold for flagging
 const AI_FLAG_THRESHOLD = 0.5
@@ -243,6 +244,14 @@ export async function POST(request: NextRequest) {
         safeSearch: safeSearchResults,
       })
     }
+
+    // Log activity
+    await logActivity({
+      userId: session.user.id,
+      type: 'LISTING_CREATED',
+      description: `Created listing "${title}"`,
+      metadata: { listingId: listing.id, deviceType, deviceModel, price },
+    })
 
     return NextResponse.json({
       success: true,

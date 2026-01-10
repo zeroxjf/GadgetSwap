@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { notifyNewSale, notifyPurchaseConfirmed } from '@/lib/notifications'
+import { logActivity } from '@/lib/activity'
 import Stripe from 'stripe'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -164,6 +165,31 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     listingId: transaction.listingId,
     transactionId: transaction.id,
     amount: transaction.totalAmount,
+  })
+
+  // Log activity for buyer (purchase)
+  await logActivity({
+    userId: transaction.buyerId,
+    type: 'PURCHASE',
+    description: `Purchased "${transaction.listing.title}" for $${transaction.totalAmount}`,
+    metadata: {
+      transactionId: transaction.id,
+      listingId: transaction.listingId,
+      amount: transaction.totalAmount,
+    },
+  })
+
+  // Log activity for seller (sale)
+  await logActivity({
+    userId: transaction.sellerId,
+    type: 'SALE',
+    description: `Sold "${transaction.listing.title}" for $${transaction.salePrice}`,
+    metadata: {
+      transactionId: transaction.id,
+      listingId: transaction.listingId,
+      amount: transaction.salePrice,
+      payout: transaction.sellerPayout,
+    },
   })
 
   console.log('Payment succeeded for transaction:', transaction.id)

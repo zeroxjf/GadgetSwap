@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isModeratorOrAdmin } from '@/lib/admin'
+import { getActivityMetrics } from '@/lib/activity'
 
 export async function GET(request: NextRequest) {
   try {
@@ -149,6 +150,51 @@ export async function GET(request: NextRequest) {
       return 0
     })
 
+    // Get activity metrics
+    let activityMetrics = null
+    try {
+      activityMetrics = await getActivityMetrics()
+    } catch (error) {
+      console.error('Failed to fetch activity metrics:', error)
+    }
+
+    // Get recent activity logs from ActivityLog table
+    let activityFeed: Array<{
+      id: string
+      type: string
+      description: string
+      userId: string
+      time: string
+      metadata?: any
+    }> = []
+
+    try {
+      const activityLogs = await prisma.activityLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      })
+
+      // Get user names for activity logs
+      const userIds = [...new Set(activityLogs.map(log => log.userId))]
+      const users = await prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, name: true, email: true },
+      })
+      const userMap = new Map(users.map(u => [u.id, u.name || u.email || 'Unknown']))
+
+      activityFeed = activityLogs.map(log => ({
+        id: log.id,
+        type: log.type,
+        description: log.description,
+        userId: log.userId,
+        userName: userMap.get(log.userId) || 'Unknown',
+        time: formatTimeAgo(log.createdAt),
+        metadata: log.metadata,
+      }))
+    } catch (error) {
+      console.error('Failed to fetch activity feed:', error)
+    }
+
     const stats = {
       // Users
       totalUsers,
@@ -175,7 +221,12 @@ export async function GET(request: NextRequest) {
       unresolvedDisputes: pendingTransactions, // Simplified
     }
 
-    return NextResponse.json({ stats, recentActivity: recentActivity.slice(0, 10) })
+    return NextResponse.json({
+      stats,
+      recentActivity: recentActivity.slice(0, 10),
+      activityMetrics,
+      activityFeed,
+    })
   } catch (error) {
     console.error('Dashboard API error:', error)
     return NextResponse.json({ error: 'Failed to fetch dashboard data' }, { status: 500 })

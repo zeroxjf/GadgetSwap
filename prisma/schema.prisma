@@ -696,6 +696,42 @@ model MarketRate {
 }
 
 // ============================================
+// ACTIVITY LOGS
+// ============================================
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  SIGNUP
+  LISTING_CREATED
+  LISTING_UPDATED
+  LISTING_DELETED
+  PURCHASE
+  SALE
+  MESSAGE_SENT
+  REVIEW_LEFT
+  PROFILE_UPDATED
+  SUBSCRIPTION_CHANGED
+  ALERT_CREATED
+  WATCHLIST_ADDED
+}
+
+model ActivityLog {
+  id          String       @id @default(cuid())
+  userId      String
+  type        ActivityType
+  description String
+  metadata    Json?        // Additional context (listingId, transactionId, etc.)
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime     @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+  @@index([createdAt])
+}
+
+// ============================================
 // EMAIL LOGS
 // ============================================
 
