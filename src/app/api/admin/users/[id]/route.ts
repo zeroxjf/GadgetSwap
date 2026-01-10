@@ -22,7 +22,7 @@ export async function PATCH(
 
     const { id } = await params
     const body = await request.json()
-    const { role, subscriptionTier, banned } = body
+    const { role, subscriptionTier, banned, banIp, banReason } = body
 
     const updateData: any = {}
 
@@ -43,6 +43,31 @@ export async function PATCH(
     if (typeof banned === 'boolean') {
       updateData.banned = banned
       updateData.bannedAt = banned ? new Date() : null
+      updateData.bannedReason = banned ? (banReason || null) : null
+    }
+
+    // If banning with IP ban option, also ban their IP
+    if (banned && banIp) {
+      const targetUser = await prisma.user.findUnique({
+        where: { id },
+        select: { lastIpAddress: true },
+      })
+
+      if (targetUser?.lastIpAddress) {
+        await prisma.bannedIP.upsert({
+          where: { ipAddress: targetUser.lastIpAddress },
+          create: {
+            ipAddress: targetUser.lastIpAddress,
+            reason: banReason || 'Banned with user',
+            bannedById: session.user.id,
+            bannedUserId: id,
+          },
+          update: {
+            reason: banReason || 'Banned with user',
+            bannedById: session.user.id,
+          },
+        })
+      }
     }
 
     const user = await prisma.user.update({
@@ -55,6 +80,7 @@ export async function PATCH(
         role: true,
         subscriptionTier: true,
         banned: true,
+        lastIpAddress: true,
       },
     })
 

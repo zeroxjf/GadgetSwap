@@ -20,6 +20,8 @@ import {
   CheckCircle,
   Crown,
   Trash2,
+  X,
+  Globe,
 } from 'lucide-react'
 
 interface UserData {
@@ -36,6 +38,7 @@ interface UserData {
   ratingCount: number
   createdAt: string
   stripeOnboardingComplete: boolean
+  lastIpAddress: string | null
   _count: {
     listings: number
   }
@@ -52,6 +55,9 @@ export default function AdminUsersPage() {
   const [total, setTotal] = useState(0)
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [banModal, setBanModal] = useState<{ userId: string; userName: string; ip: string | null } | null>(null)
+  const [banIp, setBanIp] = useState(false)
+  const [banReason, setBanReason] = useState('')
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -135,25 +141,36 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleBanUser = async (userId: string, banned: boolean) => {
-    if (banned && !confirm('Are you sure you want to ban this user?')) return
+  const openBanModal = (user: UserData) => {
+    setBanModal({ userId: user.id, userName: user.name || user.email, ip: user.lastIpAddress })
+    setBanIp(false)
+    setBanReason('')
+    setActionMenuOpen(null)
+  }
 
-    setActionLoading(userId)
+  const handleBanUser = async () => {
+    if (!banModal) return
+
+    setActionLoading(banModal.userId)
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
+      const res = await fetch(`/api/admin/users/${banModal.userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ banned }),
+        body: JSON.stringify({
+          banned: true,
+          banIp,
+          banReason: banReason || undefined,
+        }),
       })
 
       if (res.ok) {
-        fetchUsers() // Refresh to show updated status
+        fetchUsers()
+        setBanModal(null)
       }
     } catch (error) {
       console.error('Failed to ban user:', error)
     } finally {
       setActionLoading(null)
-      setActionMenuOpen(null)
     }
   }
 
@@ -408,7 +425,7 @@ export default function AdminUsersPage() {
 
                             <hr className="my-1 border-gray-200 dark:border-gray-700" />
                             <button
-                              onClick={() => handleBanUser(user.id, true)}
+                              onClick={() => openBanModal(user)}
                               className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                             >
                               <Ban className="w-4 h-4" /> Ban User
@@ -455,6 +472,90 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+
+      {/* Ban Modal */}
+      {banModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Ban User</h3>
+              <button
+                onClick={() => setBanModal(null)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-gray-600 dark:text-gray-300">
+                Ban <span className="font-medium text-gray-900 dark:text-white">{banModal.userName}</span>?
+              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Reason (optional)
+                </label>
+                <input
+                  type="text"
+                  value={banReason}
+                  onChange={(e) => setBanReason(e.target.value)}
+                  placeholder="e.g., Scam attempt, Harassment..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+
+              {banModal.ip && (
+                <label className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={banIp}
+                    onChange={(e) => setBanIp(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                      <Globe className="w-4 h-4" />
+                      Also ban IP address
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      IP: {banModal.ip}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Prevents new accounts from this IP
+                    </p>
+                  </div>
+                </label>
+              )}
+
+              {!banModal.ip && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                  No IP address recorded for this user
+                </p>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setBanModal(null)}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBanUser}
+                disabled={actionLoading === banModal.userId}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {actionLoading === banModal.userId ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Ban className="w-4 h-4" />
+                )}
+                Ban User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
