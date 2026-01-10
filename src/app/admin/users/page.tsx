@@ -45,6 +45,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
+  const [tierFilter, setTierFilter] = useState<string>('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
@@ -59,6 +60,7 @@ export default function AdminUsersPage() {
         limit: '20',
         ...(search && { search }),
         ...(roleFilter !== 'all' && { role: roleFilter }),
+        ...(tierFilter !== 'all' && { tier: tierFilter }),
       })
 
       const res = await fetch(`/api/admin/users?${params}`)
@@ -78,7 +80,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers()
-  }, [page, roleFilter])
+  }, [page, roleFilter, tierFilter])
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -104,6 +106,50 @@ export default function AdminUsersPage() {
       }
     } catch (error) {
       console.error('Failed to update role:', error)
+    } finally {
+      setActionLoading(null)
+      setActionMenuOpen(null)
+    }
+  }
+
+  const handleTierChange = async (userId: string, newTier: 'FREE' | 'PLUS' | 'PRO') => {
+    setActionLoading(userId)
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionTier: newTier }),
+      })
+
+      if (res.ok) {
+        setUsers((prev) =>
+          prev.map((u) => (u.id === userId ? { ...u, subscriptionTier: newTier } : u))
+        )
+      }
+    } catch (error) {
+      console.error('Failed to update tier:', error)
+    } finally {
+      setActionLoading(null)
+      setActionMenuOpen(null)
+    }
+  }
+
+  const handleBanUser = async (userId: string, banned: boolean) => {
+    if (banned && !confirm('Are you sure you want to ban this user?')) return
+
+    setActionLoading(userId)
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ banned }),
+      })
+
+      if (res.ok) {
+        fetchUsers() // Refresh to show updated status
+      }
+    } catch (error) {
+      console.error('Failed to ban user:', error)
     } finally {
       setActionLoading(null)
       setActionMenuOpen(null)
@@ -172,6 +218,16 @@ export default function AdminUsersPage() {
           <option value="USER">Users</option>
           <option value="MODERATOR">Moderators</option>
           <option value="ADMIN">Admins</option>
+        </select>
+        <select
+          value={tierFilter}
+          onChange={(e) => setTierFilter(e.target.value)}
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+        >
+          <option value="all">All Tiers</option>
+          <option value="FREE">Free</option>
+          <option value="PLUS">Plus</option>
+          <option value="PRO">Pro</option>
         </select>
       </div>
 
@@ -269,31 +325,68 @@ export default function AdminUsersPage() {
                       </button>
 
                       {actionMenuOpen === user.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+                        <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
                           <div className="py-1">
+                            {/* Subscription Tier */}
+                            <div className="px-4 py-1.5 text-xs font-semibold text-gray-400 uppercase">
+                              Subscription Tier
+                            </div>
+                            <button
+                              onClick={() => handleTierChange(user.id, 'FREE')}
+                              className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${user.subscriptionTier === 'FREE' ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
+                            >
+                              <User className="w-4 h-4 text-gray-500" /> Free
+                              {user.subscriptionTier === 'FREE' && <CheckCircle className="w-3 h-3 text-green-500 ml-auto" />}
+                            </button>
+                            <button
+                              onClick={() => handleTierChange(user.id, 'PLUS')}
+                              className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${user.subscriptionTier === 'PLUS' ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
+                            >
+                              <Crown className="w-4 h-4 text-blue-500" /> Plus
+                              {user.subscriptionTier === 'PLUS' && <CheckCircle className="w-3 h-3 text-green-500 ml-auto" />}
+                            </button>
+                            <button
+                              onClick={() => handleTierChange(user.id, 'PRO')}
+                              className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${user.subscriptionTier === 'PRO' ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
+                            >
+                              <Crown className="w-4 h-4 text-purple-500" /> Pro (Lifetime)
+                              {user.subscriptionTier === 'PRO' && <CheckCircle className="w-3 h-3 text-green-500 ml-auto" />}
+                            </button>
+
+                            <hr className="my-1 border-gray-200 dark:border-gray-700" />
+
+                            {/* Role */}
+                            <div className="px-4 py-1.5 text-xs font-semibold text-gray-400 uppercase">
+                              Admin Role
+                            </div>
                             <button
                               onClick={() => handleRoleChange(user.id, 'USER')}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                              className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${user.role === 'USER' ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
                             >
-                              <User className="w-4 h-4" /> Set as User
+                              <User className="w-4 h-4" /> User
+                              {user.role === 'USER' && <CheckCircle className="w-3 h-3 text-green-500 ml-auto" />}
                             </button>
                             <button
                               onClick={() => handleRoleChange(user.id, 'MODERATOR')}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                              className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${user.role === 'MODERATOR' ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
                             >
-                              <ShieldCheck className="w-4 h-4" /> Set as Moderator
+                              <ShieldCheck className="w-4 h-4" /> Moderator
+                              {user.role === 'MODERATOR' && <CheckCircle className="w-3 h-3 text-green-500 ml-auto" />}
                             </button>
                             <button
                               onClick={() => handleRoleChange(user.id, 'ADMIN')}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                              className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${user.role === 'ADMIN' ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
                             >
-                              <Crown className="w-4 h-4" /> Set as Admin
+                              <Shield className="w-4 h-4" /> Admin
+                              {user.role === 'ADMIN' && <CheckCircle className="w-3 h-3 text-green-500 ml-auto" />}
                             </button>
+
                             <hr className="my-1 border-gray-200 dark:border-gray-700" />
                             <button
+                              onClick={() => handleBanUser(user.id, true)}
                               className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                             >
-                              <Ban className="w-4 h-4" /> Suspend User
+                              <Ban className="w-4 h-4" /> Ban User
                             </button>
                           </div>
                         </div>
