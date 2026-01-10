@@ -695,6 +695,37 @@ model MarketRate {
   @@index([deviceType, deviceModel])
 }
 
+// ============================================
+// EMAIL LOGS
+// ============================================
+
+model EmailLog {
+  id            String   @id @default(cuid())
+  subject       String
+  recipientType String   // 'all', 'marketing', 'sellers', 'buyers', 'pro', 'plus', 'free', 'test'
+  recipientCount Int
+  successCount  Int      @default(0)
+  failedCount   Int      @default(0)
+
+  // Sender info
+  sentById      String
+  sentByEmail   String
+
+  // Content preview
+  contentPreview String? // First 200 chars of content
+
+  // Status
+  status        String   @default("pending") // 'pending', 'sending', 'completed', 'failed'
+  errorMessage  String?
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  completedAt   DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+}
+
 // Jailbreak compatibility database
 model JailbreakInfo {
   id              String   @id @default(cuid())

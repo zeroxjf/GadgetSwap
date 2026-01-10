@@ -40,12 +40,50 @@ export async function POST(request: NextRequest) {
     if (testEmail) {
       const html = wrapEmailTemplate(content)
       const { sendEmail } = await import('@/lib/email')
-      await sendEmail({ to: testEmail, subject, html })
-      return NextResponse.json({
-        success: true,
-        message: `Test email sent to ${testEmail}`,
-        stats: { success: 1, failed: 0 },
+
+      // Create log entry for test email
+      const emailLog = await prisma.emailLog.create({
+        data: {
+          subject,
+          recipientType: 'test',
+          recipientCount: 1,
+          sentById: session.user.id,
+          sentByEmail: session.user.email || 'unknown',
+          contentPreview: content.replace(/<[^>]*>/g, '').substring(0, 200),
+          status: 'sending',
+        },
       })
+
+      try {
+        await sendEmail({ to: testEmail, subject, html })
+
+        // Update log as completed
+        await prisma.emailLog.update({
+          where: { id: emailLog.id },
+          data: {
+            status: 'completed',
+            successCount: 1,
+            completedAt: new Date(),
+          },
+        })
+
+        return NextResponse.json({
+          success: true,
+          message: `Test email sent to ${testEmail}`,
+          stats: { success: 1, failed: 0 },
+        })
+      } catch (error: any) {
+        await prisma.emailLog.update({
+          where: { id: emailLog.id },
+          data: {
+            status: 'failed',
+            failedCount: 1,
+            errorMessage: error.message,
+            completedAt: new Date(),
+          },
+        })
+        throw error
+      }
     }
 
     // Build recipient query based on type
@@ -102,10 +140,35 @@ export async function POST(request: NextRequest) {
     const emails = recipients.map((r) => r.email)
     const html = wrapEmailTemplate(content)
 
+    // Create log entry
+    const emailLog = await prisma.emailLog.create({
+      data: {
+        subject,
+        recipientType: recipientType || 'all',
+        recipientCount: emails.length,
+        sentById: session.user.id,
+        sentByEmail: session.user.email || 'unknown',
+        contentPreview: content.replace(/<[^>]*>/g, '').substring(0, 200),
+        status: 'sending',
+      },
+    })
+
     // Send emails
     const results = await sendBulkEmail(emails, subject, html)
 
-    // Log the email send
+    // Update log with results
+    await prisma.emailLog.update({
+      where: { id: emailLog.id },
+      data: {
+        status: results.failed === emails.length ? 'failed' : 'completed',
+        successCount: results.success,
+        failedCount: results.failed,
+        errorMessage: results.errors.length > 0 ? results.errors.slice(0, 5).join('; ') : null,
+        completedAt: new Date(),
+      },
+    })
+
+    // Console log for debugging
     console.log(`[ADMIN EMAIL] Sent by ${session.user.email}:`, {
       subject,
       recipientType,
@@ -135,7 +198,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/admin/email
- * Get email stats/recipient counts
+ * Get email stats/recipient counts and sent email history
  */
 export async function GET(request: NextRequest) {
   try {
@@ -153,6 +216,11 @@ export async function GET(request: NextRequest) {
     if (user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
+
+    const searchParams = request.nextUrl.searchParams
+    const includeHistory = searchParams.get('history') === 'true'
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const limit = parseInt(searchParams.get('limit') || '20', 10)
 
     // Get counts for each recipient type
     const [
@@ -187,6 +255,21 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
+    // Optionally include email history
+    let emailLogs = null
+    let totalLogs = 0
+
+    if (includeHistory) {
+      [emailLogs, totalLogs] = await Promise.all([
+        prisma.emailLog.findMany({
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        prisma.emailLog.count(),
+      ])
+    }
+
     return NextResponse.json({
       recipientCounts: {
         all: allCount,
@@ -197,6 +280,12 @@ export async function GET(request: NextRequest) {
         plus: plusCount,
         free: freeCount,
       },
+      ...(includeHistory && {
+        emailLogs,
+        totalLogs,
+        page,
+        totalPages: Math.ceil(totalLogs / limit),
+      }),
     })
   } catch (error) {
     console.error('Get email stats error:', error)
