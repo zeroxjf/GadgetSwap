@@ -302,17 +302,10 @@ export async function GET(request: NextRequest) {
       where.sellerId = sellerId
       // Don't filter by status or reviewStatus - show all their listings
     } else {
-      // Public listings: must be ACTIVE, APPROVED, and either:
-      // - Seller has completed Stripe onboarding, OR
-      // - Seller is an admin (bypasses payout requirement)
+      // Public listings: must be ACTIVE and APPROVED
+      // Note: Stripe onboarding check temporarily disabled while awaiting Stripe approval
       where.status = 'ACTIVE'
       where.reviewStatus = 'APPROVED'
-      where.seller = {
-        OR: [
-          { stripeOnboardingComplete: true },
-          { role: 'ADMIN' },
-        ],
-      }
     }
 
     // Text search
