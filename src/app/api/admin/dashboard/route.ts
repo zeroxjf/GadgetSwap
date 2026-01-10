@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isModeratorOrAdmin } from '@/lib/admin'
 import { getActivityMetrics } from '@/lib/activity'
+import { getVercelAnalytics } from '@/lib/vercel-analytics'
 
 export async function GET(request: NextRequest) {
   try {
@@ -221,11 +222,20 @@ export async function GET(request: NextRequest) {
       unresolvedDisputes: pendingTransactions, // Simplified
     }
 
+    // Get Vercel Analytics data
+    let siteTraffic = null
+    try {
+      siteTraffic = await getVercelAnalytics()
+    } catch (error) {
+      console.error('Failed to fetch Vercel Analytics:', error)
+    }
+
     return NextResponse.json({
       stats,
       recentActivity: recentActivity.slice(0, 10),
       activityMetrics,
       activityFeed,
+      siteTraffic,
     })
   } catch (error) {
     console.error('Dashboard API error:', error)

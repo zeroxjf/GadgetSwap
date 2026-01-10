@@ -19,6 +19,9 @@ import {
   ArrowDownRight,
   Loader2,
   Eye,
+  Globe,
+  MousePointer,
+  ExternalLink,
 } from 'lucide-react'
 
 interface DashboardStats {
@@ -87,11 +90,29 @@ interface ActivityFeedItem {
   metadata?: any
 }
 
+interface SiteTraffic {
+  pageViews: {
+    today: number
+    yesterday: number
+    thisWeek: number
+    thisMonth: number
+  }
+  visitors: {
+    today: number
+    yesterday: number
+    thisWeek: number
+    thisMonth: number
+  }
+  topPages: Array<{ path: string; views: number; visitors: number }>
+  topReferrers: Array<{ referrer: string; views: number; visitors: number }>
+}
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [activityMetrics, setActivityMetrics] = useState<ActivityMetrics | null>(null)
   const [activityFeed, setActivityFeed] = useState<ActivityFeedItem[]>([])
+  const [siteTraffic, setSiteTraffic] = useState<SiteTraffic | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -107,6 +128,7 @@ export default function AdminDashboardPage() {
         setRecentActivity(data.recentActivity || [])
         setActivityMetrics(data.activityMetrics || null)
         setActivityFeed(data.activityFeed || [])
+        setSiteTraffic(data.siteTraffic || null)
       }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error)
@@ -329,6 +351,99 @@ export default function AdminDashboardPage() {
                 <p className="text-xs text-gray-500 dark:text-gray-400">Messages sent</p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Site Traffic Section */}
+      {siteTraffic && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Site Traffic</h2>
+            <a
+              href="https://vercel.com/dashboard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
+            >
+              Vercel Analytics
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {/* Page Views Today */}
+            <div className="bg-gradient-to-br from-cyan-50 to-sky-50 dark:from-cyan-900/20 dark:to-sky-900/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Eye className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                <p className="text-sm text-cyan-600 dark:text-cyan-400 font-medium">Page Views</p>
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{siteTraffic.pageViews.today.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">today</p>
+            </div>
+
+            {/* Visitors Today */}
+            <div className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <MousePointer className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                <p className="text-sm text-violet-600 dark:text-violet-400 font-medium">Visitors</p>
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{siteTraffic.visitors.today.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">today</p>
+            </div>
+
+            {/* Page Views This Week */}
+            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Globe className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <p className="text-sm text-teal-600 dark:text-teal-400 font-medium">Views (Week)</p>
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{siteTraffic.pageViews.thisWeek.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">this week</p>
+            </div>
+
+            {/* Visitors This Week */}
+            <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Users className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                <p className="text-sm text-rose-600 dark:text-rose-400 font-medium">Visitors (Week)</p>
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{siteTraffic.visitors.thisWeek.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">this week</p>
+            </div>
+          </div>
+
+          {/* Top Pages & Referrers */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Top Pages */}
+            {siteTraffic.topPages.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Top Pages</h3>
+                <div className="space-y-2">
+                  {siteTraffic.topPages.slice(0, 5).map((page, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                      <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1 mr-2">{page.path}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">{page.views.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Top Referrers */}
+            {siteTraffic.topReferrers.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Top Referrers</h3>
+                <div className="space-y-2">
+                  {siteTraffic.topReferrers.slice(0, 5).map((referrer, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                      <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1 mr-2">{referrer.referrer}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">{referrer.views.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
