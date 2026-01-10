@@ -1,15 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react'
 
-interface TourStep {
-  target: string
-  title: string
-  content: string
-}
-
-const tourSteps: TourStep[] = [
+const tourSteps = [
   {
     target: '[data-tour="ios-search"]',
     title: 'Search by iOS Version',
@@ -44,100 +38,65 @@ interface GuidedTourProps {
 
 export function GuidedTour({ isActive, onComplete }: GuidedTourProps) {
   const [currentStep, setCurrentStep] = useState(0)
-  const [isReady, setIsReady] = useState(false)
-  const highlightRef = useRef<HTMLDivElement>(null)
-  const tooltipRef = useRef<HTMLDivElement>(null)
-  const rafRef = useRef<number | null>(null)
-
-  // Lock body scroll when tour is active
-  useEffect(() => {
-    if (isActive) {
-      document.body.style.overflow = 'hidden'
-      return () => {
-        document.body.style.overflow = ''
-      }
-    }
-  }, [isActive])
-
-  const scrollToAndHighlight = useCallback((stepIndex: number) => {
-    const step = tourSteps[stepIndex]
-    if (!step) return
-
-    const element = document.querySelector(step.target) as HTMLElement
-    if (!element) return
-
-    setIsReady(false)
-
-    // Scroll element into center of viewport
-    const rect = element.getBoundingClientRect()
-    const elementTop = rect.top + window.scrollY
-    const viewportHeight = window.innerHeight
-    const targetScroll = elementTop - (viewportHeight / 2) + (rect.height / 2)
-
-    // Temporarily enable scrolling for programmatic scroll
-    document.body.style.overflow = ''
-
-    window.scrollTo({
-      top: Math.max(0, targetScroll),
-      behavior: 'smooth',
-    })
-
-    // Re-lock scroll and position elements after scroll completes
-    setTimeout(() => {
-      document.body.style.overflow = 'hidden'
-      positionElements(element)
-      setIsReady(true)
-    }, 400)
-  }, [])
-
-  const positionElements = (element: HTMLElement) => {
-    const rect = element.getBoundingClientRect()
-
-    // Position highlight
-    if (highlightRef.current) {
-      highlightRef.current.style.top = `${rect.top - 8}px`
-      highlightRef.current.style.left = `${rect.left - 8}px`
-      highlightRef.current.style.width = `${rect.width + 16}px`
-      highlightRef.current.style.height = `${rect.height + 16}px`
-    }
-
-    // Position tooltip below or above element
-    if (tooltipRef.current) {
-      const tooltipHeight = 220
-      const tooltipWidth = 340
-      const padding = 20
-
-      let top: number
-      let left = rect.left + (rect.width / 2) - (tooltipWidth / 2)
-
-      // Check if there's room below
-      if (rect.bottom + padding + tooltipHeight < window.innerHeight) {
-        top = rect.bottom + padding
-      } else {
-        // Place above
-        top = rect.top - tooltipHeight - padding
-      }
-
-      // Keep in viewport horizontally
-      left = Math.max(16, Math.min(left, window.innerWidth - tooltipWidth - 16))
-      top = Math.max(16, top)
-
-      tooltipRef.current.style.top = `${top}px`
-      tooltipRef.current.style.left = `${left}px`
-    }
-  }
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 })
+  const previousElementRef = useRef<Element | null>(null)
 
   useEffect(() => {
-    if (isActive) {
-      scrollToAndHighlight(currentStep)
+    if (!isActive) return
+
+    const step = tourSteps[currentStep]
+    const element = document.querySelector(step.target)
+
+    // Remove highlight from previous element
+    if (previousElementRef.current) {
+      previousElementRef.current.classList.remove('tour-highlight')
+    }
+
+    if (element) {
+      // Add highlight to current element
+      element.classList.add('tour-highlight')
+      previousElementRef.current = element
+
+      // Scroll into view
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      // Position tooltip after scroll
+      setTimeout(() => {
+        const rect = element.getBoundingClientRect()
+        const tooltipWidth = 340
+        const tooltipHeight = 200
+
+        let top = rect.bottom + 16
+        let left = rect.left + (rect.width / 2) - (tooltipWidth / 2)
+
+        // If not enough room below, put above
+        if (top + tooltipHeight > window.innerHeight - 20) {
+          top = rect.top - tooltipHeight - 16
+        }
+
+        // Keep in viewport
+        left = Math.max(16, Math.min(left, window.innerWidth - tooltipWidth - 16))
+        top = Math.max(16, top)
+
+        setTooltipPos({ top, left })
+      }, 400)
     }
 
     return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current)
+      if (element) {
+        element.classList.remove('tour-highlight')
       }
     }
-  }, [isActive, currentStep, scrollToAndHighlight])
+  }, [isActive, currentStep])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (previousElementRef.current) {
+        previousElementRef.current.classList.remove('tour-highlight')
+      }
+    }
+  }, [])
 
   const handleNext = () => {
     if (currentStep < tourSteps.length - 1) {
@@ -154,7 +113,9 @@ export function GuidedTour({ isActive, onComplete }: GuidedTourProps) {
   }
 
   const handleComplete = () => {
-    document.body.style.overflow = ''
+    if (previousElementRef.current) {
+      previousElementRef.current.classList.remove('tour-highlight')
+    }
     localStorage.setItem('guidedTourCompleted', 'true')
     onComplete()
   }
@@ -165,31 +126,24 @@ export function GuidedTour({ isActive, onComplete }: GuidedTourProps) {
 
   return (
     <>
-      {/* Dark overlay */}
-      <div
-        className="fixed inset-0 z-[100] bg-black/70 transition-opacity duration-300"
-        onClick={handleComplete}
-      />
-
-      {/* Highlight box */}
-      <div
-        ref={highlightRef}
-        className={`fixed z-[101] rounded-xl border-4 border-primary-500 bg-white/10 backdrop-blur-[1px] transition-all duration-300 pointer-events-none ${
-          isReady ? 'opacity-100' : 'opacity-0'
-        }`}
-        style={{
-          boxShadow: '0 0 0 4px rgba(99, 102, 241, 0.3), 0 0 30px rgba(99, 102, 241, 0.4)'
-        }}
-      />
+      {/* Styles for highlighted element */}
+      <style jsx global>{`
+        .tour-highlight {
+          position: relative;
+          z-index: 1000 !important;
+          outline: 4px solid #6366f1 !important;
+          outline-offset: 4px !important;
+          border-radius: 12px !important;
+          box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 40px rgba(99, 102, 241, 0.5) !important;
+        }
+      `}</style>
 
       {/* Tooltip */}
       <div
-        ref={tooltipRef}
-        className={`fixed z-[102] w-[340px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 transition-all duration-300 ${
-          isReady ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-        }`}
+        className="fixed z-[1001] w-[340px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 animate-fade-in"
+        style={{ top: tooltipPos.top, left: tooltipPos.left }}
       >
-        {/* Step indicator */}
+        {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
@@ -201,7 +155,7 @@ export function GuidedTour({ isActive, onComplete }: GuidedTourProps) {
           </div>
           <button
             onClick={handleComplete}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -216,9 +170,9 @@ export function GuidedTour({ isActive, onComplete }: GuidedTourProps) {
         </p>
 
         {/* Progress bar */}
-        <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full mb-6 overflow-hidden">
+        <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mb-6 overflow-hidden">
           <div
-            className="h-full bg-primary-500 rounded-full transition-all duration-300"
+            className="h-full bg-primary-500 rounded-full transition-all duration-500"
             style={{ width: `${((currentStep + 1) / tourSteps.length) * 100}%` }}
           />
         </div>
