@@ -478,16 +478,27 @@ export const iosVersions = [
   { value: '9', label: 'iOS 9 & below' },
 ] as const
 
-// Jailbreak statuses
+// Jailbreak statuses for filters (simplified to 2 options)
 export const jailbreakStatuses = [
-  { value: 'JAILBROKEN', label: 'Jailbroken' },
   { value: 'JAILBREAKABLE', label: 'Jailbreakable' },
-  { value: 'NOT_JAILBROKEN', label: 'Stock (Not Jailbroken)' },
+  { value: 'STOCK', label: 'Stock' },
 ] as const
 
-export const jailbreakStatusLabels: Record<string, string> = Object.fromEntries(
-  jailbreakStatuses.map((s) => [s.value, s.label])
-)
+// Map filter values to actual database values
+export const jailbreakFilterValues: Record<string, string[]> = {
+  JAILBREAKABLE: ['JAILBROKEN', 'JAILBREAKABLE', 'ROOTLESS_JB', 'ROOTFUL_JB'],
+  STOCK: ['NOT_JAILBROKEN'],
+}
+
+export const jailbreakStatusLabels: Record<string, string> = {
+  JAILBROKEN: 'Jailbreakable',
+  JAILBREAKABLE: 'Jailbreakable',
+  ROOTLESS_JB: 'Jailbreakable',
+  ROOTFUL_JB: 'Jailbreakable',
+  NOT_JAILBROKEN: 'Stock',
+  STOCK: 'Stock',
+  UNKNOWN: 'Unknown',
+}
 
 export function getJailbreakStatusLabel(value: string): string {
   return jailbreakStatusLabels[value] || value.replace(/_/g, ' ')

@@ -341,7 +341,16 @@ export async function GET(request: NextRequest) {
     }
 
     if (jailbreakStatus) {
-      where.jailbreakStatus = jailbreakStatus
+      // Map filter values to database values
+      // JAILBREAKABLE -> JAILBROKEN, JAILBREAKABLE, ROOTLESS_JB, ROOTFUL_JB
+      // STOCK -> NOT_JAILBROKEN
+      if (jailbreakStatus === 'JAILBREAKABLE') {
+        where.jailbreakStatus = { in: ['JAILBROKEN', 'JAILBREAKABLE', 'ROOTLESS_JB', 'ROOTFUL_JB'] }
+      } else if (jailbreakStatus === 'STOCK') {
+        where.jailbreakStatus = 'NOT_JAILBROKEN'
+      } else {
+        where.jailbreakStatus = jailbreakStatus
+      }
     }
 
     if (condition) {
