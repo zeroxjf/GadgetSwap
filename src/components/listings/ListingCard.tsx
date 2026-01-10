@@ -137,16 +137,30 @@ export function ListingCard({ listing }: ListingCardProps) {
             )}
           </button>
 
-          {/* iOS Version badge */}
-          {listing.osVersion && (
-            <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded">
-              iOS {listing.osVersion}
-            </div>
-          )}
         </div>
 
         {/* Content */}
         <div className="p-4">
+          {/* iOS Version & Jailbreak Status - PROMINENT */}
+          <div className="flex gap-2 mb-3">
+            {listing.osVersion && (
+              <div className="flex-1 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-700 dark:to-gray-600 text-white rounded-lg px-3 py-2 text-center">
+                <p className="text-[10px] uppercase tracking-wide text-gray-300">iOS</p>
+                <p className="text-lg font-bold leading-tight">{listing.osVersion}</p>
+              </div>
+            )}
+            <div className={`flex-1 rounded-lg px-3 py-2 text-center ${
+              jailbreak && jailbreak.label === 'Jailbreakable'
+                ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+            }`}>
+              <p className="text-[10px] uppercase tracking-wide opacity-75">Status</p>
+              <p className="text-sm font-bold leading-tight">
+                {jailbreak && jailbreak.label ? jailbreak.label : 'Stock'}
+              </p>
+            </div>
+          </div>
+
           {/* Price */}
           <div className="flex items-baseline justify-between mb-1">
             <span className="text-xl font-bold text-gray-900 dark:text-white">
@@ -162,23 +176,13 @@ export function ListingCard({ listing }: ListingCardProps) {
             {listing.title}
           </h3>
 
-          {/* Badges */}
+          {/* Condition & checkm8 badges */}
           <div className="flex flex-wrap gap-1.5 mb-3">
             <span className={`badge ${condition.color}`}>{condition.label}</span>
-            {jailbreak && jailbreak.label && (
-              <span className={`badge ${jailbreak.color}`}>{jailbreak.label}</span>
-            )}
             {listing.bootromExploit && (
               <span className="badge bg-amber-100 text-amber-800">checkm8</span>
             )}
           </div>
-
-          {/* Jailbreak tool if applicable */}
-          {listing.jailbreakTool && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-              JB Tool: {listing.jailbreakTool}
-            </p>
-          )}
 
           {/* Seller info */}
           <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
