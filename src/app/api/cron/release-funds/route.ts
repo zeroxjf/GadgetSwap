@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
 
-// Secret to verify cron requests (set in env)
+// Secret to verify cron requests (REQUIRED in production)
 const CRON_SECRET = process.env.CRON_SECRET
 
 /**
@@ -11,17 +11,20 @@ const CRON_SECRET = process.env.CRON_SECRET
  *
  * Call this via:
  * - Vercel Cron (add to vercel.json)
- * - External cron service
- * - Manual trigger
+ * - External cron service with Bearer token
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify cron secret if set
-    if (CRON_SECRET) {
-      const authHeader = request.headers.get('authorization')
-      if (authHeader !== `Bearer ${CRON_SECRET}`) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+    // CRON_SECRET is required - reject if not configured
+    if (!CRON_SECRET) {
+      console.error('CRON_SECRET not configured')
+      return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+    }
+
+    // Verify authorization header
+    const authHeader = request.headers.get('authorization')
+    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Find all transactions ready for fund release
@@ -122,7 +125,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Also allow GET for easy testing / Vercel cron
-export async function GET(request: NextRequest) {
-  return POST(request)
-}
+// GET method disabled for security - use POST only
