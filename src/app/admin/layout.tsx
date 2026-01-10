@@ -14,6 +14,7 @@ import {
   CreditCard,
   MessageSquare,
   AlertTriangle,
+  Mail,
 } from 'lucide-react'
 
 export default async function AdminLayout({
@@ -43,6 +44,7 @@ export default async function AdminLayout({
     { href: '/admin/messages', icon: AlertTriangle, label: 'Flagged Messages' },
     { href: '/admin/users', icon: Users, label: 'Users' },
     { href: '/admin/transactions', icon: CreditCard, label: 'Transactions' },
+    { href: '/admin/email', icon: Mail, label: 'Email Users' },
     { href: '/admin/support', icon: MessageSquare, label: 'Support' },
   ]
 
