@@ -15,6 +15,7 @@ import {
   MessageSquare,
   AlertTriangle,
   Mail,
+  Activity,
 } from 'lucide-react'
 
 export default async function AdminLayout({
@@ -40,6 +41,7 @@ export default async function AdminLayout({
 
   const navItems = [
     { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/admin/activity', icon: Activity, label: 'Activity & Traffic' },
     { href: '/admin/reviews', icon: ClipboardList, label: 'Review Queue' },
     { href: '/admin/messages', icon: AlertTriangle, label: 'Flagged Messages' },
     { href: '/admin/users', icon: Users, label: 'Users' },
