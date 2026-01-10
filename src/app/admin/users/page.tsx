@@ -19,6 +19,7 @@ import {
   Ban,
   CheckCircle,
   Crown,
+  Trash2,
 } from 'lucide-react'
 
 interface UserData {
@@ -150,6 +151,30 @@ export default function AdminUsersPage() {
       }
     } catch (error) {
       console.error('Failed to ban user:', error)
+    } finally {
+      setActionLoading(null)
+      setActionMenuOpen(null)
+    }
+  }
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to permanently delete ${userName}? This will delete all their listings, messages, and transactions. This cannot be undone.`)) return
+
+    setActionLoading(userId)
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        setUsers((prev) => prev.filter((u) => u.id !== userId))
+        setTotal((prev) => prev - 1)
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete user')
+      }
+    } catch (error) {
+      console.error('Failed to delete user:', error)
     } finally {
       setActionLoading(null)
       setActionMenuOpen(null)
@@ -387,6 +412,12 @@ export default function AdminUsersPage() {
                               className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                             >
                               <Ban className="w-4 h-4" /> Ban User
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id, user.name || user.email)}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                            >
+                              <Trash2 className="w-4 h-4" /> Delete User
                             </button>
                           </div>
                         </div>
