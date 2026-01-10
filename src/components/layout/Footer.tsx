@@ -99,7 +99,7 @@ export function Footer() {
             <div className="bg-green-900/50 rounded-lg py-2 ring-2 ring-green-500">
               <div className="text-xl font-bold text-green-300">0%</div>
               <div className="text-xs text-green-200">Pro Plan</div>
-              <div className="text-xs text-green-600">platform fee</div>
+              <div className="text-xs text-green-600">we cover Stripe</div>
             </div>
           </div>
         </div>
