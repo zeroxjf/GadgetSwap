@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const search = searchParams.get('search') || ''
     const role = searchParams.get('role')
+    const tier = searchParams.get('tier')
 
     const where: any = {}
 
@@ -34,6 +35,10 @@ export async function GET(request: NextRequest) {
 
     if (role && role !== 'all') {
       where.role = role
+    }
+
+    if (tier && tier !== 'all') {
+      where.subscriptionTier = tier
     }
 
     const [users, total] = await Promise.all([

@@ -22,7 +22,7 @@ export async function PATCH(
 
     const { id } = await params
     const body = await request.json()
-    const { role, suspended } = body
+    const { role, subscriptionTier, banned } = body
 
     const updateData: any = {}
 
@@ -30,9 +30,19 @@ export async function PATCH(
       updateData.role = role
     }
 
-    if (typeof suspended === 'boolean') {
-      // You could add a suspended field to the User model
-      // For now, we'll skip this
+    if (subscriptionTier && ['FREE', 'PLUS', 'PRO'].includes(subscriptionTier)) {
+      updateData.subscriptionTier = subscriptionTier
+      // Clear Stripe subscription info if manually setting tier
+      // (they're getting it for free, not via Stripe)
+      if (subscriptionTier !== 'FREE') {
+        updateData.subscriptionStatus = 'active'
+        updateData.subscriptionEnd = null // No end date = lifetime
+      }
+    }
+
+    if (typeof banned === 'boolean') {
+      updateData.banned = banned
+      updateData.bannedAt = banned ? new Date() : null
     }
 
     const user = await prisma.user.update({
@@ -43,6 +53,8 @@ export async function PATCH(
         email: true,
         name: true,
         role: true,
+        subscriptionTier: true,
+        banned: true,
       },
     })
 
