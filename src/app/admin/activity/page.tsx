@@ -379,7 +379,7 @@ export default function AdminActivityPage() {
               Vercel Web Analytics doesn't have a public API. View your analytics directly in the Vercel dashboard.
             </p>
             <a
-              href="https://vercel.com/dashboard"
+              href="https://vercel.com/zeroxjfs-projects/gadget-swap-zmtp/analytics"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
