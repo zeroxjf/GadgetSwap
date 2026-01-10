@@ -64,12 +64,8 @@ interface SiteTraffic {
   }
   topPages: Array<{ path: string; views: number; visitors: number }>
   topReferrers: Array<{ referrer: string; views: number; visitors: number }>
-  debug?: {
-    hasToken: boolean
-    hasProjectId: boolean
-    hasTeamId: boolean
-    error?: string
-  }
+  notAvailable?: boolean
+  message?: string
 }
 
 const activityTypeIcons: Record<string, { icon: typeof Activity; color: string; bg: string }> = {
@@ -277,7 +273,7 @@ export default function AdminActivityPage() {
       )}
 
       {/* Site Traffic Section */}
-      {siteTraffic ? (
+      {siteTraffic && !siteTraffic.notAvailable ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Site Traffic</h2>
@@ -378,35 +374,19 @@ export default function AdminActivityPage() {
           </div>
           <div className="text-center py-8">
             <Globe className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 mb-2">Vercel Analytics not configured</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
-              Add VERCEL_API_TOKEN and VERCEL_PROJECT_ID env vars to enable
+            <p className="text-gray-500 dark:text-gray-400 mb-2">View Site Traffic in Vercel Dashboard</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
+              Vercel Web Analytics doesn't have a public API. View your analytics directly in the Vercel dashboard.
             </p>
-            <div className="text-xs text-left bg-gray-100 dark:bg-gray-700 p-3 rounded max-w-md mx-auto">
-              <p className="font-mono mb-2">Required env vars:</p>
-              <ul className="space-y-1 text-gray-600 dark:text-gray-400">
-                <li>VERCEL_API_TOKEN - Create at Vercel Settings &gt; Tokens</li>
-                <li>VERCEL_PROJECT_ID - Found in Project Settings &gt; General</li>
-                <li>VERCEL_TEAM_ID - Team Settings &gt; General (if team project)</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Debug Info for Site Traffic */}
-      {siteTraffic?.debug?.error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-red-800 dark:text-red-300 mb-2">Vercel Analytics Debug</h3>
-          <div className="text-xs text-red-700 dark:text-red-400 space-y-1">
-            <p>Has Token: {siteTraffic.debug.hasToken ? 'Yes' : 'No'}</p>
-            <p>Has Project ID: {siteTraffic.debug.hasProjectId ? 'Yes' : 'No'}</p>
-            <p>Has Team ID: {siteTraffic.debug.hasTeamId ? 'Yes' : 'No'}</p>
-            {siteTraffic.debug.error && (
-              <p className="mt-2 p-2 bg-red-100 dark:bg-red-900/40 rounded font-mono break-all">
-                Error: {siteTraffic.debug.error}
-              </p>
-            )}
+            <a
+              href="https://vercel.com/dashboard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Open Vercel Analytics
+            </a>
           </div>
         </div>
       )}
