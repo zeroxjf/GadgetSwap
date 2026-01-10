@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { moderateMessage, getFlagExplanation } from '@/lib/message-moderation'
 import { createNotification } from '@/lib/notifications'
 import { logActivity } from '@/lib/activity'
+import { checkRateLimit, rateLimitResponse, rateLimits } from '@/lib/rate-limit'
 
 /**
  * GET /api/messages
@@ -113,6 +114,12 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 30 messages per minute
+    const rateCheck = checkRateLimit(request, rateLimits.messages)
+    if (!rateCheck.success) {
+      return rateLimitResponse(rateCheck.resetIn)
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {

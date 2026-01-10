@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { stripe, calculateFees, STRIPE_FEE_PERCENT, STRIPE_FEE_FIXED, PLATFORM_FEES } from '@/lib/stripe'
 import { calculateTax } from '@/lib/tax'
 import { getDefaultShippingCost, qualifiesForFreeShipping } from '@/lib/shipping'
+import { checkRateLimit, rateLimitResponse, rateLimits } from '@/lib/rate-limit'
 
 /**
  * POST /api/checkout
@@ -12,6 +13,12 @@ import { getDefaultShippingCost, qualifiesForFreeShipping } from '@/lib/shipping
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 10 checkout attempts per minute
+    const rateCheck = checkRateLimit(request, rateLimits.checkout)
+    if (!rateCheck.success) {
+      return rateLimitResponse(rateCheck.resetIn)
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {

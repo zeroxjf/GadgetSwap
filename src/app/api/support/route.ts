@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit, rateLimitResponse, rateLimits } from '@/lib/rate-limit'
 
 /**
  * POST /api/support
@@ -9,6 +10,12 @@ import { prisma } from '@/lib/prisma'
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 support tickets per minute
+    const rateCheck = checkRateLimit(request, rateLimits.support)
+    if (!rateCheck.success) {
+      return rateLimitResponse(rateCheck.resetIn)
+    }
+
     const session = await getServerSession(authOptions)
     const body = await request.json()
     const { type, message, email, pageUrl } = body

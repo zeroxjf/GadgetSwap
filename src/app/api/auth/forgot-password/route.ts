@@ -1,9 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
+import { checkRateLimit, rateLimitResponse, rateLimits } from '@/lib/rate-limit'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 3 requests per IP per hour
+    const rateCheck = checkRateLimit(request, rateLimits.forgotPassword)
+    if (!rateCheck.success) {
+      return rateLimitResponse(rateCheck.resetIn)
+    }
+
     const { email } = await request.json()
 
     if (!email) {
