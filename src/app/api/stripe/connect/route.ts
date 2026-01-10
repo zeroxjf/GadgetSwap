@@ -5,15 +5,12 @@ import { prisma } from '@/lib/prisma'
 import { createConnectAccount, createConnectOnboardingLink, checkConnectAccountStatus } from '@/lib/stripe'
 
 // =============================================================================
-// STRIPE CONNECT API ENDPOINTS
+// STRIPE CONNECT API ENDPOINTS - EXPRESS ACCOUNTS
 // =============================================================================
 
 /**
  * GET /api/stripe/connect
  * Get the current user's Stripe Connect status
- *
- * Returns the account status directly from Stripe's V2 API,
- * including whether onboarding is complete and charges are enabled.
  */
 export async function GET() {
   try {
@@ -43,8 +40,7 @@ export async function GET() {
       })
     }
 
-    // Get latest status from Stripe V2 API
-    // Always fetch from API directly as per Stripe guidance
+    // Get latest status from Stripe
     const status = await checkConnectAccountStatus(user.stripeAccountId)
 
     // Sync status to database if changed
@@ -79,13 +75,10 @@ export async function GET() {
 
 /**
  * POST /api/stripe/connect
- * Create a Stripe Connect account using V2 API and return onboarding link
+ * Create a Stripe Connect Express account and return onboarding link
  *
- * V2 API uses:
- * - display_name: The seller's name (from their profile)
- * - contact_email: The seller's email
- * - dashboard: 'full' for full Stripe Dashboard access
- * - No top-level 'type' field (unlike V1 Express/Standard accounts)
+ * Express accounts have simplified onboarding - just identity + bank account.
+ * Perfect for marketplace sellers.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -119,6 +112,7 @@ export async function POST(request: NextRequest) {
       where: { id: session.user.id },
       select: {
         stripeAccountId: true,
+        stripeOnboardingComplete: true,
         name: true,
         username: true,
       },
@@ -126,35 +120,60 @@ export async function POST(request: NextRequest) {
 
     let stripeAccountId = user?.stripeAccountId
 
-    // Create new Connect account if needed using V2 API
-    if (!stripeAccountId) {
-      // Use the user's name as display name, fallback to username or email prefix
-      const displayName = user?.name ||
-                          user?.username ||
-                          session.user.email.split('@')[0]
-
-      // V2 API: createConnectAccount(displayName, email, userId)
-      const account = await createConnectAccount(
-        displayName,
-        session.user.email,
-        session.user.id
-      )
-
-      stripeAccountId = account.id
-
-      // Save to database
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: {
+    // If user has an existing account that's not onboarded, try to use it
+    // If it fails (e.g., V2 account), we'll create a new Express account
+    if (stripeAccountId) {
+      try {
+        // Try to create onboarding link for existing account
+        const onboardingUrl = await createConnectOnboardingLink(
           stripeAccountId,
-          stripeAccountStatus: 'pending',
-          stripeOnboardingComplete: false,
-        },
-      })
+          finalReturnUrl,
+          finalRefreshUrl
+        )
+
+        return NextResponse.json({
+          accountId: stripeAccountId,
+          url: onboardingUrl,
+        })
+      } catch (error: any) {
+        console.log(`Existing account ${stripeAccountId} failed, creating new Express account:`, error.message)
+        // Clear the old account - we'll create a new one
+        stripeAccountId = null
+        await prisma.user.update({
+          where: { id: session.user.id },
+          data: {
+            stripeAccountId: null,
+            stripeAccountStatus: null,
+            stripeOnboardingComplete: false,
+          },
+        })
+      }
     }
 
-    // Generate onboarding link using V2 API
-    // This redirects user to Stripe's hosted onboarding experience
+    // Create new Express account
+    const displayName = user?.name ||
+                        user?.username ||
+                        session.user.email.split('@')[0]
+
+    const account = await createConnectAccount(
+      displayName,
+      session.user.email,
+      session.user.id
+    )
+
+    stripeAccountId = account.id
+
+    // Save to database
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        stripeAccountId,
+        stripeAccountStatus: 'pending',
+        stripeOnboardingComplete: false,
+      },
+    })
+
+    // Generate onboarding link
     const onboardingUrl = await createConnectOnboardingLink(
       stripeAccountId,
       finalReturnUrl,

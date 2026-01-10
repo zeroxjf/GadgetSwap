@@ -1,46 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { parseThinEvent, retrieveV2Event, checkConnectAccountStatus } from '@/lib/stripe'
+import { parseWebhookEvent, checkConnectAccountStatus } from '@/lib/stripe'
 
 // =============================================================================
-// STRIPE CONNECT V2 WEBHOOK HANDLER - THIN EVENTS
+// STRIPE CONNECT WEBHOOK HANDLER - EXPRESS ACCOUNTS
 // =============================================================================
 //
-// This webhook handles V2 "thin" events for connected accounts.
-// Thin events contain minimal data - you must fetch the full event to get details.
+// This webhook handles events for Express connected accounts.
 //
 // SETUP INSTRUCTIONS:
 // 1. Go to Stripe Dashboard > Developers > Webhooks
-// 2. Click "+ Add destination"
-// 3. In "Events from" section, select "Connected accounts"
-// 4. Click "Show advanced options" and select "Thin" payload style
-// 5. Add your endpoint URL: https://yourdomain.com/api/webhooks/stripe-connect
-// 6. Select these events:
-//    - v2.core.account[requirements].updated
-//    - v2.core.account[configuration.merchant].capability_status_updated
+// 2. Click "+ Add endpoint"
+// 3. Add your endpoint URL: https://yourdomain.com/api/webhooks/stripe-connect
+// 4. Select "Connect" to listen for events from connected accounts
+// 5. Select these events:
+//    - account.updated
+//    - account.application.authorized
+//    - account.application.deauthorized
 //
 // LOCAL TESTING:
-// Run the Stripe CLI with:
-// stripe listen --thin-events 'v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated' --forward-thin-to http://localhost:3000/api/webhooks/stripe-connect
+// stripe listen --forward-connect-to localhost:3000/api/webhooks/stripe-connect
 //
-// PLACEHOLDER: Set STRIPE_CONNECT_WEBHOOK_SECRET in your environment variables
-// Get this from the Stripe Dashboard when you create the webhook endpoint
 const webhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET
 
 export async function POST(request: NextRequest) {
-  // Verify webhook secret is configured
   if (!webhookSecret) {
-    console.error(
-      '⚠️  STRIPE_CONNECT_WEBHOOK_SECRET is not set.\n' +
-      '   Get this from: https://dashboard.stripe.com/webhooks'
-    )
+    console.error('STRIPE_CONNECT_WEBHOOK_SECRET is not set')
     return NextResponse.json(
       { error: 'Webhook secret not configured' },
       { status: 500 }
     )
   }
 
-  // Get the raw body and signature
   const payload = await request.text()
   const signature = request.headers.get('stripe-signature')
 
@@ -52,29 +43,25 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Parse the thin event
-    // Thin events contain minimal data - we need to fetch the full event
-    const thinEvent = parseThinEvent(payload, signature, webhookSecret)
+    const event = parseWebhookEvent(payload, signature, webhookSecret)
 
-    console.log(`Received thin event: ${thinEvent.type} (${thinEvent.id})`)
+    console.log(`Received Connect event: ${event.type}`)
 
-    // Fetch the full event data to understand what happened
-    const event = await retrieveV2Event(thinEvent.id)
+    switch (event.type) {
+      case 'account.updated':
+        await handleAccountUpdated(event.data.object as any)
+        break
 
-    // Handle different event types
-    // Note: V2 event types may not be in SDK types yet, so we cast to string
-    const eventType = event.type as string
+      case 'account.application.authorized':
+        console.log('Account authorized:', (event.data.object as any).id)
+        break
 
-    if (eventType === 'v2.core.account[requirements].updated') {
-      await handleRequirementsUpdated(event)
-    } else if (eventType === 'v2.core.account[configuration.merchant].capability_status_updated') {
-      await handleMerchantCapabilityUpdated(event)
-    } else if (eventType === 'v2.core.account[configuration.customer].capability_status_updated') {
-      await handleCustomerCapabilityUpdated(event)
-    } else if (eventType === 'v2.core.account[configuration.recipient].capability_status_updated') {
-      await handleRecipientCapabilityUpdated(event)
-    } else {
-      console.log(`Unhandled event type: ${eventType}`)
+      case 'account.application.deauthorized':
+        await handleAccountDeauthorized(event.data.object as any)
+        break
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`)
     }
 
     return NextResponse.json({ received: true })
@@ -87,53 +74,40 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// =============================================================================
-// EVENT HANDLERS
-// =============================================================================
-
 /**
- * Handle requirements updated event
+ * Handle account.updated event
  *
- * This is triggered when an account's requirements change, often due to:
- * - Financial regulator changes
- * - Card network requirement updates
- * - Account verification needs
- *
- * You should collect any updated requirements from the account.
+ * This fires when any account details change, including:
+ * - Onboarding completion
+ * - Capabilities becoming active
+ * - Requirements changing
  */
-async function handleRequirementsUpdated(event: any) {
-  const accountId = event.related_object?.id
+async function handleAccountUpdated(account: any) {
+  const accountId = account.id
 
-  if (!accountId) {
-    console.error('No account ID in requirements updated event')
-    return
-  }
-
-  console.log(`Requirements updated for account: ${accountId}`)
+  console.log(`Account updated: ${accountId}`, {
+    charges_enabled: account.charges_enabled,
+    payouts_enabled: account.payouts_enabled,
+    details_submitted: account.details_submitted,
+  })
 
   try {
-    // Fetch the current account status
-    const status = await checkConnectAccountStatus(accountId)
-
-    // Update the user's onboarding status in the database
-    // TODO: If requirements are now due, you may want to notify the user
-    await prisma.user.updateMany({
+    // Update the user's onboarding status
+    const result = await prisma.user.updateMany({
       where: { stripeAccountId: accountId },
       data: {
-        stripeOnboardingComplete: status.onboardingComplete && status.chargesEnabled,
-        stripeAccountStatus: status.status,
+        stripeOnboardingComplete: account.charges_enabled && account.details_submitted,
+        stripeAccountStatus: account.charges_enabled ? 'active' : 'pending',
       },
     })
 
-    console.log(`Updated account status for ${accountId}: ${status.status}`)
+    if (result.count > 0) {
+      console.log(`Updated user with Stripe account ${accountId}`)
 
-    // If there are new requirements, you might want to:
-    // 1. Send an email to the user
-    // 2. Show a notification in the dashboard
-    // 3. Create a new onboarding link for them to complete
-    if (status.requirementsStatus === 'currently_due' || status.requirementsStatus === 'past_due') {
-      console.log(`Account ${accountId} has pending requirements: ${status.requirementsStatus}`)
-      // TODO: Notify user about pending requirements
+      // If onboarding just completed, their listings will now be visible
+      if (account.charges_enabled && account.details_submitted) {
+        console.log(`Account ${accountId} is now fully onboarded and can accept payments!`)
+      }
     }
   } catch (error) {
     console.error(`Error updating account ${accountId}:`, error)
@@ -141,82 +115,28 @@ async function handleRequirementsUpdated(event: any) {
 }
 
 /**
- * Handle merchant capability status updated event
+ * Handle account.application.deauthorized event
  *
- * This is triggered when an account's merchant capabilities change.
- * For example, when card_payments becomes active or is disabled.
+ * This fires when a user disconnects your platform from their Stripe account.
  */
-async function handleMerchantCapabilityUpdated(event: any) {
-  const accountId = event.related_object?.id
+async function handleAccountDeauthorized(account: any) {
+  const accountId = account.id
 
-  if (!accountId) {
-    console.error('No account ID in merchant capability event')
-    return
-  }
-
-  console.log(`Merchant capability updated for account: ${accountId}`)
+  console.log(`Account deauthorized: ${accountId}`)
 
   try {
-    // Fetch the current account status
-    const status = await checkConnectAccountStatus(accountId)
-
-    // Update the database
+    // Clear the Stripe account from the user
     await prisma.user.updateMany({
       where: { stripeAccountId: accountId },
       data: {
-        stripeOnboardingComplete: status.chargesEnabled,
-        stripeAccountStatus: status.status,
+        stripeAccountId: null,
+        stripeOnboardingComplete: false,
+        stripeAccountStatus: null,
       },
     })
 
-    console.log(`Updated merchant status for ${accountId}: chargesEnabled=${status.chargesEnabled}`)
-
-    // If card payments became active, the seller can now accept payments
-    if (status.chargesEnabled) {
-      console.log(`Account ${accountId} is now ready to accept payments!`)
-      // TODO: Notify user that they can now accept payments
-      // TODO: Make their listings visible (they're filtered by stripeOnboardingComplete)
-    }
+    console.log(`Cleared Stripe account for ${accountId}`)
   } catch (error) {
-    console.error(`Error updating merchant capability for ${accountId}:`, error)
+    console.error(`Error handling deauthorization for ${accountId}:`, error)
   }
-}
-
-/**
- * Handle customer capability status updated event
- *
- * This is triggered when an account's customer configuration changes.
- */
-async function handleCustomerCapabilityUpdated(event: any) {
-  const accountId = event.related_object?.id
-
-  if (!accountId) {
-    console.error('No account ID in customer capability event')
-    return
-  }
-
-  console.log(`Customer capability updated for account: ${accountId}`)
-
-  // Customer capabilities are typically for accounts that also act as customers
-  // (e.g., for platform subscriptions). Handle based on your needs.
-  // TODO: Add handling if you use customer capabilities
-}
-
-/**
- * Handle recipient capability status updated event
- *
- * This is triggered when an account's recipient configuration changes.
- */
-async function handleRecipientCapabilityUpdated(event: any) {
-  const accountId = event.related_object?.id
-
-  if (!accountId) {
-    console.error('No account ID in recipient capability event')
-    return
-  }
-
-  console.log(`Recipient capability updated for account: ${accountId}`)
-
-  // Recipient capabilities are for accounts that receive payouts.
-  // TODO: Add handling if you use recipient capabilities
 }
