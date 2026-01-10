@@ -108,16 +108,21 @@ export async function POST(request: NextRequest) {
     // Stripe fee (calculated on total)
     const rawStripeFee = Math.round((totalAmount * STRIPE_FEE_PERCENT + STRIPE_FEE_FIXED) * 100) / 100
 
-    // Plus and Pro sellers pay ZERO fees - GadgetSwap covers Stripe fees
-    const isPaidTier = subscriptionTier === 'PLUS' || subscriptionTier === 'PRO'
-    const sellerStripeFee = isPaidTier ? 0 : rawStripeFee
+    // Only PRO sellers have Stripe fees covered by GadgetSwap
+    // FREE: 1% platform + Stripe fees
+    // PLUS: 0% platform, seller pays Stripe fees
+    // PRO: 0% platform, GadgetSwap covers Stripe fees
+    const isProTier = subscriptionTier === 'PRO'
+    const sellerStripeFee = isProTier ? 0 : rawStripeFee
 
     // What seller receives (sale price minus fees)
     const sellerPayout = Math.round((salePrice - platformFee - sellerStripeFee) * 100) / 100
 
-    // Application fee: for FREE tier, we take platform fee + stripe fee
-    // For Plus/Pro, we only take platform fee (0%) - we absorb Stripe fees
-    const applicationFee = isPaidTier ? platformFee : (platformFee + rawStripeFee)
+    // Application fee breakdown:
+    // FREE: platform fee (1%) + Stripe fee passed to seller
+    // PLUS: 0% platform fee, Stripe fee passed to seller
+    // PRO: 0% platform fee, we absorb Stripe fee (no application fee)
+    const applicationFee = isProTier ? 0 : platformFee
 
     // Create payment intent - use Stripe Connect for regular sellers, direct payment for admin sellers
     const paymentIntentParams: any = {
@@ -192,7 +197,8 @@ export async function POST(request: NextRequest) {
         stripeFee: sellerStripeFee,
         sellerPayout,
         totalAmount,
-        zeroPlatformFees: isPaidTier,
+        zeroPlatformFees: subscriptionTier !== 'FREE',
+        zeroTotalFees: isProTier,
       },
     })
   } catch (error: any) {

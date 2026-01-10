@@ -95,7 +95,8 @@ export default function TermsPage() {
               <p className="text-gray-600 mb-4">Platform fees on successful sales:</p>
               <ul className="list-disc pl-6 text-gray-600 space-y-2">
                 <li>Free accounts: 1% platform fee + ~3% Stripe processing fee</li>
-                <li>Plus/Pro subscribers: 0% platform fee (GadgetSwap covers Stripe fees)</li>
+                <li>Plus subscribers: 0% platform fee + ~3% Stripe processing fee</li>
+                <li>Pro subscribers: 0% total fees (GadgetSwap covers Stripe fees)</li>
               </ul>
               <p className="text-gray-600 mt-4">
                 <strong>Important:</strong> GadgetSwap does not process, store, or have access to your payment

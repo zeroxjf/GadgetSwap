@@ -53,7 +53,9 @@ export const SUBSCRIPTION_PRICES = {
 
 /**
  * Calculate fees for a transaction
- * Plus and Pro sellers pay 0% fees - GadgetSwap covers Stripe fees
+ * - FREE: 1% platform fee + Stripe fees (~3%)
+ * - PLUS: 0% platform fee, seller pays Stripe fees (~3%)
+ * - PRO: 0% platform fee, GadgetSwap covers Stripe fees (0% total)
  */
 export function calculateFees(
   salePrice: number,
@@ -65,9 +67,10 @@ export function calculateFees(
   // Stripe fee is calculated on the total amount charged
   const rawStripeFee = Math.round((salePrice * STRIPE_FEE_PERCENT + STRIPE_FEE_FIXED) * 100) / 100
 
-  // Plus and Pro members pay ZERO fees - GadgetSwap covers Stripe fees
-  const sellerPaysStripeFee = subscriptionTier === 'FREE'
-  const stripeFee = sellerPaysStripeFee ? rawStripeFee : 0
+  // Only PRO members have Stripe fees covered by GadgetSwap
+  // FREE and PLUS sellers pay Stripe fees
+  const gadgetSwapCoversStripeFee = subscriptionTier === 'PRO'
+  const stripeFee = gadgetSwapCoversStripeFee ? 0 : rawStripeFee
 
   // Seller receives: sale price - platform fee - stripe fee (if applicable)
   const sellerPayout = Math.round((salePrice - platformFee - stripeFee) * 100) / 100
@@ -77,7 +80,7 @@ export function calculateFees(
     platformFee,
     stripeFee,
     sellerPayout,
-    gadgetSwapCoversStripeFee: !sellerPaysStripeFee,
+    gadgetSwapCoversStripeFee,
   }
 }
 
