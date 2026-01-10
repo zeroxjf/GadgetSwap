@@ -65,6 +65,41 @@ export async function PATCH(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const hasAccess = await isAdmin()
+    if (!hasAccess) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
+
+    const { id } = await params
+
+    // Prevent deleting yourself
+    if (id === session.user.id) {
+      return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 })
+    }
+
+    // Delete user and all related data
+    // Note: This cascades to delete their listings, messages, etc. based on schema
+    await prisma.user.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Admin delete user error:', error)
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 })
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
