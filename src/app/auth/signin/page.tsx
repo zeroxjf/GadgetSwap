@@ -18,9 +18,11 @@ function SignInForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Redirect if already logged in
+  // Redirect if already logged in and track login IP
   useEffect(() => {
     if (status === 'authenticated') {
+      // Track login IP in background
+      fetch('/api/auth/track-login', { method: 'POST' }).catch(() => {})
       router.push(callbackUrl)
     }
   }, [status, router, callbackUrl])

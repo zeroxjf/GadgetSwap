@@ -10,9 +10,11 @@ export default function SignUpPage() {
   const { status } = useSession()
   const router = useRouter()
 
-  // Redirect if already logged in
+  // Redirect if already logged in and track login IP
   useEffect(() => {
     if (status === 'authenticated') {
+      // Track login IP in background
+      fetch('/api/auth/track-login', { method: 'POST' }).catch(() => {})
       router.push('/account')
     }
   }, [status, router])
