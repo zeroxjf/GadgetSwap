@@ -38,7 +38,7 @@ interface UserData {
   ratingCount: number
   createdAt: string
   stripeOnboardingComplete: boolean
-  lastIpAddress: string | null
+  lastIpHash: string | null
   _count: {
     listings: number
   }
@@ -55,7 +55,7 @@ export default function AdminUsersPage() {
   const [total, setTotal] = useState(0)
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [banModal, setBanModal] = useState<{ userId: string; userName: string; ip: string | null } | null>(null)
+  const [banModal, setBanModal] = useState<{ userId: string; userName: string; ipHash: string | null } | null>(null)
   const [banIp, setBanIp] = useState(false)
   const [banReason, setBanReason] = useState('')
 
@@ -142,7 +142,7 @@ export default function AdminUsersPage() {
   }
 
   const openBanModal = (user: UserData) => {
-    setBanModal({ userId: user.id, userName: user.name || user.email, ip: user.lastIpAddress })
+    setBanModal({ userId: user.id, userName: user.name || user.email, ipHash: user.lastIpHash })
     setBanIp(false)
     setBanReason('')
     setActionMenuOpen(null)
@@ -504,7 +504,7 @@ export default function AdminUsersPage() {
                 />
               </div>
 
-              {banModal.ip && (
+              {banModal.ipHash && (
                 <label className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer">
                   <input
                     type="checkbox"
@@ -517,8 +517,8 @@ export default function AdminUsersPage() {
                       <Globe className="w-4 h-4" />
                       Also ban IP address
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      IP: {banModal.ip}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-mono">
+                      Hash: {banModal.ipHash.slice(0, 12)}...
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Prevents new accounts from this IP
@@ -527,9 +527,9 @@ export default function AdminUsersPage() {
                 </label>
               )}
 
-              {!banModal.ip && (
+              {!banModal.ipHash && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                  No IP address recorded for this user
+                  No IP recorded for this user yet
                 </p>
               )}
             </div>

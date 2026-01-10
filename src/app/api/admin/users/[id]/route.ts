@@ -46,18 +46,18 @@ export async function PATCH(
       updateData.bannedReason = banned ? (banReason || null) : null
     }
 
-    // If banning with IP ban option, also ban their IP
+    // If banning with IP ban option, also ban their IP hash
     if (banned && banIp) {
       const targetUser = await prisma.user.findUnique({
         where: { id },
-        select: { lastIpAddress: true },
+        select: { lastIpHash: true },
       })
 
-      if (targetUser?.lastIpAddress) {
+      if (targetUser?.lastIpHash) {
         await prisma.bannedIP.upsert({
-          where: { ipAddress: targetUser.lastIpAddress },
+          where: { ipHash: targetUser.lastIpHash },
           create: {
-            ipAddress: targetUser.lastIpAddress,
+            ipHash: targetUser.lastIpHash,
             reason: banReason || 'Banned with user',
             bannedById: session.user.id,
             bannedUserId: id,
@@ -80,7 +80,7 @@ export async function PATCH(
         role: true,
         subscriptionTier: true,
         banned: true,
-        lastIpAddress: true,
+        lastIpHash: true,
       },
     })
 

@@ -59,7 +59,7 @@ model User {
   banned        Boolean   @default(false)
   bannedAt      DateTime?
   bannedReason  String?
-  lastIpAddress String?   // Last known IP address
+  lastIpHash    String?   // SHA-256 hash of last known IP address
 
   // Notification preferences
   emailNotifications Boolean @default(true)
@@ -768,14 +768,14 @@ model EmailLog {
 // ============================================
 
 model BannedIP {
-  id          String   @id @default(cuid())
-  ipAddress   String   @unique
-  reason      String?
-  bannedById  String?  // Admin who banned
-  bannedUserId String? // Original user who was banned (for reference)
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  ipHash       String   @unique  // SHA-256 hash of IP address for privacy
+  reason       String?
+  bannedById   String?  // Admin who banned
+  bannedUserId String?  // Original user who was banned (for reference)
+  createdAt    DateTime @default(now())
 
-  @@index([ipAddress])
+  @@index([ipHash])
 }
 
 // Jailbreak compatibility database
