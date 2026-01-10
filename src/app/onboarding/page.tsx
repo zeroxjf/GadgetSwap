@@ -12,6 +12,9 @@ import {
   Building2,
   Shield,
   Zap,
+  Crown,
+  Gift,
+  Sparkles,
 } from 'lucide-react'
 
 export default function OnboardingPage() {
@@ -21,6 +24,9 @@ export default function OnboardingPage() {
   const [skipping, setSkipping] = useState(false)
   const [checkingStatus, setCheckingStatus] = useState(true)
   const [alreadyComplete, setAlreadyComplete] = useState(false)
+  const [claimingPro, setClaimingPro] = useState(false)
+  const [proClaimed, setProClaimed] = useState(false)
+  const [proOfferAvailable, setProOfferAvailable] = useState(true)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -37,19 +43,44 @@ export default function OnboardingPage() {
 
   const checkOnboardingStatus = async () => {
     try {
-      const response = await fetch('/api/user/profile')
-      if (response.ok) {
-        const data = await response.json()
+      const [profileRes, proRes] = await Promise.all([
+        fetch('/api/user/profile'),
+        fetch('/api/claim-pro'),
+      ])
+
+      if (profileRes.ok) {
+        const data = await profileRes.json()
         // If already completed onboarding or has Stripe set up, redirect
         if (data.user.onboardingComplete || data.user.stripeOnboardingComplete) {
           setAlreadyComplete(true)
           router.push('/')
         }
       }
+
+      if (proRes.ok) {
+        const proData = await proRes.json()
+        setProOfferAvailable(proData.enabled && !proData.alreadyPro)
+        setProClaimed(proData.alreadyPro)
+      }
     } catch (error) {
       console.error('Error checking status:', error)
     } finally {
       setCheckingStatus(false)
+    }
+  }
+
+  const handleClaimPro = async () => {
+    setClaimingPro(true)
+    try {
+      const res = await fetch('/api/claim-pro', { method: 'POST' })
+      if (res.ok) {
+        setProClaimed(true)
+        setProOfferAvailable(false)
+      }
+    } catch (error) {
+      console.error('Claim Pro error:', error)
+    } finally {
+      setClaimingPro(false)
     }
   }
 
@@ -126,6 +157,70 @@ export default function OnboardingPage() {
             Set up your seller account to start listing devices
           </p>
         </div>
+
+        {/* Early Adopter Pro Offer */}
+        {(proOfferAvailable || proClaimed) && (
+          <div className={`mb-6 p-6 rounded-xl border-2 ${proClaimed ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-500'}`}>
+            <div className="flex items-start gap-4">
+              <div className={`p-3 rounded-full ${proClaimed ? 'bg-green-100 dark:bg-green-800' : 'bg-purple-100 dark:bg-purple-800'}`}>
+                {proClaimed ? (
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                ) : (
+                  <Gift className="w-6 h-6 text-purple-600" />
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-bold text-gray-900 dark:text-white">
+                    {proClaimed ? 'Lifetime Pro Activated!' : 'Early Adopter Offer'}
+                  </h3>
+                  {!proClaimed && (
+                    <span className="px-2 py-0.5 bg-purple-600 text-white text-xs font-medium rounded-full flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Limited Time
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  {proClaimed
+                    ? 'You have lifetime access to all Pro features. Thank you for being an early supporter!'
+                    : 'As an early adopter, claim your FREE lifetime Pro membership. Unlimited listings, lowest fees, and all premium features forever.'}
+                </p>
+                {!proClaimed && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded-full text-gray-600 dark:text-gray-400">
+                      <Crown className="w-3 h-3 inline mr-1 text-yellow-500" /> 0.5% seller fees
+                    </span>
+                    <span className="text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded-full text-gray-600 dark:text-gray-400">
+                      Unlimited listings
+                    </span>
+                    <span className="text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded-full text-gray-600 dark:text-gray-400">
+                      Priority support
+                    </span>
+                  </div>
+                )}
+                {!proClaimed && (
+                  <button
+                    onClick={handleClaimPro}
+                    disabled={claimingPro}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {claimingPro ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Claiming...
+                      </>
+                    ) : (
+                      <>
+                        <Crown className="w-4 h-4" />
+                        Claim Lifetime Pro - Free
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Card */}
         <div className="card p-6 mb-6">
