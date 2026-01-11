@@ -36,8 +36,10 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
     // Build where clause
+    // Exclude drafts - only show submitted listings in review queue
     const where: any = {
       reviewStatus: status,
+      status: { not: 'DRAFT' },
     }
 
     if (flaggedOnly) {
@@ -73,11 +75,11 @@ export async function GET(request: NextRequest) {
         skip: offset,
       }),
       prisma.listing.count({ where }),
-      // Get stats for dashboard
+      // Get stats for dashboard (exclude drafts from all counts)
       Promise.all([
-        prisma.listing.count({ where: { reviewStatus: 'PENDING_REVIEW' } }),
+        prisma.listing.count({ where: { reviewStatus: 'PENDING_REVIEW', status: { not: 'DRAFT' } } }),
         prisma.listing.count({
-          where: { reviewStatus: 'PENDING_REVIEW', flaggedForReview: true },
+          where: { reviewStatus: 'PENDING_REVIEW', status: { not: 'DRAFT' }, flaggedForReview: true },
         }),
         prisma.listing.count({
           where: {
