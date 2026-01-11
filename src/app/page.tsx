@@ -15,7 +15,8 @@ import {
   Lock,
   Fingerprint,
   Clock,
-  BadgeCheck
+  BadgeCheck,
+  Sparkles
 } from 'lucide-react'
 import { ListingCard } from '@/components/listings/ListingCard'
 import { JailbreakSearch } from '@/components/search/JailbreakSearch'
@@ -148,6 +149,22 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Early Adopter Welcome Banner */}
+      <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-b border-amber-200 dark:border-amber-800">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-center gap-3 text-center">
+            <Sparkles className="w-5 h-5 text-amber-500 flex-shrink-0" />
+            <p className="text-amber-900 dark:text-amber-100">
+              <span className="font-semibold">You're early!</span>
+              {' '}The site's a bit of a ghost town, but as we grow, so will the inventory.
+              {' '}<span className="hidden sm:inline">Got a device to list or want alerts for specific specs?</span>
+              {' '}<Link href="/auth/signup" className="font-semibold text-amber-700 dark:text-amber-300 hover:underline">Join today</Link>
+            </p>
+            <Sparkles className="w-5 h-5 text-amber-500 flex-shrink-0 hidden sm:block" />
+          </div>
+        </div>
+      </div>
+
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white pt-8 pb-16 md:pt-12 md:pb-24">
         <div className="max-w-7xl mx-auto px-4">
