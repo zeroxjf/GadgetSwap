@@ -68,16 +68,16 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription
-        const userId = subscription.metadata?.userId
         const customerId = subscription.customer as string
         const periodEnd = (subscription as any).current_period_end
         const priceId = subscription.items.data[0]?.price?.id
         const newTier = getTierFromPriceId(priceId)
 
-        // Try to find user by userId metadata first, then by stripeCustomerId
-        let user = userId
-          ? await prisma.user.findUnique({ where: { id: userId } })
-          : await prisma.user.findFirst({ where: { stripeCustomerId: customerId } })
+        // SECURITY: Always look up by stripeCustomerId first (verified by Stripe)
+        // Never trust metadata alone as it could be manipulated
+        const user = await prisma.user.findFirst({
+          where: { stripeCustomerId: customerId },
+        })
 
         if (user) {
           await prisma.user.update({
@@ -89,19 +89,20 @@ export async function POST(request: NextRequest) {
             },
           })
           console.log(`Updated subscription for user ${user.id}: tier=${newTier}, status=${subscription.status}`)
+        } else {
+          console.warn(`No user found for Stripe customer ${customerId}`)
         }
         break
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
-        const userId = subscription.metadata?.userId
         const customerId = subscription.customer as string
 
-        // Try to find user by userId metadata first, then by stripeCustomerId
-        let user = userId
-          ? await prisma.user.findUnique({ where: { id: userId } })
-          : await prisma.user.findFirst({ where: { stripeCustomerId: customerId } })
+        // SECURITY: Always look up by stripeCustomerId (verified by Stripe)
+        const user = await prisma.user.findFirst({
+          where: { stripeCustomerId: customerId },
+        })
 
         if (user) {
           await prisma.user.update({
@@ -115,6 +116,8 @@ export async function POST(request: NextRequest) {
           })
 
           console.log(`User ${user.id} subscription canceled, reverted to FREE`)
+        } else {
+          console.warn(`No user found for Stripe customer ${customerId} (subscription deleted)`)
         }
         break
       }

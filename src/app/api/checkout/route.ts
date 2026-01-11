@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { listingId, shippingAddress } = body
+    const { listingId, shippingAddress, expectedPrice } = body
 
     if (!listingId) {
       return NextResponse.json(
@@ -41,6 +41,14 @@ export async function POST(request: NextRequest) {
     if (!shippingAddress || !shippingAddress.zipCode) {
       return NextResponse.json(
         { error: 'Shipping address with ZIP code is required' },
+        { status: 400 }
+      )
+    }
+
+    // Require expectedPrice for security - prevents price manipulation
+    if (typeof expectedPrice !== 'number' || expectedPrice <= 0) {
+      return NextResponse.json(
+        { error: 'Expected price is required' },
         { status: 400 }
       )
     }
@@ -90,6 +98,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Seller has not set up payment processing yet' },
         { status: 400 }
+      )
+    }
+
+    // SECURITY: Verify the price hasn't changed since buyer viewed the listing
+    // This prevents checkout with stale prices if seller updated the listing
+    const currentPrice = Number(listing.price)
+    if (Math.abs(currentPrice - expectedPrice) > 0.01) {
+      return NextResponse.json(
+        {
+          error: 'Price has changed since you viewed this listing. Please refresh and try again.',
+          currentPrice,
+          expectedPrice,
+        },
+        { status: 409 } // Conflict
       )
     }
 
