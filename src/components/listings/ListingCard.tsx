@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Heart, Star, Zap, Loader2 } from 'lucide-react'
+import { Heart, Star, Zap, Loader2, Cpu, Smartphone } from 'lucide-react'
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 
@@ -30,23 +30,18 @@ interface ListingCardProps {
   }
 }
 
-const conditionLabels: Record<string, { label: string; color: string }> = {
-  NEW: { label: 'New', color: 'bg-green-100 text-green-800' },
-  LIKE_NEW: { label: 'Like New', color: 'bg-green-100 text-green-800' },
-  EXCELLENT: { label: 'Excellent', color: 'bg-blue-100 text-blue-800' },
-  GOOD: { label: 'Good', color: 'bg-yellow-100 text-yellow-800' },
-  FAIR: { label: 'Fair', color: 'bg-orange-100 text-orange-800' },
-  POOR: { label: 'Poor', color: 'bg-red-100 text-red-800' },
-  FOR_PARTS: { label: 'For Parts', color: 'bg-gray-100 text-gray-800' },
+const conditionConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
+  NEW: { label: 'New', bg: 'bg-emerald-50 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' },
+  LIKE_NEW: { label: 'Like New', bg: 'bg-emerald-50 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' },
+  EXCELLENT: { label: 'Excellent', bg: 'bg-blue-50 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400', dot: 'bg-blue-500' },
+  GOOD: { label: 'Good', bg: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-400', dot: 'bg-amber-500' },
+  FAIR: { label: 'Fair', bg: 'bg-orange-50 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-400', dot: 'bg-orange-500' },
+  POOR: { label: 'Poor', bg: 'bg-red-50 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-400', dot: 'bg-red-500' },
+  FOR_PARTS: { label: 'Parts', bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-400', dot: 'bg-gray-400' },
 }
 
-const jailbreakLabels: Record<string, { label: string; color: string }> = {
-  JAILBROKEN: { label: 'Jailbreakable', color: 'bg-purple-100 text-purple-800' },
-  JAILBREAKABLE: { label: 'Jailbreakable', color: 'bg-purple-100 text-purple-800' },
-  ROOTLESS_JB: { label: 'Jailbreakable', color: 'bg-purple-100 text-purple-800' },
-  ROOTFUL_JB: { label: 'Jailbreakable', color: 'bg-purple-100 text-purple-800' },
-  NOT_JAILBROKEN: { label: 'Stock', color: 'bg-gray-100 text-gray-600' },
-  UNKNOWN: { label: '', color: '' },
+const isJailbreakable = (status?: string) => {
+  return ['JAILBROKEN', 'JAILBREAKABLE', 'ROOTLESS_JB', 'ROOTFUL_JB'].includes(status || '')
 }
 
 export function ListingCard({ listing }: ListingCardProps) {
@@ -54,17 +49,14 @@ export function ListingCard({ listing }: ListingCardProps) {
   const [isWatchlisted, setIsWatchlisted] = useState(listing.isWatchlisted || false)
   const [isUpdating, setIsUpdating] = useState(false)
 
-  const condition = conditionLabels[listing.condition] || conditionLabels.GOOD
-  const jailbreak = listing.jailbreakStatus
-    ? jailbreakLabels[listing.jailbreakStatus]
-    : null
+  const condition = conditionConfig[listing.condition] || conditionConfig.GOOD
+  const canJailbreak = isJailbreakable(listing.jailbreakStatus)
 
   const handleWatchlist = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
     if (!session?.user) {
-      // Redirect to sign in or show message
       window.location.href = `/auth/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`
       return
     }
@@ -83,8 +75,6 @@ export function ListingCard({ listing }: ListingCardProps) {
 
       if (response.ok) {
         setIsWatchlisted(newState)
-      } else {
-        console.error('Failed to update watchlist')
       }
     } catch (error) {
       console.error('Watchlist error:', error)
@@ -95,102 +85,116 @@ export function ListingCard({ listing }: ListingCardProps) {
 
   return (
     <Link href={`/listings/${listing.id}`} className="group">
-      <div className="card overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700/50">
         {/* Image */}
-        <div className="relative aspect-square bg-gray-100">
+        <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-900 overflow-hidden">
           {listing.images[0]?.url ? (
             <Image
               src={listing.images[0].url}
               alt={listing.title}
               fill
-              className="object-cover"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-              <span className="text-gray-400 text-sm">{listing.deviceModel}</span>
+            <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
+              <Smartphone className="w-12 h-12 text-gray-300 dark:text-gray-600" />
             </div>
           )}
 
-          {/* Featured badge */}
-          {listing.featured && (
-            <div className="absolute top-2 left-2 bg-accent-500 text-white text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1">
-              <Zap className="w-3 h-3" />
-              Featured
+          {/* Top overlay badges */}
+          <div className="absolute top-0 left-0 right-0 p-2.5 flex justify-between items-start">
+            {/* Left badges */}
+            <div className="flex flex-wrap gap-1.5">
+              {listing.featured && (
+                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-semibold px-2 py-1 rounded-full shadow-lg">
+                  <Zap className="w-3 h-3" />
+                  Featured
+                </span>
+              )}
+              {canJailbreak && (
+                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-600 to-violet-600 text-white text-[10px] font-semibold px-2 py-1 rounded-full shadow-lg">
+                  <Cpu className="w-3 h-3" />
+                  JB Ready
+                </span>
+              )}
+            </div>
+
+            {/* Watchlist button */}
+            <button
+              onClick={handleWatchlist}
+              disabled={isUpdating}
+              className={`p-2 rounded-full shadow-lg transition-all duration-200 ${
+                isWatchlisted
+                  ? 'bg-red-500 text-white'
+                  : 'bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800'
+              }`}
+            >
+              {isUpdating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Heart className={`w-4 h-4 ${isWatchlisted ? 'fill-current' : ''}`} />
+              )}
+            </button>
+          </div>
+
+          {/* Bottom gradient overlay with iOS version */}
+          {listing.osVersion && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-2.5 pt-8">
+              <div className="flex items-center gap-2">
+                <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-2 py-0.5 rounded">
+                  iOS {listing.osVersion}
+                </span>
+                {listing.bootromExploit && (
+                  <span className="bg-amber-500/90 text-white text-xs font-medium px-2 py-0.5 rounded">
+                    checkm8
+                  </span>
+                )}
+              </div>
             </div>
           )}
-
-          {/* Watchlist button */}
-          <button
-            onClick={handleWatchlist}
-            disabled={isUpdating}
-            className="absolute top-2 right-2 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors disabled:opacity-50"
-          >
-            {isUpdating ? (
-              <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
-            ) : (
-              <Heart
-                className={`w-4 h-4 ${
-                  isWatchlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'
-                }`}
-              />
-            )}
-          </button>
-
         </div>
 
         {/* Content */}
-        <div className="p-3 sm:p-4">
-          {/* iOS Version & Jailbreak Status - PROMINENT */}
-          <div className="flex gap-2 mb-2.5 sm:mb-3">
-            {listing.osVersion && (
-              <div className="flex-1 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-700 dark:to-gray-600 text-white rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-center">
-                <p className="text-[9px] sm:text-[10px] tracking-wide text-gray-300">iOS</p>
-                <p className="text-base sm:text-lg font-bold leading-tight">{listing.osVersion}</p>
-              </div>
-            )}
-            <div className={`flex-1 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-center ${
-              jailbreak && jailbreak.label === 'Jailbreakable'
-                ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-            }`}>
-              <p className="text-[9px] sm:text-[10px] tracking-wide opacity-75">Jailbreakable?</p>
-              <p className="text-sm font-bold leading-tight">
-                {jailbreak && jailbreak.label === 'Jailbreakable' ? 'Yes' : 'No'}
-              </p>
+        <div className="p-3.5">
+          {/* Price & Storage row */}
+          <div className="flex items-baseline justify-between mb-1.5">
+            <span className="text-xl font-bold text-gray-900 dark:text-white">
+              ${listing.price.toLocaleString()}
+            </span>
+            <div className="flex items-center gap-2">
+              {listing.storageGB && (
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+                  {listing.storageGB}GB
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Price */}
-          <div className="flex items-baseline justify-between mb-1">
-            <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-              ${listing.price.toLocaleString()}
-            </span>
-            {listing.storageGB && (
-              <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{listing.storageGB}GB</span>
-            )}
-          </div>
-
           {/* Title */}
-          <h3 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
             {listing.title}
           </h3>
 
-          {/* Condition & checkm8 badges */}
-          <div className="flex flex-wrap gap-1.5 mb-2 sm:mb-3">
-            <span className={`badge text-[11px] sm:text-xs ${condition.color}`}>{condition.label}</span>
-            {listing.bootromExploit && (
-              <span className="badge text-[11px] sm:text-xs bg-amber-100 text-amber-800">checkm8</span>
-            )}
+          {/* Condition badge */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md ${condition.bg} ${condition.text}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${condition.dot}`}></span>
+              {condition.label}
+            </span>
           </div>
 
-          {/* Seller info - hidden on mobile for compact view */}
-          <div className="hidden sm:flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-            <span className="text-sm text-gray-600 dark:text-gray-400">{listing.seller.name}</span>
+          {/* Seller info */}
+          <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-gray-700/50">
+            <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]">
+              {listing.seller.name || 'Seller'}
+            </span>
             <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-              <span className="text-sm font-medium">{listing.seller.rating}</span>
-              <span className="text-xs text-gray-400">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                {listing.seller.rating.toFixed(1)}
+              </span>
+              <span className="text-[10px] text-gray-400">
                 ({listing.seller.totalSales})
               </span>
             </div>
