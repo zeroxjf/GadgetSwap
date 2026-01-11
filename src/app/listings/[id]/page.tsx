@@ -317,15 +317,15 @@ export default function ListingDetailPage() {
                         <span className="font-medium">{listing.osVersion}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Status</span>
+                        <span className="text-gray-600">Jailbreakable?</span>
                         <span className={`badge ${
                           ['JAILBROKEN', 'JAILBREAKABLE', 'ROOTLESS_JB', 'ROOTFUL_JB'].includes(listing.jailbreakStatus)
                             ? 'bg-purple-100 text-purple-800'
                             : 'bg-gray-100 text-gray-600'
                         }`}>
                           {['JAILBROKEN', 'JAILBREAKABLE', 'ROOTLESS_JB', 'ROOTFUL_JB'].includes(listing.jailbreakStatus)
-                            ? 'Jailbreakable'
-                            : 'Stock'}
+                            ? 'Yes'
+                            : 'No'}
                         </span>
                       </div>
                     </div>
@@ -381,11 +381,11 @@ export default function ListingDetailPage() {
                       ['JAILBROKEN', 'JAILBREAKABLE', 'ROOTLESS_JB', 'ROOTFUL_JB'].includes(listing.jailbreakStatus)
                         ? 'text-purple-200'
                         : 'text-gray-500 dark:text-gray-400'
-                    }`}>Status</p>
+                    }`}>Jailbreakable?</p>
                     <p className="text-2xl font-bold">
                       {['JAILBROKEN', 'JAILBREAKABLE', 'ROOTLESS_JB', 'ROOTFUL_JB'].includes(listing.jailbreakStatus)
-                        ? 'Jailbreakable'
-                        : 'Stock'}
+                        ? 'Yes'
+                        : 'No'}
                     </p>
                     {listing.bootromExploit && (
                       <p className="text-xs mt-1 text-purple-200">checkm8 compatible</p>
