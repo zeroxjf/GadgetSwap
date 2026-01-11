@@ -6,6 +6,7 @@ import { moderateMessage, getFlagExplanation } from '@/lib/message-moderation'
 import { createNotification } from '@/lib/notifications'
 import { logActivity } from '@/lib/activity'
 import { checkRateLimit, rateLimitResponse, rateLimits } from '@/lib/rate-limit'
+import { isCurrentUserBanned } from '@/lib/admin'
 
 /**
  * GET /api/messages
@@ -15,6 +16,13 @@ import { checkRateLimit, rateLimitResponse, rateLimits } from '@/lib/rate-limit'
  * 1. Limit messages fetched (latest 500 per user max)
  * 2. Use distinct to get unique conversations first
  * 3. Only fetch detailed data for active conversations
+ *
+ * NOTE: Current implementation uses take: 500 limit which is acceptable for
+ * moderate load. For production scale with high-volume users, implement
+ * cursor-based pagination:
+ * - Add `cursor` and `limit` query params
+ * - Return `nextCursor` in response for infinite scroll
+ * - Example: GET /api/messages?cursor=<lastMessageId>&limit=50
  */
 export async function GET(request: NextRequest) {
   try {
@@ -162,6 +170,11 @@ export async function POST(request: NextRequest) {
         { error: 'You must be signed in' },
         { status: 401 }
       )
+    }
+
+    // SECURITY: Check if user is banned
+    if (await isCurrentUserBanned()) {
+      return NextResponse.json({ error: 'Your account has been suspended' }, { status: 403 })
     }
 
     const { receiverId, content, listingId } = await request.json()

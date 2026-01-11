@@ -45,6 +45,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { draftId, formData, images, verificationCode, verificationPhotoUrl } = body
 
+    // SECURITY: Validate storageGB bounds if provided
+    if (formData.storageGB) {
+      const storageGB = parseInt(formData.storageGB)
+      if (isNaN(storageGB) || storageGB < 1 || storageGB > 2048) {
+        return NextResponse.json({ error: 'Storage must be between 1 and 2048 GB' }, { status: 400 })
+      }
+    }
+
+    // SECURITY: Validate batteryHealth bounds if provided
+    if (formData.batteryHealth) {
+      const batteryHealth = parseInt(formData.batteryHealth)
+      if (isNaN(batteryHealth) || batteryHealth < 0 || batteryHealth > 100) {
+        return NextResponse.json({ error: 'Battery health must be between 0 and 100' }, { status: 400 })
+      }
+    }
+
     // Prepare the listing data
     const listingData: any = {
       sellerId: session.user.id,

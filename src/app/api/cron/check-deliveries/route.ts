@@ -14,12 +14,18 @@ const CRON_SECRET = process.env.CRON_SECRET
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify cron secret if set
-    if (CRON_SECRET) {
-      const authHeader = request.headers.get('authorization')
-      if (authHeader !== `Bearer ${CRON_SECRET}`) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+    // CRON_SECRET is required - reject if not configured
+    if (!CRON_SECRET) {
+      console.error('CRON_SECRET not configured - cron job cannot run securely')
+      console.warn('[SECURITY] Cron endpoint accessed without CRON_SECRET configured')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Verify cron secret
+    const authHeader = request.headers.get('authorization')
+    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+      console.warn('[SECURITY] Cron request rejected - invalid or missing authorization')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Find all shipped transactions with tracking numbers

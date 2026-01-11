@@ -109,9 +109,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error('Webhook error:', error)
+    // SECURITY: Return 200 to prevent Stripe retries on internal errors
+    // Stripe will retry on 4xx/5xx responses, which could cause duplicate processing
     return NextResponse.json(
-      { error: 'Webhook handler failed' },
-      { status: 500 }
+      { received: true, error: 'Webhook handler failed' },
+      { status: 200 }
     )
   }
 }
@@ -148,10 +150,18 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   })
 
   // Update listing status to PENDING (awaiting shipment)
-  await prisma.listing.update({
-    where: { id: transaction.listingId },
+  // SECURITY: Use conditional update to verify listing exists and is in ACTIVE state
+  const listingUpdate = await prisma.listing.updateMany({
+    where: {
+      id: transaction.listingId,
+      status: 'ACTIVE',  // Only update if currently ACTIVE
+    },
     data: { status: 'PENDING' },
   })
+
+  if (listingUpdate.count === 0) {
+    console.warn(`Listing ${transaction.listingId} not in ACTIVE state during payment success, skipping status update`)
+  }
 
   // Update seller's total sales count
   await prisma.user.update({

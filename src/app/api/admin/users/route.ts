@@ -17,8 +17,11 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams
-    const page = parseInt(searchParams.get('page') || '1', 10)
-    const limit = parseInt(searchParams.get('limit') || '20', 10)
+    // SECURITY: Bound pagination parameters to prevent abuse
+    const rawPage = parseInt(searchParams.get('page') || '1', 10)
+    const rawLimit = parseInt(searchParams.get('limit') || '20', 10)
+    const page = Math.max(1, rawPage)
+    const limit = Math.max(1, Math.min(100, rawLimit))
     const search = searchParams.get('search') || ''
     const role = searchParams.get('role')
     const tier = searchParams.get('tier')

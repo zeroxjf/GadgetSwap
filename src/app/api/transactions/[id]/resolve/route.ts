@@ -98,8 +98,8 @@ export async function POST(
           'requested_by_customer'
         )
         refundedAmount = refundAmount
-        // If more than 50% of sale price refunded, consider it buyer win
-        disputeStatus = refundAmount > Number(transaction.salePrice) / 2 ? 'RESOLVED_BUYER' : 'RESOLVED_SELLER'
+        // If 50% or more of sale price refunded, consider it buyer-favorable
+        disputeStatus = refundAmount >= Number(transaction.salePrice) / 2 ? 'RESOLVED_BUYER' : 'RESOLVED_SELLER'
         finalStatus = 'COMPLETED' // Partial refund means transaction still "completed"
       }
       // resolution === 'seller' means no refund, just release funds to seller

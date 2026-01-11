@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isModeratorOrAdmin } from '@/lib/admin'
 
 /**
  * GET /api/listings/[id]
@@ -47,12 +48,13 @@ export async function GET(
     // Check if viewer has permission to see this listing
     const session = await getServerSession(authOptions)
     const isOwnListing = session?.user?.id === listing.sellerId
-    const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'MODERATOR'
+    // SECURITY: Check fresh role from database to prevent stale session bypass
+    const isModerator = session?.user?.id ? await isModeratorOrAdmin() : false
 
     // Only show non-approved listings to owner or admin
     const isPubliclyVisible = listing.status === 'ACTIVE' && listing.reviewStatus === 'APPROVED'
 
-    if (!isPubliclyVisible && !isOwnListing && !isAdmin) {
+    if (!isPubliclyVisible && !isOwnListing && !isModerator) {
       return NextResponse.json(
         { error: 'Listing not found' },
         { status: 404 }
@@ -97,7 +99,7 @@ export async function PUT(
     // Verify ownership
     const listing = await prisma.listing.findUnique({
       where: { id },
-      select: { sellerId: true, status: true, reviewStatus: true, price: true },
+      select: { sellerId: true, status: true, reviewStatus: true, price: true, verificationCode: true, verificationPhotoUrl: true },
     })
 
     if (!listing) {
@@ -151,8 +153,48 @@ export async function PUT(
     if (typeof originalParts === 'boolean') updateData.originalParts = originalParts
     if (typeof imeiClean === 'boolean') updateData.imeiClean = imeiClean
     if (typeof icloudUnlocked === 'boolean') updateData.icloudUnlocked = icloudUnlocked
-    if (status !== undefined && ['ACTIVE', 'DRAFT', 'REMOVED'].includes(status)) {
+    // SECURITY: State machine validation for status transitions
+    // Valid transitions:
+    // - PENDING → DRAFT, REMOVED
+    // - ACTIVE → REMOVED, DRAFT
+    // - DRAFT → PENDING (must go through review)
+    // - SOLD → (terminal, no transitions)
+    // - REMOVED → PENDING (must go through review)
+    if (status !== undefined) {
+      const validTransitions: Record<string, string[]> = {
+        'PENDING': ['DRAFT', 'REMOVED'],
+        'ACTIVE': ['REMOVED', 'DRAFT'],
+        'DRAFT': ['PENDING'],  // Cannot go directly to ACTIVE - must go through review
+        'SOLD': [],  // Terminal state - no transitions allowed
+        'REMOVED': ['PENDING'],  // Must go through review to reactivate
+        'EXPIRED': ['PENDING'],  // Must go through review to reactivate
+      }
+
+      const currentStatus = listing.status
+      const allowedTransitions = validTransitions[currentStatus] || []
+
+      if (!allowedTransitions.includes(status)) {
+        return NextResponse.json(
+          { error: `Invalid status transition from ${currentStatus} to ${status}` },
+          { status: 400 }
+        )
+      }
+
       updateData.status = status
+
+      // If transitioning to PENDING, also set review status
+      if (status === 'PENDING') {
+        // SECURITY: Verify that verification code and photo are present when transitioning from DRAFT to PENDING
+        if (currentStatus === 'DRAFT') {
+          if (!listing.verificationCode || !listing.verificationPhotoUrl) {
+            return NextResponse.json(
+              { error: 'Verification code and photo are required to submit for review' },
+              { status: 400 }
+            )
+          }
+        }
+        updateData.reviewStatus = 'PENDING_REVIEW'
+      }
     }
 
     // If listing was rejected or needs_info, resubmit for review when edited

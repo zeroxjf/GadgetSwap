@@ -40,14 +40,27 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     })
 
+    // SECURITY: Only expose buyer-relevant fields
+    // stripeFee, platformFee, and sellerPayout are internal financial metrics
     return NextResponse.json({
       purchases: purchases.map(p => ({
-        ...p,
+        id: p.id,
+        status: p.status,
         salePrice: Number(p.salePrice),
-        platformFee: Number(p.platformFee),
-        stripeFee: Number(p.stripeFee),
-        sellerPayout: Number(p.sellerPayout),
-        totalAmount: Number(p.salePrice),
+        totalAmount: Number(p.totalAmount),
+        taxAmount: Number(p.taxAmount),
+        shippingCost: Number(p.shippingCost),
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        completedAt: p.completedAt,
+        shippedAt: p.shippedAt,
+        deliveredAt: p.deliveredAt,
+        trackingNumber: p.trackingNumber,
+        shippingCarrier: p.shippingCarrier,
+        listing: p.listing,
+        seller: p.seller,
+        disputeStatus: p.disputeStatus,
+        returnStatus: p.returnStatus,
       })),
     })
   } catch (error) {

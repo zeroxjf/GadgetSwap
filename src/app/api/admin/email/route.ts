@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendBulkEmail, wrapEmailTemplate } from '@/lib/email'
+import { isAdmin } from '@/lib/admin'
 
 /**
  * POST /api/admin/email
@@ -17,8 +18,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Use role from session (already fetched during auth)
-    if (session.user.role !== 'ADMIN') {
+    // SECURITY: Check fresh role from database to prevent stale session bypass
+    if (!(await isAdmin())) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
           recipientCount: 1,
           sentById: session.user.id,
           sentByEmail: session.user.email || 'unknown',
-          contentPreview: content.replace(/<[^>]*>/g, '').substring(0, 200),
+          contentPreview: content.replace(/<[^>]*>/g, '').replace(/[<>&"']/g, '').substring(0, 200),
           status: 'sending',
         },
       })
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
         recipientCount: emails.length,
         sentById: session.user.id,
         sentByEmail: session.user.email || 'unknown',
-        contentPreview: content.replace(/<[^>]*>/g, '').substring(0, 200),
+        contentPreview: content.replace(/<[^>]*>/g, '').replace(/[<>&"']/g, '').substring(0, 200),
         status: 'sending',
       },
     })
@@ -173,6 +174,7 @@ export async function POST(request: NextRequest) {
       failed: results.failed,
     })
 
+    // SECURITY: Only return count of failures, not detailed error messages
     return NextResponse.json({
       success: true,
       message: `Email sent to ${results.success} users`,
@@ -181,7 +183,6 @@ export async function POST(request: NextRequest) {
         success: results.success,
         failed: results.failed,
       },
-      errors: results.errors.length > 0 ? results.errors.slice(0, 10) : undefined,
     })
   } catch (error) {
     console.error('Admin email error:', error)
@@ -205,8 +206,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Use role from session (already fetched during auth)
-    if (session.user.role !== 'ADMIN') {
+    // SECURITY: Check fresh role from database to prevent stale session bypass
+    if (!(await isAdmin())) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

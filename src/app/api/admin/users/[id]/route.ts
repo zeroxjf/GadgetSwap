@@ -147,6 +147,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 })
     }
 
+    // SECURITY: Prevent admins from deleting other admin accounts
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true, email: true },
+    })
+
+    if (!targetUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    if (targetUser.role === 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Cannot delete admin accounts. Demote to USER first.' },
+        { status: 403 }
+      )
+    }
+
     // Delete user and all related data
     // Note: This cascades to delete their listings, messages, etc. based on schema
     await prisma.user.delete({

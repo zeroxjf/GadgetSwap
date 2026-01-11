@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isCurrentUserBanned } from '@/lib/admin'
 
 /**
  * GET /api/addresses
@@ -48,6 +49,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      )
+    }
+
+    // Check if user is banned
+    if (await isCurrentUserBanned()) {
+      return NextResponse.json(
+        { error: 'Your account has been suspended' },
+        { status: 403 }
       )
     }
 
