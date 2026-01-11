@@ -100,14 +100,17 @@ export async function POST(request: NextRequest) {
       emailNotify,
     } = body
 
-    // Map simplified osVersion to min/max range (e.g., "16" -> "16.0" to "16.99")
+    // Store simplified osVersion directly (e.g., "16", "17")
+    // For matching, we'll use prefix matching: "16" matches "16.0", "16.1.2", etc.
     let osVersionMin = legacyMin
     let osVersionMax = legacyMax
     let osVersionExact = legacyExact
 
     if (osVersion && !osVersionMin && !osVersionMax && !osVersionExact) {
-      osVersionMin = `${osVersion}.0`
-      osVersionMax = osVersion === '13' ? '13.99' : `${osVersion}.99`
+      // Store as osVersionMin for simplified queries
+      // Value like "16" will match listings starting with "16"
+      osVersionMin = osVersion
+      osVersionMax = null // Not using range anymore
     }
 
     if (!name) {
