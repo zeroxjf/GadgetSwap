@@ -19,6 +19,7 @@ import {
   CheckCircle,
   ArrowRight
 } from 'lucide-react'
+import { useSubscriptionTier } from '@/hooks/useSubscriptionTier'
 
 interface DeviceAlert {
   id: string
@@ -213,8 +214,8 @@ export default function AlertsPage() {
     )
   }
 
-  const maxAlerts = (session.user as any).subscriptionTier === 'PRO' ? Infinity :
-                    (session.user as any).subscriptionTier === 'PLUS' ? 3 : 1
+  const { tier } = useSubscriptionTier()
+  const maxAlerts = tier === 'PRO' ? Infinity : tier === 'PLUS' ? 3 : 1
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -247,14 +248,14 @@ export default function AlertsPage() {
                 {alerts.length} / {maxAlerts === Infinity ? '∞' : maxAlerts} alerts used
               </p>
               <p className="text-sm text-primary-700">
-                {session.user.subscriptionTier === 'FREE'
+                {tier === 'FREE'
                   ? 'Upgrade to Plus for 3 alerts or Pro for unlimited'
-                  : session.user.subscriptionTier === 'PLUS'
+                  : tier === 'PLUS'
                   ? 'Upgrade to Pro for unlimited alerts'
                   : 'You have unlimited alerts'}
               </p>
             </div>
-            {session.user.subscriptionTier !== 'PRO' && (
+            {tier !== 'PRO' && (
               <Link href="/subscription" className="btn-secondary text-sm">
                 Upgrade
               </Link>

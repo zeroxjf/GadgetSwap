@@ -21,6 +21,7 @@ import {
   getSupportedDevices,
   JailbreakResult
 } from '@/lib/jailbreak-compatibility'
+import { useSubscriptionTier } from '@/hooks/useSubscriptionTier'
 
 // Jailbreak tools reference data (this is static reference data, not mock data)
 const jailbreakTools = [
@@ -486,37 +487,10 @@ function MarketInsightsContent({ isPro }: { isPro: boolean }) {
 
 export default function MarketInsightsPage() {
   const { data: session, status } = useSession()
-  const [isPro, setIsPro] = useState(false)
-  const [checking, setChecking] = useState(true)
+  const { tier, mounted } = useSubscriptionTier()
+  const isPro = tier === 'PRO'
 
-  useEffect(() => {
-    if (status === 'loading') return
-
-    // Check if user has Pro subscription
-    const checkSubscription = async () => {
-      if (!session?.user) {
-        setIsPro(false)
-        setChecking(false)
-        return
-      }
-
-      try {
-        const response = await fetch('/api/user')
-        if (response.ok) {
-          const userData = await response.json()
-          setIsPro(userData.subscriptionTier === 'PRO')
-        }
-      } catch (error) {
-        console.error('Error checking subscription:', error)
-      } finally {
-        setChecking(false)
-      }
-    }
-
-    checkSubscription()
-  }, [session, status])
-
-  if (status === 'loading' || checking) {
+  if (status === 'loading' || !mounted) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />

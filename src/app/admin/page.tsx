@@ -23,6 +23,7 @@ import {
   MousePointer,
   ExternalLink,
 } from 'lucide-react'
+import { TierSimulator } from '@/components/admin/TierSimulator'
 
 interface DashboardStats {
   // Users
@@ -161,6 +162,9 @@ export default function AdminDashboardPage() {
           Last updated: {new Date().toLocaleTimeString()}
         </p>
       </div>
+
+      {/* Tier Simulator */}
+      <TierSimulator />
 
       {/* Quick Action Cards */}
       {(stats.pendingReview > 0 || stats.flaggedListings > 0 || stats.unresolvedDisputes > 0) && (
