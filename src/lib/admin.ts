@@ -186,8 +186,33 @@ export const ADMIN_EMAILS = [
 ]
 
 /**
+ * Normalize email to prevent bypass via aliases
+ * Gmail allows: user+tag@gmail.com and u.s.e.r@gmail.com
+ * This normalizes to the canonical form
+ */
+function normalizeEmail(email: string): string {
+  const lower = email.toLowerCase().trim()
+  const [localPart, domain] = lower.split('@')
+
+  if (!domain) return lower
+
+  // For Gmail, remove dots and plus aliases
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    const normalized = localPart
+      .split('+')[0]  // Remove everything after +
+      .replace(/\./g, '')  // Remove dots
+    return `${normalized}@gmail.com`
+  }
+
+  // For other domains, just remove plus aliases
+  return `${localPart.split('+')[0]}@${domain}`
+}
+
+/**
  * Check if an email should be auto-promoted to admin
+ * SECURITY: Normalizes emails to prevent bypass via aliases
  */
 export function shouldAutoPromoteToAdmin(email: string): boolean {
-  return ADMIN_EMAILS.includes(email.toLowerCase())
+  const normalizedInput = normalizeEmail(email)
+  return ADMIN_EMAILS.some(adminEmail => normalizeEmail(adminEmail) === normalizedInput)
 }

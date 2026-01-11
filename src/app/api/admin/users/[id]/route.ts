@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isAdmin } from '@/lib/admin'
+import { logActivity } from '@/lib/activity'
 
 export async function PATCH(
   request: NextRequest,
@@ -70,6 +71,12 @@ export async function PATCH(
       }
     }
 
+    // Get current user data for audit log comparison
+    const currentUser = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true, subscriptionTier: true, banned: true, email: true },
+    })
+
     const user = await prisma.user.update({
       where: { id },
       data: updateData,
@@ -80,9 +87,36 @@ export async function PATCH(
         role: true,
         subscriptionTier: true,
         banned: true,
-        lastIpHash: true,
       },
     })
+
+    // AUDIT LOG: Record all admin actions on users
+    const changes: string[] = []
+    if (role && currentUser?.role !== role) {
+      changes.push(`role: ${currentUser?.role} → ${role}`)
+    }
+    if (subscriptionTier && currentUser?.subscriptionTier !== subscriptionTier) {
+      changes.push(`subscription: ${currentUser?.subscriptionTier} → ${subscriptionTier}`)
+    }
+    if (typeof banned === 'boolean' && currentUser?.banned !== banned) {
+      changes.push(`banned: ${currentUser?.banned} → ${banned}${banReason ? ` (${banReason})` : ''}`)
+    }
+
+    if (changes.length > 0) {
+      await logActivity({
+        userId: session.user.id,
+        type: 'ADMIN_ACTION',
+        description: `Admin modified user ${currentUser?.email}: ${changes.join(', ')}`,
+        metadata: {
+          targetUserId: id,
+          targetEmail: currentUser?.email,
+          changes: updateData,
+          adminId: session.user.id,
+          adminEmail: session.user.email,
+        },
+      })
+      console.log(`[ADMIN AUDIT] ${session.user.email} modified user ${currentUser?.email}: ${changes.join(', ')}`)
+    }
 
     return NextResponse.json({ success: true, user })
   } catch (error) {
