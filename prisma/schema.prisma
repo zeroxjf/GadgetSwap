@@ -715,6 +715,7 @@ enum ActivityType {
   SUBSCRIPTION_CHANGED
   ALERT_CREATED
   WATCHLIST_ADDED
+  ADMIN_ACTION
 }
 
 model ActivityLog {
