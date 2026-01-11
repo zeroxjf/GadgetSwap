@@ -410,11 +410,13 @@ export async function listProductsOnConnectedAccount(
  *
  * @param priceId - The Stripe price ID for the subscription
  * @param userId - Your internal user ID
+ * @param tier - The subscription tier (PLUS or PRO)
  * @param customerEmail - Customer's email for prefilling
  */
 export async function createSubscriptionCheckout(
   priceId: string,
   userId: string,
+  tier: 'PLUS' | 'PRO',
   customerEmail?: string
 ) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -429,6 +431,7 @@ export async function createSubscriptionCheckout(
     ],
     metadata: {
       userId,
+      tier,
     },
     customer_email: customerEmail,
     success_url: `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
