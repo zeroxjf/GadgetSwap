@@ -31,6 +31,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // OAuth provider IDs for mobile app sign-in
+  appleId       String?   @unique  // Apple Sign-In user identifier
+  googleId      String?   @unique  // Google Sign-In user identifier
+
   // Role for admin access
   role          UserRole  @default(USER)
 
