@@ -3,30 +3,37 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Sun, Moon } from 'lucide-react'
 
+function getStoredTheme(): string | null {
+  try {
+    return localStorage.getItem('theme')
+  } catch {
+    return null
+  }
+}
+
+function setStoredTheme(theme: string) {
+  try {
+    localStorage.setItem('theme', theme)
+  } catch {
+    // localStorage blocked - theme will work for session only
+  }
+}
+
 export function ThemeToggle() {
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
 
-  // Sync state with DOM on mount
   useEffect(() => {
     setMounted(true)
-    const isDarkMode = document.documentElement.classList.contains('dark')
-    setIsDark(isDarkMode)
+    setIsDark(document.documentElement.classList.contains('dark'))
   }, [])
 
   const toggleTheme = useCallback(() => {
-    // Read current state directly from DOM (source of truth)
     const currentlyDark = document.documentElement.classList.contains('dark')
     const newIsDark = !currentlyDark
 
-    if (newIsDark) {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
-    }
-
+    document.documentElement.className = newIsDark ? 'dark' : ''
+    setStoredTheme(newIsDark ? 'dark' : 'light')
     setIsDark(newIsDark)
   }, [])
 

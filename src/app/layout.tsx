@@ -33,12 +33,16 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                var theme = localStorage.getItem('theme');
-                if (!theme) {
-                  theme = 'light';
-                  localStorage.setItem('theme', 'light');
+                try {
+                  var theme = localStorage.getItem('theme');
+                  if (!theme) {
+                    theme = 'light';
+                    localStorage.setItem('theme', 'light');
+                  }
+                  document.documentElement.className = theme === 'dark' ? 'dark' : '';
+                } catch(e) {
+                  document.documentElement.className = '';
                 }
-                document.documentElement.className = theme === 'dark' ? 'dark' : '';
               })();
             `,
           }}
