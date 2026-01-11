@@ -68,21 +68,14 @@ export function Header() {
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
-      {/* Top bar - Fee comparison banner */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm py-2">
-        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <span className="font-bold">1% + ~3% Stripe = ~4% total</span>
-            <span className="hidden sm:inline text-green-200">|</span>
-            <span className="hidden sm:inline text-green-100">
-              Lower than <span className="line-through text-green-300">Swappa 6.5%</span>
-              {' '}& <span className="line-through text-green-300">eBay 13%</span>
-            </span>
-            <span className="sm:hidden text-green-200">Beat Swappa & eBay</span>
-          </div>
-          <Link href="/subscription" className="font-semibold hover:underline flex items-center gap-1">
-            <span className="hidden sm:inline">Go Pro →</span>
-            <span className="bg-white text-green-600 px-2 py-0.5 rounded text-xs font-bold">0% FEES</span>
+      {/* Top bar - Free Pro promotion banner */}
+      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm py-2">
+        <div className="max-w-7xl mx-auto px-4 flex justify-center items-center gap-2">
+          <span className="font-bold">Free Lifetime Pro Subscription</span>
+          <span className="text-white/70">—</span>
+          <span className="text-purple-100">Limited time for early adopters</span>
+          <Link href="/subscription" className="ml-2 bg-white text-purple-600 px-3 py-0.5 rounded-full text-xs font-bold hover:bg-purple-100 transition-colors">
+            Claim Now
           </Link>
         </div>
       </div>
