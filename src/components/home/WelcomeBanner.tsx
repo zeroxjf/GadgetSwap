@@ -18,6 +18,8 @@ export function WelcomeBanner() {
   const handleDismiss = () => {
     setIsClosing(true)
     localStorage.setItem('welcomeBannerDismissed', 'true')
+    // Trigger feedback widget attention animation
+    window.dispatchEvent(new CustomEvent('showFeedbackAttention'))
     setTimeout(() => {
       setIsVisible(false)
     }, 300)

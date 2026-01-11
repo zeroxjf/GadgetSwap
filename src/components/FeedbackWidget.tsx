@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 import {
@@ -28,6 +28,23 @@ export function FeedbackWidget() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
+  const [showAttention, setShowAttention] = useState(false)
+
+  // Listen for attention trigger from welcome banner
+  useEffect(() => {
+    const handleShowAttention = () => {
+      setShowAttention(true)
+      // Stop animation after 5 seconds
+      setTimeout(() => {
+        setShowAttention(false)
+      }, 5000)
+    }
+
+    window.addEventListener('showFeedbackAttention', handleShowAttention)
+    return () => {
+      window.removeEventListener('showFeedbackAttention', handleShowAttention)
+    }
+  }, [])
 
   // Don't show on admin pages
   if (pathname?.startsWith('/admin')) {
@@ -93,15 +110,29 @@ export function FeedbackWidget() {
   return (
     <>
       {/* Floating Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-40 bg-gradient-to-r from-primary-600 to-accent-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 ${
-          isOpen ? 'hidden' : ''
-        }`}
-        aria-label="Send feedback"
-      >
-        <MessageCircle className="w-6 h-6" />
-      </button>
+      <div className={`fixed bottom-6 right-6 z-40 ${isOpen ? 'hidden' : ''}`}>
+        {/* Attention Tooltip */}
+        {showAttention && (
+          <div className="absolute bottom-full right-0 mb-3 animate-fade-in">
+            <div className="bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-lg whitespace-nowrap">
+              Questions or concerns?
+              <div className="absolute top-full right-6 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-900" />
+            </div>
+          </div>
+        )}
+        <button
+          onClick={() => {
+            setIsOpen(true)
+            setShowAttention(false)
+          }}
+          className={`bg-gradient-to-r from-primary-600 to-accent-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 ${
+            showAttention ? 'animate-dock-bounce' : ''
+          }`}
+          aria-label="Send feedback"
+        >
+          <MessageCircle className="w-6 h-6" />
+        </button>
+      </div>
 
       {/* Widget Panel */}
       {isOpen && (
