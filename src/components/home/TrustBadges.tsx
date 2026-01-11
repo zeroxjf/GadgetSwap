@@ -21,8 +21,8 @@ const escrowContent = {
   description: `Your payment is held securely until 24 hours after delivery. This gives you time to inspect the device and raise any concerns directly with GadgetSwap for fast resolution.`,
   bullets: [
     'Funds held until delivery + 24 hour inspection window',
-    'Report issues within 24 hours for fast refunds (days, not months)',
-    'After 24 hours, bank disputes required (2-3 month process)',
+    'Report issues within 24 hours for fast refunds (days, not weeks)',
+    'After 24 hours, bank disputes required (can take weeks)',
     'Always inspect your device immediately upon delivery',
   ],
   critical: true,
