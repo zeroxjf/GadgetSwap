@@ -158,8 +158,8 @@ export default async function HomePage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                The Marketplace for
-                <span className="text-primary-200"> iOS Enthusiasts</span>
+                The Marketplace for<br />
+                <span className="text-primary-200">iOS Enthusiasts</span>
               </h1>
               <p className="text-lg text-primary-100 mb-8">
                 Buy and sell Apple devices with confidence. Search by iOS version,
