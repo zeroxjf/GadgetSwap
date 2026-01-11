@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Heart, Star, Zap, Loader2, Cpu, Smartphone } from 'lucide-react'
+import { Heart, Star, Zap, Loader2, Smartphone } from 'lucide-react'
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 
@@ -112,12 +112,6 @@ export function ListingCard({ listing }: ListingCardProps) {
                   Featured
                 </span>
               )}
-              {canJailbreak && (
-                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-600 to-violet-600 text-white text-[10px] font-semibold px-2 py-1 rounded-full shadow-lg">
-                  <Cpu className="w-3 h-3" />
-                  JB Ready
-                </span>
-              )}
             </div>
 
             {/* Watchlist button */}
@@ -138,21 +132,30 @@ export function ListingCard({ listing }: ListingCardProps) {
             </button>
           </div>
 
-          {/* Bottom gradient overlay with iOS version */}
-          {listing.osVersion && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-2.5 pt-8">
-              <div className="flex items-center gap-2">
-                <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-2 py-0.5 rounded">
-                  iOS {listing.osVersion}
-                </span>
+          {/* Bottom gradient overlay with iOS version & Jailbreak status */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2.5 pt-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                {listing.osVersion && (
+                  <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-2 py-0.5 rounded">
+                    iOS {listing.osVersion}
+                  </span>
+                )}
                 {listing.bootromExploit && (
                   <span className="bg-amber-500/90 text-white text-xs font-medium px-2 py-0.5 rounded">
                     checkm8
                   </span>
                 )}
               </div>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                canJailbreak
+                  ? 'bg-purple-500/90 text-white'
+                  : 'bg-white/20 backdrop-blur-sm text-white/80'
+              }`}>
+                {canJailbreak ? 'JB: Yes' : 'JB: No'}
+              </span>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Content */}
