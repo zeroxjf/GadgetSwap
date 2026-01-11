@@ -292,9 +292,9 @@ export default function AlertsPage() {
                         )}
                         {alert.osVersionExact ? (
                           <span className="badge bg-purple-100 text-purple-700">iOS {alert.osVersionExact}</span>
-                        ) : (alert.osVersionMin || alert.osVersionMax) && (
+                        ) : alert.osVersionMin && (
                           <span className="badge bg-purple-100 text-purple-700">
-                            iOS {alert.osVersionMin || '?'} - {alert.osVersionMax || '?'}
+                            iOS {alert.osVersionMin}
                           </span>
                         )}
                         {alert.jailbreakStatus && alert.jailbreakStatus !== 'UNKNOWN' && (
