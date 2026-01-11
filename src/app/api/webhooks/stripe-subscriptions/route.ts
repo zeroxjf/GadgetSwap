@@ -200,13 +200,16 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     }
 
     // Only update tier if subscription is active (not pending cancellation)
+    // Note: current_period_end is a Unix timestamp in seconds
+    const periodEnd = (subscription as any).current_period_end as number | null
+
     if (!subscription.cancel_at_period_end) {
       updateData.subscriptionTier = tier
       updateData.subscriptionEnd = null
     } else {
       // Mark when subscription will end, but keep current tier until then
-      updateData.subscriptionEnd = subscription.current_period_end
-        ? new Date(subscription.current_period_end * 1000)
+      updateData.subscriptionEnd = periodEnd
+        ? new Date(periodEnd * 1000)
         : null
     }
 
@@ -216,8 +219,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     })
 
     // Notify user about upcoming cancellation
-    if (subscription.cancel_at_period_end && subscription.current_period_end) {
-      const endDate = new Date(subscription.current_period_end * 1000)
+    if (subscription.cancel_at_period_end && periodEnd) {
+      const endDate = new Date(periodEnd * 1000)
       await createNotification({
         userId: user.id,
         type: 'SYSTEM',
