@@ -44,11 +44,23 @@ export async function GET(
       )
     }
 
-    // Increment view count only if viewer is not the seller
+    // Check if viewer has permission to see this listing
     const session = await getServerSession(authOptions)
     const isOwnListing = session?.user?.id === listing.sellerId
+    const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'MODERATOR'
 
-    if (!isOwnListing) {
+    // Only show non-approved listings to owner or admin
+    const isPubliclyVisible = listing.status === 'ACTIVE' && listing.reviewStatus === 'APPROVED'
+
+    if (!isPubliclyVisible && !isOwnListing && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Listing not found' },
+        { status: 404 }
+      )
+    }
+
+    // Increment view count only for approved listings viewed by non-owners
+    if (isPubliclyVisible && !isOwnListing) {
       await prisma.listing.update({
         where: { id },
         data: { views: { increment: 1 } },

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { stripeClient } from '@/lib/stripe'
+import { createNotification } from '@/lib/notifications'
+import { sendEmail, wrapEmailTemplate } from '@/lib/email'
 import Stripe from 'stripe'
 
 // =============================================================================
@@ -181,26 +183,60 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   // Check if subscription is paused
   const isPaused = !!(subscription as any).pause_collection
 
-  // TODO: Update user subscription in database
   try {
-    await prisma.user.updateMany({
+    // Find user by Stripe account ID
+    const user = await prisma.user.findFirst({
       where: { stripeAccountId: accountId as string },
-      data: {
-        subscriptionTier: subscription.cancel_at_period_end ? 'FREE' : tier,
-        subscriptionStatus: subscription.status,
-        // If cancel_at_period_end is true, user will downgrade at end of period
-        // You might want to show a warning in the UI
-      },
     })
 
-    if (subscription.cancel_at_period_end) {
+    if (!user) {
+      console.error(`User not found for Stripe account: ${accountId}`)
+      return
+    }
+
+    // Build update data - keep tier active until actual cancellation
+    const updateData: any = {
+      subscriptionStatus: subscription.status,
+    }
+
+    // Only update tier if subscription is active (not pending cancellation)
+    if (!subscription.cancel_at_period_end) {
+      updateData.subscriptionTier = tier
+      updateData.subscriptionEnd = null
+    } else {
+      // Mark when subscription will end, but keep current tier until then
+      updateData.subscriptionEnd = subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000)
+        : null
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: updateData,
+    })
+
+    // Notify user about upcoming cancellation
+    if (subscription.cancel_at_period_end && subscription.current_period_end) {
+      const endDate = new Date(subscription.current_period_end * 1000)
+      await createNotification({
+        userId: user.id,
+        type: 'SYSTEM',
+        title: 'Subscription Ending Soon',
+        message: `Your ${tier} subscription will end on ${endDate.toLocaleDateString()}. Renew to keep your benefits.`,
+        link: '/subscription',
+      })
       console.log(`Subscription will cancel at end of period for: ${accountId}`)
-      // TODO: Send email notification about upcoming cancellation
     }
 
     if (isPaused) {
+      await createNotification({
+        userId: user.id,
+        type: 'SYSTEM',
+        title: 'Subscription Paused',
+        message: 'Your subscription has been paused. Resume anytime to restore your benefits.',
+        link: '/subscription',
+      })
       console.log(`Subscription is paused for: ${accountId}`)
-      // TODO: Handle paused subscription (restrict access, etc.)
     }
   } catch (error) {
     console.error('Error updating subscription:', error)
@@ -218,18 +254,66 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
   console.log(`Subscription deleted for: ${accountId}`)
 
-  // TODO: Update user subscription in database - revert to FREE tier
   try {
-    await prisma.user.updateMany({
+    // Find user and get their previous tier for the notification
+    const user = await prisma.user.findFirst({
       where: { stripeAccountId: accountId as string },
+    })
+
+    if (!user) {
+      console.error(`User not found for Stripe account: ${accountId}`)
+      return
+    }
+
+    const previousTier = user.subscriptionTier
+
+    // Revert to FREE tier
+    await prisma.user.update({
+      where: { id: user.id },
       data: {
         subscriptionTier: 'FREE',
         subscriptionId: null,
         subscriptionStatus: 'canceled',
+        subscriptionEnd: null,
       },
     })
+
+    // Create in-app notification
+    await createNotification({
+      userId: user.id,
+      type: 'SYSTEM',
+      title: 'Subscription Ended',
+      message: `Your ${previousTier} subscription has ended. You're now on the Free plan. Upgrade anytime to restore your benefits.`,
+      link: '/subscription',
+    })
+
+    // Send email notification
+    if (user.email) {
+      const emailContent = `
+        <h2 style="margin:0 0 16px;color:#111827;font-size:20px;">
+          Your Subscription Has Ended
+        </h2>
+        <p style="margin:0 0 16px;color:#4b5563;font-size:14px;">
+          Hi ${user.name || 'there'},
+        </p>
+        <p style="margin:0 0 16px;color:#4b5563;font-size:14px;">
+          Your ${previousTier} subscription to GadgetSwap has ended. You've been moved to our Free plan.
+        </p>
+        <p style="margin:0 0 24px;color:#4b5563;font-size:14px;">
+          We'd love to have you back! Upgrade anytime to restore your premium features.
+        </p>
+        <a href="https://gadgetswap.tech/subscription" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;">
+          View Plans
+        </a>
+      `
+      await sendEmail({
+        to: user.email,
+        subject: 'Your GadgetSwap subscription has ended',
+        html: wrapEmailTemplate(emailContent, 'Your subscription has ended'),
+      })
+    }
+
     console.log(`Reverted user to FREE tier: ${accountId}`)
-    // TODO: Send email notification about subscription cancellation
   } catch (error) {
     console.error('Error handling subscription deletion:', error)
   }
@@ -259,13 +343,64 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
  */
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const accountId = (invoice as any).customer_account || invoice.customer
+  const amountDue = (invoice.amount_due / 100).toFixed(2)
 
   console.log(`Invoice payment failed for: ${accountId}`)
-  console.log(`Amount: $${(invoice.amount_due / 100).toFixed(2)}`)
+  console.log(`Amount: $${amountDue}`)
 
-  // TODO: Send email notification about failed payment
-  // TODO: You might want to create a notification in the app
-  // The user should update their payment method via billing portal
+  try {
+    // Find user by Stripe account ID
+    const user = await prisma.user.findFirst({
+      where: { stripeAccountId: accountId as string },
+    })
+
+    if (!user) {
+      console.error(`User not found for Stripe account: ${accountId}`)
+      return
+    }
+
+    // Create in-app notification
+    await createNotification({
+      userId: user.id,
+      type: 'SYSTEM',
+      title: 'Payment Failed',
+      message: `Your subscription payment of $${amountDue} failed. Please update your payment method to keep your benefits.`,
+      link: '/subscription',
+    })
+
+    // Send email notification
+    if (user.email) {
+      const emailContent = `
+        <h2 style="margin:0 0 16px;color:#dc2626;font-size:20px;">
+          Payment Failed
+        </h2>
+        <p style="margin:0 0 16px;color:#4b5563;font-size:14px;">
+          Hi ${user.name || 'there'},
+        </p>
+        <p style="margin:0 0 16px;color:#4b5563;font-size:14px;">
+          We weren't able to process your subscription payment of <strong>$${amountDue}</strong>.
+        </p>
+        <p style="margin:0 0 16px;color:#4b5563;font-size:14px;">
+          To keep your ${user.subscriptionTier} benefits, please update your payment method.
+        </p>
+        <p style="margin:0 0 24px;color:#6b7280;font-size:13px;">
+          If your payment method isn't updated, your subscription may be canceled.
+        </p>
+        <a href="https://gadgetswap.tech/subscription" style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;">
+          Update Payment Method
+        </a>
+      `
+      await sendEmail({
+        to: user.email,
+        subject: 'Action Required: Payment failed for your GadgetSwap subscription',
+        html: wrapEmailTemplate(emailContent, 'Payment failed'),
+      })
+    }
+
+    console.log(`Notified user about payment failure: ${user.id}`)
+  } catch (error) {
+    console.error('Error handling invoice payment failure:', error)
+  }
 }
 
 /**

@@ -2,7 +2,7 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const FROM_EMAIL = process.env.FROM_EMAIL || 'GadgetSwap <noreply@gadgetswap.com>'
+const FROM_EMAIL = process.env.FROM_EMAIL || 'GadgetSwap <noreply@gadgetswap.tech>'
 
 export interface SendEmailOptions {
   to: string | string[]
@@ -107,8 +107,8 @@ export function wrapEmailTemplate(content: string, preheader?: string) {
     <div style="text-align:center;padding:24px;color:#6b7280;font-size:12px;">
       <p style="margin:0 0 8px;">GadgetSwap - The Marketplace for iOS Enthusiasts</p>
       <p style="margin:0;">
-        <a href="https://gadgetswap.com/unsubscribe" style="color:#6b7280;">Unsubscribe</a> |
-        <a href="https://gadgetswap.com/help" style="color:#6b7280;">Help</a>
+        <a href="https://gadgetswap.tech/unsubscribe" style="color:#6b7280;">Unsubscribe</a> |
+        <a href="https://gadgetswap.tech/help" style="color:#6b7280;">Help</a>
       </p>
     </div>
   </div>
