@@ -71,7 +71,7 @@ export function WelcomeBanner() {
             <Link
               href="/alerts"
               onClick={handleDismiss}
-              className="flex items-center justify-center gap-2 w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center justify-center gap-2 w-full border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <Bell className="w-5 h-5" />
               Set Up Alerts
