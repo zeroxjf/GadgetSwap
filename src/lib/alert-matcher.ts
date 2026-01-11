@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { sendEmail, wrapEmailTemplate } from '@/lib/email'
+import { createNotification } from '@/lib/notifications'
 
 interface ListingForMatching {
   id: string
@@ -264,6 +265,15 @@ export async function matchAndNotifyAlerts(listingId: string): Promise<{
             matchCount: { increment: 1 },
             lastMatchAt: new Date(),
           },
+        })
+
+        // Create in-app notification
+        await createNotification({
+          userId: alert.userId,
+          type: 'ALERT_MATCH',
+          title: `Match found: ${alert.name}`,
+          message: `${listing.title} - $${listing.price.toLocaleString()}`,
+          link: `/listings/${listing.id}`,
         })
 
         // Send email notification
