@@ -5,11 +5,18 @@
  * integration with IMEICheck.com TAC API for device verification.
  */
 
-// Rate limiting tracker
+import crypto from 'crypto'
+import { prisma } from './prisma'
+
+// Rate limiting tracker (in-memory fallback)
 let lastRequestTime = 0
 let requestCount = 0
 const RATE_LIMIT = 30 // requests per minute
 const RATE_WINDOW = 60000 // 1 minute in ms
+
+// Per-user rate limiting constants
+const USER_RATE_LIMIT = 10 // verifications per hour per user
+const USER_RATE_WINDOW = 60 * 60 * 1000 // 1 hour in ms
 
 /**
  * Validate IMEI format using Luhn algorithm
@@ -97,6 +104,67 @@ function incrementRateLimit() {
     lastRequestTime = now
   } else {
     requestCount++
+  }
+}
+
+/**
+ * Database-backed rate limit check for IMEI verification per user
+ * This provides cross-instance rate limiting in serverless environments
+ */
+async function checkUserRateLimit(userId: string): Promise<{ allowed: boolean; remaining?: number; waitTime?: number }> {
+  try {
+    const windowStart = new Date(Date.now() - USER_RATE_WINDOW)
+
+    // Count recent attempts for this user
+    const recentAttempts = await prisma.imeiVerificationAttempt.count({
+      where: {
+        userId,
+        createdAt: { gte: windowStart }
+      }
+    })
+
+    if (recentAttempts >= USER_RATE_LIMIT) {
+      // Find the oldest attempt in the window to calculate wait time
+      const oldestAttempt = await prisma.imeiVerificationAttempt.findFirst({
+        where: {
+          userId,
+          createdAt: { gte: windowStart }
+        },
+        orderBy: { createdAt: 'asc' }
+      })
+
+      const waitTime = oldestAttempt
+        ? Math.ceil((oldestAttempt.createdAt.getTime() + USER_RATE_WINDOW - Date.now()) / 1000)
+        : 60
+
+      return { allowed: false, remaining: 0, waitTime }
+    }
+
+    return { allowed: true, remaining: USER_RATE_LIMIT - recentAttempts }
+  } catch (error) {
+    console.error('Database rate limit check failed:', error)
+    // Fall back to allowing if database check fails
+    return { allowed: true }
+  }
+}
+
+/**
+ * Record an IMEI verification attempt for rate limiting
+ */
+async function recordVerificationAttempt(userId: string, imei: string): Promise<void> {
+  try {
+    const imeiHash = crypto.createHash('sha256').update(imei).digest('hex')
+    await prisma.imeiVerificationAttempt.create({
+      data: { userId, imeiHash }
+    })
+
+    // Clean up old attempts (fire and forget)
+    const cleanupDate = new Date(Date.now() - USER_RATE_WINDOW * 2)
+    prisma.imeiVerificationAttempt.deleteMany({
+      where: { createdAt: { lt: cleanupDate } }
+    }).catch(() => {})
+  } catch (error) {
+    console.error('Failed to record verification attempt:', error)
   }
 }
 
@@ -224,8 +292,10 @@ export async function lookupTAC(imei: string): Promise<TACLookupResult> {
 
 /**
  * Full IMEI verification combining format validation and TAC lookup
+ * @param imei - The IMEI number to verify
+ * @param userId - Optional user ID for database-backed rate limiting
  */
-export async function verifyIMEI(imei: string): Promise<{
+export async function verifyIMEI(imei: string, userId?: string): Promise<{
   valid: boolean
   verified: boolean
   brand?: string
@@ -247,8 +317,27 @@ export async function verifyIMEI(imei: string): Promise<{
     }
   }
 
-  // Step 2: TAC lookup
+  // Step 2: Check user-specific rate limit (database-backed) if userId provided
+  if (userId) {
+    const userRateCheck = await checkUserRateLimit(userId)
+    if (!userRateCheck.allowed) {
+      return {
+        valid: true,
+        verified: false,
+        rateLimited: true,
+        waitTime: userRateCheck.waitTime,
+        error: `Rate limit reached. You can verify ${USER_RATE_LIMIT} devices per hour. Please wait ${userRateCheck.waitTime} seconds.`,
+      }
+    }
+  }
+
+  // Step 3: TAC lookup
   const tacResult = await lookupTAC(imei)
+
+  // Record the verification attempt for user rate limiting
+  if (userId) {
+    await recordVerificationAttempt(userId, imei)
+  }
 
   if (tacResult.rateLimited) {
     return {

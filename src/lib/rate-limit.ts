@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from './prisma'
 
 /**
- * Simple in-memory rate limiter for serverless
+ * ============================================================================
+ * SERVERLESS RATE LIMITER WITH DATABASE FALLBACK
+ * ============================================================================
  *
- * IMPORTANT LIMITATION: This in-memory rate limiter does NOT work reliably
- * in serverless environments (Vercel, AWS Lambda, etc.) because:
- * 1. Each serverless instance has its own memory space
- * 2. Instances can be created/destroyed at any time
- * 3. Requests may hit different instances, bypassing the limit
+ * IMPORTANT: This rate limiter uses BOTH in-memory and database-backed storage.
  *
- * For production at scale, replace with Redis-based rate limiting:
+ * IN-MEMORY LIMITATIONS (still applies for first-line defense):
+ * - Each serverless instance has its own memory space
+ * - Instances can be created/destroyed at any time
+ * - Requests may hit different instances, bypassing the in-memory limit
+ *
+ * DATABASE FALLBACK (provides cross-instance rate limiting):
+ * - Checks database for rate limit records across all instances
+ * - Use checkRateLimitWithDb() for security-critical endpoints
+ * - Has slight performance overhead but ensures global rate limiting
+ *
+ * For optimal production at scale, consider Redis-based rate limiting:
  * - Upstash Redis (recommended for Vercel): https://upstash.com/
  * - @upstash/ratelimit package provides drop-in replacement
- *
- * Current implementation is acceptable for:
- * - Development/testing
- * - Low-traffic production (single instance)
- * - Basic abuse prevention (not security-critical rate limiting)
+ * ============================================================================
  */
 
 interface RateLimitEntry {
@@ -144,4 +149,72 @@ export const rateLimits = {
 
   // General API - lenient
   api: { limit: 100, windowMs: 60 * 1000, keyPrefix: 'api' },                   // 100 per minute
+}
+
+/**
+ * Database-backed rate limit check for security-critical endpoints
+ * This provides cross-instance rate limiting in serverless environments
+ *
+ * USAGE: Use this for auth endpoints, password reset, etc. where
+ * in-memory rate limiting is insufficient.
+ */
+export async function checkRateLimitWithDb(
+  request: NextRequest,
+  config: RateLimitConfig
+): Promise<{ success: boolean; remaining: number; resetIn: number }> {
+  const ip = getClientIP(request)
+  const key = `${config.keyPrefix || 'rl'}:${ip}`
+  const now = new Date()
+  const resetAt = new Date(now.getTime() + config.windowMs)
+
+  try {
+    // First, clean up expired entries (fire and forget)
+    prisma.rateLimit.deleteMany({
+      where: { resetAt: { lt: now } }
+    }).catch(() => {}) // Ignore cleanup errors
+
+    // Try to find or create rate limit entry atomically
+    const existing = await prisma.rateLimit.findUnique({
+      where: { key }
+    })
+
+    if (!existing || existing.resetAt < now) {
+      // Create new entry or reset expired one
+      await prisma.rateLimit.upsert({
+        where: { key },
+        update: { count: 1, resetAt },
+        create: { key, count: 1, resetAt }
+      })
+      return {
+        success: true,
+        remaining: config.limit - 1,
+        resetIn: config.windowMs,
+      }
+    }
+
+    if (existing.count >= config.limit) {
+      // Rate limited
+      return {
+        success: false,
+        remaining: 0,
+        resetIn: existing.resetAt.getTime() - now.getTime(),
+      }
+    }
+
+    // Increment counter
+    await prisma.rateLimit.update({
+      where: { key },
+      data: { count: { increment: 1 } }
+    })
+
+    return {
+      success: true,
+      remaining: config.limit - existing.count - 1,
+      resetIn: existing.resetAt.getTime() - now.getTime(),
+    }
+  } catch (error) {
+    // If database fails, fall back to in-memory check
+    console.error('Database rate limit check failed, falling back to in-memory:', error)
+    return checkRateLimit(request, config)
+  }
 }

@@ -20,26 +20,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // SECURITY: Always perform token generation to normalize timing
+    // This prevents timing attacks from revealing if email exists
+    const token = crypto.randomBytes(32).toString('hex')
+    const expires = new Date(Date.now() + 3600000) // 1 hour from now
+
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { email },
     })
 
     // Always return success to prevent email enumeration
-    if (!user) {
+    // But only actually store/send token if user exists with password
+    if (!user || !user.passwordHash) {
+      // Still perform a dummy database operation to normalize timing
+      // This makes the response time consistent whether user exists or not
+      await prisma.verificationToken.findFirst({
+        where: { identifier: 'dummy-timing-normalization' }
+      }).catch(() => {})
       return NextResponse.json({ success: true })
     }
 
-    // Check if user has a password (credentials auth)
-    if (!user.passwordHash) {
-      return NextResponse.json({ success: true })
-    }
-
-    // Generate reset token
-    const token = crypto.randomBytes(32).toString('hex')
-    const expires = new Date(Date.now() + 3600000) // 1 hour from now
-
-    // Store token in database
+    // Store token in database (only for valid users with password)
     await prisma.verificationToken.create({
       data: {
         identifier: email,

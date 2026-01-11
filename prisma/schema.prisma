@@ -852,3 +852,46 @@ model StripeWebhookEvent {
 
   @@index([eventType])
 }
+
+// ============================================
+// RATE LIMITING (Database-backed for serverless)
+// ============================================
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String   @unique  // Format: "prefix:identifier" (e.g., "login:192.168.1.1")
+  count     Int      @default(1)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}
+
+// ============================================
+// VERIFICATION CODES (Database-backed for serverless)
+// ============================================
+
+model PendingVerificationCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ============================================
+// IMEI VERIFICATION TRACKING (Rate limiting per user)
+// ============================================
+
+model ImeiVerificationAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  imeiHash  String   // SHA256 hash of IMEI for privacy
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}

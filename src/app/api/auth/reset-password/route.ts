@@ -20,35 +20,21 @@ export async function POST(request: Request) {
       )
     }
 
-    // Find and validate token
-    const verificationToken = await prisma.verificationToken.findFirst({
+    // SECURITY FIX: Atomic token consumption to prevent race conditions
+    // Delete the token first - if it doesn't exist or is already deleted,
+    // the deleteMany will return count: 0
+    const deleteResult = await prisma.verificationToken.deleteMany({
       where: {
         identifier: email,
         token,
+        expires: { gte: new Date() } // Only delete if not expired
       },
     })
 
-    if (!verificationToken) {
+    // If no token was deleted, it either didn't exist, was already used, or expired
+    if (deleteResult.count === 0) {
       return NextResponse.json(
         { error: 'Invalid or expired reset link' },
-        { status: 400 }
-      )
-    }
-
-    // Check if token has expired
-    if (verificationToken.expires < new Date()) {
-      // Delete expired token
-      await prisma.verificationToken.delete({
-        where: {
-          identifier_token: {
-            identifier: email,
-            token,
-          },
-        },
-      })
-
-      return NextResponse.json(
-        { error: 'Reset link has expired. Please request a new one.' },
         { status: 400 }
       )
     }
@@ -72,16 +58,6 @@ export async function POST(request: Request) {
     await prisma.user.update({
       where: { id: user.id },
       data: { passwordHash },
-    })
-
-    // Delete used token
-    await prisma.verificationToken.delete({
-      where: {
-        identifier_token: {
-          identifier: email,
-          token,
-        },
-      },
     })
 
     return NextResponse.json({ success: true })
