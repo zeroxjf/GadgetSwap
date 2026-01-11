@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { Providers } from '@/components/Providers'
 import { FeedbackWidget } from '@/components/FeedbackWidget'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { Analytics } from '@vercel/analytics/react'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -26,8 +27,20 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var theme = localStorage.getItem('theme');
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                }
+              })();
+            `,
+          }}
+        />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=AW-17866343153"
           strategy="afterInteractive"
@@ -51,6 +64,7 @@ export default function RootLayout({
             <Footer />
           </div>
           <FeedbackWidget />
+          <ThemeToggle />
         </Providers>
         <Analytics />
       </body>
