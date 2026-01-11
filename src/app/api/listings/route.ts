@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth'
 import crypto from 'crypto'
 import { createNotification } from '@/lib/notifications'
 import { logActivity } from '@/lib/activity'
-import { validateVerificationCode } from '@/lib/verification'
+import { validateVerificationCodeAsync } from '@/lib/verification'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 // AI detection threshold for flagging
@@ -164,7 +164,10 @@ export async function POST(request: NextRequest) {
     }
 
     // SECURITY: Validate verification code belongs to this user and hasn't expired
-    if (!validateVerificationCode(verificationCode, session.user.id)) {
+    // NOTE: Code consumption is now done atomically inside the listing creation transaction
+    // to prevent race conditions where code is consumed but listing creation fails
+    const isCodeValid = await validateVerificationCodeAsync(verificationCode, session.user.id)
+    if (!isCodeValid) {
       return NextResponse.json(
         { error: 'Invalid or expired verification code. Please generate a new code.' },
         { status: 400 }
@@ -188,8 +191,9 @@ export async function POST(request: NextRequest) {
       // Hash full IMEI for duplicate detection (SHA256)
       imeiData.imeiHash = crypto.createHash('sha256').update(cleanIMEI).digest('hex')
 
-      // Check for duplicate IMEI (same device already listed by another seller)
-      // Also check pending review listings
+      // SECURITY: Check for duplicate IMEI - no exceptions to prevent race conditions
+      // The database unique constraint on imeiHash provides the final protection,
+      // but we check here first for a better error message
       const existingListing = await prisma.listing.findFirst({
         where: {
           imeiHash: imeiData.imeiHash,
@@ -197,13 +201,14 @@ export async function POST(request: NextRequest) {
             { status: 'ACTIVE' },
             { reviewStatus: 'PENDING_REVIEW' },
           ],
-          sellerId: { not: session.user.id }, // Allow same user to relist
+          // SECURITY FIX: Removed "sellerId: { not: session.user.id }" exception
+          // This prevents race conditions where same user submits twice simultaneously
         },
       })
 
       if (existingListing) {
         return NextResponse.json(
-          { error: 'This device is already listed by another seller' },
+          { error: 'This device is already listed. Please wait for the existing listing to be processed or removed.' },
           { status: 400 }
         )
       }

@@ -115,14 +115,27 @@ export async function PATCH(
           }, { status: 400 })
         }
 
-        const updated = await prisma.transaction.update({
-          where: { id },
+        // SECURITY FIX: Use optimistic locking - verify current status in WHERE clause
+        const updateResult = await prisma.transaction.updateMany({
+          where: {
+            id,
+            status: 'PAYMENT_RECEIVED', // Only update if still in expected state
+          },
           data: {
             status: 'SHIPPED',
             trackingNumber,
             shippingCarrier: detectedCarrier.toUpperCase(),
             shippedAt: new Date(),
           },
+        })
+
+        if (updateResult.count === 0) {
+          return NextResponse.json({ error: 'Transaction status has changed. Please refresh and try again.' }, { status: 409 })
+        }
+
+        // Fetch the updated transaction for the response
+        const updated = await prisma.transaction.findUnique({
+          where: { id },
         })
 
         // Notify buyer of shipment
@@ -155,13 +168,26 @@ export async function PATCH(
         const escrowReleaseAt = new Date()
         escrowReleaseAt.setHours(escrowReleaseAt.getHours() + 24)
 
-        const updated = await prisma.transaction.update({
-          where: { id },
+        // SECURITY FIX: Use optimistic locking - verify current status in WHERE clause
+        const deliveryUpdateResult = await prisma.transaction.updateMany({
+          where: {
+            id,
+            status: 'SHIPPED', // Only update if still in expected state
+          },
           data: {
             status: 'DELIVERED',
             deliveredAt: new Date(),
             escrowReleaseAt,
           },
+        })
+
+        if (deliveryUpdateResult.count === 0) {
+          return NextResponse.json({ error: 'Transaction status has changed. Please refresh and try again.' }, { status: 409 })
+        }
+
+        // Fetch the updated transaction for the response
+        const updated = await prisma.transaction.findUnique({
+          where: { id },
         })
 
         // Notify seller of delivery confirmation
@@ -197,14 +223,28 @@ export async function PATCH(
           return NextResponse.json({ error: 'Dispute reason is required' }, { status: 400 })
         }
 
-        const updated = await prisma.transaction.update({
-          where: { id },
+        // SECURITY FIX: Use optimistic locking - verify funds are still held in WHERE clause
+        const disputeUpdateResult = await prisma.transaction.updateMany({
+          where: {
+            id,
+            fundsHeld: true, // Only update if funds are still held
+            status: { notIn: ['DISPUTED', 'REFUNDED', 'COMPLETED'] }, // Not already disputed/resolved
+          },
           data: {
             status: 'DISPUTED',
             disputeStatus: 'OPEN',
             disputeReason: reason,
             escrowReleaseAt: null, // Pause escrow release
           },
+        })
+
+        if (disputeUpdateResult.count === 0) {
+          return NextResponse.json({ error: 'Transaction state has changed. Please refresh and try again.' }, { status: 409 })
+        }
+
+        // Fetch the updated transaction for the response
+        const updated = await prisma.transaction.findUnique({
+          where: { id },
         })
 
         // Determine who opened the dispute

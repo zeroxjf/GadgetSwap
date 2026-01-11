@@ -249,15 +249,6 @@ export async function setUserRole(
 }
 
 /**
- * List of admin email addresses for initial setup
- * These users will automatically be granted admin role on first login
- * SECURITY: Read from ADMIN_EMAILS environment variable (comma-separated) with fallback
- */
-export const ADMIN_EMAILS = process.env.ADMIN_EMAILS
-  ? process.env.ADMIN_EMAILS.split(',').map(email => email.trim()).filter(Boolean)
-  : ['jf.tech.team@gmail.com']
-
-/**
  * Normalize email to prevent bypass via aliases
  * Gmail allows: user+tag@gmail.com and u.s.e.r@gmail.com
  * This normalizes to the canonical form
@@ -281,10 +272,24 @@ function normalizeEmail(email: string): string {
 }
 
 /**
+ * List of admin email addresses for initial setup
+ * These users will automatically be granted admin role on first login
+ * SECURITY: Read from ADMIN_EMAILS environment variable (comma-separated) with fallback
+ * SECURITY FIX: Emails are normalized at module load time, not per-request
+ */
+const RAW_ADMIN_EMAILS = process.env.ADMIN_EMAILS
+  ? process.env.ADMIN_EMAILS.split(',').map(email => email.trim()).filter(Boolean)
+  : ['jf.tech.team@gmail.com']
+
+// SECURITY: Pre-normalize admin emails at module load time to ensure consistent comparison
+export const ADMIN_EMAILS = RAW_ADMIN_EMAILS
+const NORMALIZED_ADMIN_EMAILS = RAW_ADMIN_EMAILS.map(normalizeEmail)
+
+/**
  * Check if an email should be auto-promoted to admin
- * SECURITY: Normalizes emails to prevent bypass via aliases
+ * SECURITY: Normalizes input email and compares against pre-normalized admin emails
  */
 export function shouldAutoPromoteToAdmin(email: string): boolean {
   const normalizedInput = normalizeEmail(email)
-  return ADMIN_EMAILS.some(adminEmail => normalizeEmail(adminEmail) === normalizedInput)
+  return NORMALIZED_ADMIN_EMAILS.includes(normalizedInput)
 }

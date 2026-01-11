@@ -43,67 +43,85 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true, duplicate: true })
     }
 
-    // Record the event before processing
-    await prisma.stripeWebhookEvent.create({
-      data: {
-        id: event.id,
-        eventType: event.type,
-      },
-    })
+    // SECURITY FIX: Process event FIRST, then mark as processed AFTER success
+    // This ensures failed events can be retried by Stripe
+    let processingError: Error | null = null
 
     // Handle different event types
-    switch (event.type) {
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent
-        await handlePaymentSuccess(paymentIntent)
-        break
-      }
+    try {
+      switch (event.type) {
+        case 'payment_intent.succeeded': {
+          const paymentIntent = event.data.object as Stripe.PaymentIntent
+          await handlePaymentSuccess(paymentIntent)
+          break
+        }
 
-      case 'payment_intent.payment_failed': {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent
-        await handlePaymentFailure(paymentIntent)
-        break
-      }
+        case 'payment_intent.payment_failed': {
+          const paymentIntent = event.data.object as Stripe.PaymentIntent
+          await handlePaymentFailure(paymentIntent)
+          break
+        }
 
-      case 'account.updated': {
-        const account = event.data.object as Stripe.Account
-        await handleAccountUpdate(account)
-        break
-      }
+        case 'account.updated': {
+          const account = event.data.object as Stripe.Account
+          await handleAccountUpdate(account)
+          break
+        }
 
-      case 'transfer.created': {
-        const transfer = event.data.object as Stripe.Transfer
-        console.log('Transfer created:', transfer.id)
-        break
-      }
+        case 'transfer.created': {
+          const transfer = event.data.object as Stripe.Transfer
+          console.log('Transfer created:', transfer.id)
+          break
+        }
 
-      // Chargeback/Dispute handling
-      case 'charge.dispute.created': {
-        const dispute = event.data.object as Stripe.Dispute
-        await handleDisputeCreated(dispute)
-        break
-      }
+        // Chargeback/Dispute handling
+        case 'charge.dispute.created': {
+          const dispute = event.data.object as Stripe.Dispute
+          await handleDisputeCreated(dispute)
+          break
+        }
 
-      case 'charge.dispute.updated': {
-        const dispute = event.data.object as Stripe.Dispute
-        await handleDisputeUpdated(dispute)
-        break
-      }
+        case 'charge.dispute.updated': {
+          const dispute = event.data.object as Stripe.Dispute
+          await handleDisputeUpdated(dispute)
+          break
+        }
 
-      case 'charge.dispute.closed': {
-        const dispute = event.data.object as Stripe.Dispute
-        await handleDisputeClosed(dispute)
-        break
-      }
+        case 'charge.dispute.closed': {
+          const dispute = event.data.object as Stripe.Dispute
+          await handleDisputeClosed(dispute)
+          break
+        }
 
-      case 'charge.refunded': {
-        const charge = event.data.object as Stripe.Charge
-        await handleChargeRefunded(charge)
-        break
-      }
+        case 'charge.refunded': {
+          const charge = event.data.object as Stripe.Charge
+          await handleChargeRefunded(charge)
+          break
+        }
 
-      default:
-        console.log(`Unhandled event type: ${event.type}`)
+        default:
+          console.log(`Unhandled event type: ${event.type}`)
+      }
+    } catch (error) {
+      processingError = error as Error
+      console.error(`Error processing webhook event ${event.id}:`, error)
+    }
+
+    // Only mark event as processed AFTER successful processing
+    // This allows Stripe to retry failed events
+    if (!processingError) {
+      await prisma.stripeWebhookEvent.create({
+        data: {
+          id: event.id,
+          eventType: event.type,
+        },
+      })
+    } else {
+      // Return 500 to trigger Stripe retry for failed events
+      return NextResponse.json(
+        { received: true, error: 'Processing failed, will retry' },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({ received: true })

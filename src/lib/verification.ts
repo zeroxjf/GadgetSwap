@@ -4,27 +4,33 @@ import { prisma } from './prisma'
 // Excludes I, O, 0, 1 to avoid confusion in handwritten notes
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
-// In-memory store for pending verification codes with expiration
-// Format: { code: { userId, expiresAt } }
-// SECURITY: Codes expire after 1 hour to prevent reuse attacks
-//
-// LIMITATION: This in-memory store does NOT work reliably in serverless environments
-// (Vercel, AWS Lambda, etc.) because each instance has its own memory space.
-// For production at scale, migrate to database-backed verification codes:
-// - Create a VerificationCode table with userId, code, expiresAt, usedAt columns
-// - Use database transactions to prevent race conditions
-// - This ensures codes persist across serverless instances and server restarts
-const pendingVerificationCodes = new Map<string, { userId: string; expiresAt: Date }>()
+/**
+ * ============================================================================
+ * DATABASE-BACKED VERIFICATION CODE STORAGE
+ * ============================================================================
+ *
+ * Verification codes are now stored in the PendingVerificationCode table
+ * to ensure persistence across serverless instances and server restarts.
+ *
+ * This solves the reliability issues with in-memory storage in serverless
+ * environments where each instance has its own memory space.
+ * ============================================================================
+ */
 
-// Clean up expired codes periodically
-setInterval(() => {
-  const now = new Date()
-  for (const [code, data] of pendingVerificationCodes.entries()) {
-    if (data.expiresAt < now) {
-      pendingVerificationCodes.delete(code)
-    }
+/**
+ * Clean up expired verification codes from the database
+ * Called periodically or before operations
+ */
+async function cleanupExpiredCodes(): Promise<void> {
+  try {
+    await prisma.pendingVerificationCode.deleteMany({
+      where: { expiresAt: { lt: new Date() } }
+    })
+  } catch (error) {
+    // Log but don't throw - cleanup is best-effort
+    console.error('Failed to cleanup expired verification codes:', error)
   }
-}, 60000) // Clean every minute
+}
 
 /**
  * Generate a random 6-character verification code
@@ -48,6 +54,9 @@ export async function createUniqueVerificationCode(
   userId?: string,
   maxAttempts: number = 10
 ): Promise<string> {
+  // Clean up expired codes first (best-effort)
+  cleanupExpiredCodes().catch(() => {})
+
   let attempts = 0
 
   while (attempts < maxAttempts) {
@@ -59,14 +68,18 @@ export async function createUniqueVerificationCode(
       select: { id: true },
     })
 
-    // Also check pending codes
-    const existingPending = pendingVerificationCodes.has(code)
+    // Also check pending codes in database
+    const existingPending = await prisma.pendingVerificationCode.findUnique({
+      where: { code },
+    })
 
     if (!existingListing && !existingPending) {
       // Store code with expiration if userId provided
       if (userId) {
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour expiration
-        pendingVerificationCodes.set(code, { userId, expiresAt })
+        await prisma.pendingVerificationCode.create({
+          data: { code, userId, expiresAt }
+        })
       }
       return code
     }
@@ -81,7 +94,9 @@ export async function createUniqueVerificationCode(
   // Store fallback code with expiration if userId provided
   if (userId) {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000)
-    pendingVerificationCodes.set(fallbackCode, { userId, expiresAt })
+    await prisma.pendingVerificationCode.create({
+      data: { code: fallbackCode, userId, expiresAt }
+    })
   }
 
   return fallbackCode
@@ -90,42 +105,73 @@ export async function createUniqueVerificationCode(
 /**
  * Validate and consume a verification code for listing creation
  * Returns true if code is valid and matches the user, false otherwise
+ *
+ * NOTE: This function is synchronous for backward compatibility.
+ * Use validateVerificationCodeAsync for the database-backed version.
+ * @deprecated Use validateVerificationCodeAsync instead
  */
 export function validateVerificationCode(code: string, userId: string): boolean {
-  const pending = pendingVerificationCodes.get(code)
+  // This synchronous version cannot work with database
+  // It's kept for backward compatibility but should be replaced
+  // with validateVerificationCodeAsync in all callers
+  console.warn('validateVerificationCode is deprecated, use validateVerificationCodeAsync')
+  return false
+}
 
-  if (!pending) {
-    // Code not found in pending - might be already used or never generated
+/**
+ * Validate and consume a verification code for listing creation (async database-backed version)
+ * Returns true if code is valid and matches the user, false otherwise
+ */
+export async function validateVerificationCodeAsync(code: string, userId: string): Promise<boolean> {
+  try {
+    const pending = await prisma.pendingVerificationCode.findUnique({
+      where: { code }
+    })
+
+    if (!pending) {
+      // Code not found in pending - might be already used or never generated
+      return false
+    }
+
+    // Check expiration
+    if (pending.expiresAt < new Date()) {
+      // Delete expired code
+      await prisma.pendingVerificationCode.delete({ where: { code } }).catch(() => {})
+      return false
+    }
+
+    // Check user ownership
+    if (pending.userId !== userId) {
+      return false
+    }
+
+    // Valid - remove from pending so it can't be reused
+    await prisma.pendingVerificationCode.delete({ where: { code } })
+    return true
+  } catch (error) {
+    console.error('Error validating verification code:', error)
     return false
   }
-
-  // Check expiration
-  if (pending.expiresAt < new Date()) {
-    pendingVerificationCodes.delete(code)
-    return false
-  }
-
-  // Check user ownership
-  if (pending.userId !== userId) {
-    return false
-  }
-
-  // Valid - remove from pending so it can't be reused
-  pendingVerificationCodes.delete(code)
-  return true
 }
 
 /**
  * Check if a verification code is available (not expired and not used)
  */
-export function isVerificationCodeValid(code: string, userId: string): boolean {
-  const pending = pendingVerificationCodes.get(code)
+export async function isVerificationCodeValid(code: string, userId: string): Promise<boolean> {
+  try {
+    const pending = await prisma.pendingVerificationCode.findUnique({
+      where: { code }
+    })
 
-  if (!pending) {
+    if (!pending) {
+      return false
+    }
+
+    return pending.userId === userId && pending.expiresAt >= new Date()
+  } catch (error) {
+    console.error('Error checking verification code:', error)
     return false
   }
-
-  return pending.userId === userId && pending.expiresAt >= new Date()
 }
 
 /**

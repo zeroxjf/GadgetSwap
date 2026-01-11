@@ -3,8 +3,28 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import crypto from 'crypto'
+import crypto, { timingSafeEqual } from 'crypto'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function constantTimeCompare(a: string, b: string): boolean {
+  try {
+    const bufA = Buffer.from(a, 'utf8')
+    const bufB = Buffer.from(b, 'utf8')
+    // timingSafeEqual requires same length buffers
+    if (bufA.length !== bufB.length) {
+      // Still do a comparison to maintain constant time
+      const padded = Buffer.alloc(bufA.length)
+      timingSafeEqual(bufA, padded)
+      return false
+    }
+    return timingSafeEqual(bufA, bufB)
+  } catch {
+    return false
+  }
+}
 
 /**
  * PUT /api/user/email
@@ -110,7 +130,8 @@ export async function PUT(request: NextRequest) {
     // const verificationUrl = `${process.env.NEXTAUTH_URL}/api/user/email/verify?token=${token}`
     // await sendEmail({ to: newEmail, subject: 'Verify your new email', ... })
 
-    console.log(`[EMAIL CHANGE] Verification token created for user ${session.user.id}, new email: ${newEmail}`)
+    // SECURITY FIX: Log only user ID, not email (PII)
+    console.log(`[EMAIL CHANGE] Verification token created for user ${session.user.id}`)
 
     return NextResponse.json({
       success: true,
@@ -144,14 +165,18 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // SECURITY: Use exact match on the random token part to prevent enumeration
+    // SECURITY FIX: Use constant-time comparison on the random token part to prevent timing attacks
+    // Also returns identical error messages for all failure cases
     const verificationToken = verificationTokens.find(vt => {
       const [storedToken] = vt.token.split(':')
-      return storedToken === token
+      return constantTimeCompare(storedToken, token)
     })
 
+    // SECURITY: Return identical error for all failure cases to prevent enumeration
+    const genericError = 'Invalid or expired verification token'
+
     if (!verificationToken) {
-      return NextResponse.json({ error: 'Invalid or expired verification token' }, { status: 400 })
+      return NextResponse.json({ error: genericError }, { status: 400 })
     }
 
     // Check expiration
@@ -163,8 +188,8 @@ export async function GET(request: NextRequest) {
             token: verificationToken.token,
           },
         },
-      })
-      return NextResponse.json({ error: 'Verification token has expired' }, { status: 400 })
+      }).catch(() => {}) // Ignore delete errors for security
+      return NextResponse.json({ error: genericError }, { status: 400 })
     }
 
     // Extract userId and new email from token
@@ -196,7 +221,8 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    console.log(`[EMAIL CHANGE] Email successfully changed for user ${userId} to ${newEmail}`)
+    // SECURITY FIX: Log only user ID, not email (PII)
+    console.log(`[EMAIL CHANGE] Email successfully changed for user ${userId}`)
 
     return NextResponse.json({
       success: true,
