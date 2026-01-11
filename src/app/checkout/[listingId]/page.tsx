@@ -331,6 +331,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           listingId: listing.id,
           shippingAddress,
+          expectedPrice: listing.price, // Security: verify price hasn't changed
         }),
       })
 

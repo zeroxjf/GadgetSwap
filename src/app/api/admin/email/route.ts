@@ -12,17 +12,13 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
+    // Auth check FIRST - before any DB queries
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-
-    if (user?.role !== 'ADMIN') {
+    // Use role from session (already fetched during auth)
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -204,16 +200,13 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
+    // Auth check FIRST - before any DB queries
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-
-    if (user?.role !== 'ADMIN') {
+    // Use role from session (already fetched during auth)
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

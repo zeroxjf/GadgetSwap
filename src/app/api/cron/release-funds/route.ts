@@ -23,16 +23,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
     }
 
-    // Verify request is from Vercel Cron or has valid Bearer token
+    // Verify request has valid Bearer token
+    // NOTE: x-vercel-cron header can be spoofed, so we ALWAYS require the secret
     const authHeader = request.headers.get('authorization')
-    const vercelCronHeader = request.headers.get('x-vercel-cron')
-
-    // Vercel Cron sets x-vercel-cron header automatically
-    // For manual calls, require Bearer token
-    const isVercelCron = vercelCronHeader === '1'
     const hasValidToken = authHeader === `Bearer ${CRON_SECRET}`
 
-    if (!isVercelCron && !hasValidToken) {
+    if (!hasValidToken) {
+      console.warn('Cron request rejected - invalid or missing authorization')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
