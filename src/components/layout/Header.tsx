@@ -100,18 +100,6 @@ export function Header() {
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
-      {/* Top bar - Free Pro promotion banner */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm py-2">
-        <div className="max-w-7xl mx-auto px-4 flex justify-center items-center gap-2">
-          <span className="font-bold">Free Lifetime Pro Subscription</span>
-          <span className="text-white/70">—</span>
-          <span className="text-purple-100">Limited time for early adopters</span>
-          <Link href="/onboarding" className="ml-2 bg-white text-purple-600 px-3 py-0.5 rounded-full text-xs font-bold hover:bg-purple-100 transition-colors">
-            Claim Now
-          </Link>
-        </div>
-      </div>
-
       {/* Main header */}
       <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4">
