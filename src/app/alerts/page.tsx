@@ -12,7 +12,12 @@ import {
   Smartphone,
   ChevronLeft,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Zap,
+  Filter,
+  Mail,
+  CheckCircle,
+  ArrowRight
 } from 'lucide-react'
 
 interface DeviceAlert {
@@ -40,16 +45,12 @@ export default function AlertsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin?callbackUrl=/alerts')
-    }
-  }, [status, router])
-
-  useEffect(() => {
     if (session?.user) {
       fetchAlerts()
+    } else if (status === 'unauthenticated') {
+      setLoading(false)
     }
-  }, [session])
+  }, [session, status])
 
   const fetchAlerts = async () => {
     try {
@@ -96,12 +97,124 @@ export default function AlertsPage() {
     )
   }
 
+  // Feature showcase for unauthenticated users
   if (!session?.user) {
-    return null
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white py-16">
+          <div className="max-w-4xl mx-auto px-4 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-6">
+              <Bell className="w-8 h-8" />
+            </div>
+            <h1 className="text-4xl font-bold mb-4">Device Alerts</h1>
+            <p className="text-xl text-primary-100 max-w-2xl mx-auto">
+              Stop refreshing. Get notified instantly when a device matching your exact specs is listed.
+            </p>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="max-w-4xl mx-auto px-4 py-16">
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-4">
+                <Filter className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Precise Filters</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Set alerts for specific iOS versions, device models, storage sizes, and price ranges.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl mb-4">
+                <Zap className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Instant Notifications</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Get an email the moment a matching device is listed. Be first to message the seller.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl mb-4">
+                <Smartphone className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Jailbreak Focused</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Filter by jailbreak status. Find devices on exploitable firmware versions.
+              </p>
+            </div>
+          </div>
+
+          {/* Example Alert Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-12">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Example Alert</h3>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/50">
+                  <Smartphone className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900 dark:text-white">iPhone 14 Pro - Jailbreakable</h4>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded text-xs font-medium text-gray-700 dark:text-gray-300">iPhone 14 Pro</span>
+                    <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/50 rounded text-xs font-medium text-purple-700 dark:text-purple-300">iOS 16.0 - 16.6.1</span>
+                    <span className="px-2 py-1 bg-green-100 dark:bg-green-900/50 rounded text-xs font-medium text-green-700 dark:text-green-300">Jailbreakable</span>
+                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/50 rounded text-xs font-medium text-blue-700 dark:text-blue-300">$400 - $800</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* How It Works */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-8">How It Works</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white">Create an Alert</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Choose device type, iOS version, and other criteria.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white">We Monitor Listings</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Every new listing is checked against your alerts.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white">Get Notified</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Instant email when a match is found.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <Link
+              href="/auth/signup?callbackUrl=/alerts/new"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-accent-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-primary-700 hover:to-accent-700 transition-all shadow-lg"
+            >
+              Create Your First Alert
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-4">
+              Free accounts get 1 alert. <Link href="/subscription" className="text-primary-600 hover:underline">Upgrade</Link> for more.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  const maxAlerts = session.user.subscriptionTier === 'PRO' ? Infinity :
-                    session.user.subscriptionTier === 'PLUS' ? 3 : 1
+  const maxAlerts = (session.user as any).subscriptionTier === 'PRO' ? Infinity :
+                    (session.user as any).subscriptionTier === 'PLUS' ? 3 : 1
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
