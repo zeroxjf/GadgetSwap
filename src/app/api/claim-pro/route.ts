@@ -3,9 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// Early adopter lifetime Pro offer
-// This can be disabled by setting EARLY_ADOPTER_PRO_ENABLED=false in env
-const EARLY_ADOPTER_ENABLED = process.env.EARLY_ADOPTER_PRO_ENABLED !== 'false'
+// Early adopter lifetime Pro offer - ENDED
+// Offer ran during launch period and has now concluded
+const EARLY_ADOPTER_ENABLED = false
 
 export async function POST(request: NextRequest) {
   try {
