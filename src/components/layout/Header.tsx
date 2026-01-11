@@ -74,7 +74,7 @@ export function Header() {
           <span className="font-bold">Free Lifetime Pro Subscription</span>
           <span className="text-white/70">—</span>
           <span className="text-purple-100">Limited time for early adopters</span>
-          <Link href="/subscription" className="ml-2 bg-white text-purple-600 px-3 py-0.5 rounded-full text-xs font-bold hover:bg-purple-100 transition-colors">
+          <Link href="/onboarding" className="ml-2 bg-white text-purple-600 px-3 py-0.5 rounded-full text-xs font-bold hover:bg-purple-100 transition-colors">
             Claim Now
           </Link>
         </div>
