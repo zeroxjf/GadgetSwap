@@ -75,6 +75,43 @@ export async function requireAdmin(): Promise<void> {
 }
 
 /**
+ * Check if the current user is banned
+ * Returns true if banned, false if not banned or not authenticated
+ */
+export async function isCurrentUserBanned(): Promise<boolean> {
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.id) {
+    return false
+  }
+
+  // Check session first (faster, usually up-to-date)
+  if (session.user.banned) {
+    return true
+  }
+
+  // Double-check database for fresh data
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { banned: true },
+  })
+
+  return user?.banned ?? false
+}
+
+/**
+ * Require user is not banned - throws if banned
+ * Use this at the start of protected API routes
+ */
+export async function requireNotBanned(): Promise<void> {
+  const isBanned = await isCurrentUserBanned()
+
+  if (isBanned) {
+    throw new Error('Your account has been suspended')
+  }
+}
+
+/**
  * Require moderator or admin access - throws if neither
  */
 export async function requireModeratorOrAdmin(): Promise<void> {
