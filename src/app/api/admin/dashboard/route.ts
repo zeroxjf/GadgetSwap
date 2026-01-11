@@ -48,11 +48,11 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where: { createdAt: { gte: startOfDay } } }),
       prisma.user.count({ where: { createdAt: { gte: startOfWeek } } }),
 
-      // Listings
+      // Listings (exclude drafts from pending review counts)
       prisma.listing.count(),
       prisma.listing.count({ where: { status: 'ACTIVE', reviewStatus: 'APPROVED' } }),
-      prisma.listing.count({ where: { reviewStatus: 'PENDING_REVIEW' } }),
-      prisma.listing.count({ where: { flaggedForReview: true, reviewStatus: 'PENDING_REVIEW' } }),
+      prisma.listing.count({ where: { reviewStatus: 'PENDING_REVIEW', status: { not: 'DRAFT' } } }),
+      prisma.listing.count({ where: { flaggedForReview: true, reviewStatus: 'PENDING_REVIEW', status: { not: 'DRAFT' } } }),
 
       // Transactions
       prisma.transaction.count(),
