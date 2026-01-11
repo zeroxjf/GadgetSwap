@@ -395,11 +395,33 @@ export async function GET(request: NextRequest) {
     // SECURITY: Limit search query length to prevent ReDoS attacks
     if (q) {
       const sanitizedQuery = q.slice(0, 100)
-      where.OR = [
+
+      // Smart iOS version detection
+      // Matches: "iOS 17.3", "ios17.3", "17.3", "iOS 17", "17.3.1", etc.
+      const iosVersionMatch = sanitizedQuery.match(/(?:ios\s*)?(\d{1,2}(?:\.\d{1,2}){0,2})/i)
+      const extractedVersion = iosVersionMatch ? iosVersionMatch[1] : null
+
+      // Build search conditions
+      const searchConditions: any[] = [
         { title: { contains: sanitizedQuery, mode: 'insensitive' } },
         { description: { contains: sanitizedQuery, mode: 'insensitive' } },
         { deviceModel: { contains: sanitizedQuery, mode: 'insensitive' } },
       ]
+
+      // If we detected an iOS version pattern, also search osVersion field
+      if (extractedVersion) {
+        searchConditions.push(
+          { osVersion: { startsWith: extractedVersion, mode: 'insensitive' } }
+        )
+      }
+
+      // Also do a direct osVersion contains search for the raw query
+      // This handles searches like "17.3" directly
+      searchConditions.push(
+        { osVersion: { contains: sanitizedQuery.replace(/ios\s*/i, '').trim(), mode: 'insensitive' } }
+      )
+
+      where.OR = searchConditions
     }
 
     if (featured) {
