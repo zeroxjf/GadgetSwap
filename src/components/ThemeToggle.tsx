@@ -3,22 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Sun, Moon } from 'lucide-react'
 
-function getStoredTheme(): string | null {
-  try {
-    return localStorage.getItem('theme')
-  } catch {
-    return null
-  }
-}
-
-function setStoredTheme(theme: string) {
-  try {
-    localStorage.setItem('theme', theme)
-  } catch {
-    // localStorage blocked - theme will work for session only
-  }
-}
-
 export function ThemeToggle() {
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -33,7 +17,7 @@ export function ThemeToggle() {
     const newIsDark = !currentlyDark
 
     document.documentElement.className = newIsDark ? 'dark' : ''
-    setStoredTheme(newIsDark ? 'dark' : 'light')
+    localStorage.setItem('theme', newIsDark ? 'dark' : 'light')
     setIsDark(newIsDark)
   }, [])
 
