@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { isModeratorOrAdmin } from '@/lib/admin'
 import { createNotification } from '@/lib/notifications'
+import { matchAndNotifyAlerts } from '@/lib/alert-matcher'
 
 type ReviewAction = 'APPROVED' | 'REJECTED' | 'NEEDS_INFO'
 
@@ -217,6 +218,13 @@ export async function POST(
       link: `/listings/${id}`,
     })
 
+    // If approved, check for matching alerts and notify users
+    let alertResults = null
+    if (action === 'APPROVED') {
+      alertResults = await matchAndNotifyAlerts(id)
+      console.log(`Alert matching for listing ${id}:`, alertResults)
+    }
+
     return NextResponse.json({
       success: true,
       action,
@@ -225,6 +233,7 @@ export async function POST(
         ...updatedListing,
         price: Number(updatedListing.price),
       },
+      alertResults,
     })
   } catch (error) {
     console.error('Admin review action error:', error)
