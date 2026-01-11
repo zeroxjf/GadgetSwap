@@ -2,6 +2,33 @@ import { prisma } from '@/lib/prisma'
 import { sendEmail, wrapEmailTemplate } from '@/lib/email'
 import { createNotification } from '@/lib/notifications'
 
+/**
+ * Parse a version string into numeric components
+ * "16.1.2" -> [16, 1, 2]
+ * "16" -> [16]
+ */
+function parseVersion(version: string): number[] {
+  return version.split('.').map(part => parseInt(part, 10) || 0)
+}
+
+/**
+ * Compare two version strings numerically
+ * Returns: -1 if a < b, 0 if a == b, 1 if a > b
+ */
+function compareVersions(a: string, b: string): number {
+  const partsA = parseVersion(a)
+  const partsB = parseVersion(b)
+  const maxLength = Math.max(partsA.length, partsB.length)
+
+  for (let i = 0; i < maxLength; i++) {
+    const numA = partsA[i] || 0
+    const numB = partsB[i] || 0
+    if (numA < numB) return -1
+    if (numA > numB) return 1
+  }
+  return 0
+}
+
 interface ListingForMatching {
   id: string
   title: string
@@ -68,10 +95,12 @@ function doesListingMatchAlert(
       }
     }
 
-    // Legacy range matching (if both min and max are set)
+    // Range matching (if both min and max are set) - use numeric comparison
     if (alert.osVersionMin && alert.osVersionMax) {
-      // Simple string comparison for version ranges
-      if (listing.osVersion < alert.osVersionMin || listing.osVersion > alert.osVersionMax) {
+      const minCompare = compareVersions(listing.osVersion, alert.osVersionMin)
+      const maxCompare = compareVersions(listing.osVersion, alert.osVersionMax)
+      // Listing version must be >= min and <= max
+      if (minCompare < 0 || maxCompare > 0) {
         return false
       }
     }
@@ -131,7 +160,7 @@ function generateAlertEmailHtml(
   alertName: string
 ): string {
   const imageUrl = listing.images[0]?.url || ''
-  const listingUrl = `https://gadgetswap.com/listings/${listing.id}`
+  const listingUrl = `https://gadgetswap.tech/listings/${listing.id}`
 
   const content = `
     <h2 style="margin:0 0 16px;color:#111827;font-size:20px;">
@@ -187,7 +216,7 @@ function generateAlertEmailHtml(
     <p style="margin:24px 0 0;color:#9ca3af;font-size:12px;text-align:center;">
       You're receiving this because you set up an alert on GadgetSwap.
       <br />
-      <a href="https://gadgetswap.com/alerts" style="color:#6b7280;">Manage your alerts</a>
+      <a href="https://gadgetswap.tech/alerts" style="color:#6b7280;">Manage your alerts</a>
     </p>
   `
 
