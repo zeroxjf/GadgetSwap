@@ -153,15 +153,15 @@ export default async function HomePage() {
       <WelcomeBanner />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white pt-8 pb-16 md:pt-12 md:pb-24">
+      <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white pt-6 pb-12 md:pt-12 md:pb-24">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                The Marketplace for<br />
-                <span className="text-primary-200">iOS Enthusiasts</span>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6">
+                The Marketplace for{' '}
+                <span className="text-primary-200 block sm:inline">iOS Enthusiasts</span>
               </h1>
-              <p className="text-lg text-primary-100 mb-8">
+              <p className="text-base sm:text-lg text-primary-100 mb-6 md:mb-8">
                 Buy and sell Apple devices with confidence. Search by iOS version,
                 find jailbreakable devices, and <span className="text-white font-medium">get alerts when your exact specs are listed</span> — all with
                 the lowest fees in the industry.
@@ -195,7 +195,7 @@ export default async function HomePage() {
             </div>
 
             {/* Quick iOS Search */}
-            <div data-tour="ios-search" className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div data-tour="ios-search" className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20">
               <h2 className="text-xl font-semibold mb-4">Find by iOS/iPadOS Version</h2>
               <JailbreakSearch />
               <div data-tour="alerts" className="mt-4 pt-4 border-t border-white/20">
@@ -216,14 +216,14 @@ export default async function HomePage() {
       </section>
 
       {/* Categories */}
-      <section className="py-12 bg-white dark:bg-gray-900">
+      <section className="py-8 md:py-12 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4">
-          <div data-tour="categories" className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div data-tour="categories" className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {categories.map((category) => (
               <Link
                 key={category.name}
                 href={category.href}
-                className="card p-6 hover:shadow-md transition-shadow group"
+                className="card p-4 sm:p-6 hover:shadow-md transition-shadow group"
               >
                 <category.icon className="w-8 h-8 text-primary-600 mb-3 group-hover:scale-110 transition-transform" />
                 <h3 className="font-semibold text-gray-900 dark:text-white">{category.name}</h3>
@@ -235,19 +235,19 @@ export default async function HomePage() {
       </section>
 
       {/* Jailbreak-Focused Section */}
-      <section className="py-12 bg-gradient-to-r from-accent-600 to-purple-600 text-white">
+      <section className="py-10 md:py-12 bg-gradient-to-r from-accent-600 to-purple-600 text-white">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-4">Built for the Jailbreak Community</h2>
-            <p className="text-lg text-purple-100 max-w-2xl mx-auto">
+          <div className="text-center mb-6 md:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3 md:mb-4">Built for the Jailbreak Community</h2>
+            <p className="text-base sm:text-lg text-purple-100 max-w-2xl mx-auto">
               Unlike other marketplaces, we understand what jailbreakers need.
               Search by iOS version, find checkm8-compatible devices, and know
               exactly what you're getting.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+          <div className="grid md:grid-cols-3 gap-4 sm:gap-6 mb-6 md:mb-8">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20">
               <h3 className="font-semibold text-lg mb-2">iOS Version Search</h3>
               <p className="text-purple-100 text-sm mb-4">
                 Find devices on specific iOS versions. Perfect for targeting
@@ -258,7 +258,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20">
               <h3 className="font-semibold text-lg mb-2">Jailbreak Status</h3>
               <p className="text-purple-100 text-sm mb-4">
                 Every listing shows jailbreak status, tool used, and bootrom
@@ -269,7 +269,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20">
               <h3 className="font-semibold text-lg mb-2">Compatibility Checker</h3>
               <p className="text-purple-100 text-sm mb-4">
                 Our database knows which iOS versions work with which jailbreak
@@ -282,9 +282,9 @@ export default async function HomePage() {
           </div>
 
           {/* Fair Pricing for Jailbreakable Devices */}
-          <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 border border-white/30 max-w-3xl mx-auto">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-green-400 rounded-xl flex items-center justify-center flex-shrink-0">
+          <div className="bg-white/15 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/30 max-w-3xl mx-auto">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-400 rounded-xl flex items-center justify-center flex-shrink-0">
                 <TrendingUp className="w-6 h-6 text-green-900" />
               </div>
               <div>
@@ -304,67 +304,67 @@ export default async function HomePage() {
       </section>
 
       {/* Fee Comparison - Major Section */}
-      <section data-tour="fees" className="py-16 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+      <section data-tour="fees" className="py-10 md:py-16 bg-gradient-to-b from-gray-900 to-gray-800 text-white">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <span className="inline-block bg-green-500 text-white text-sm font-bold px-4 py-1 rounded-full mb-4">
+          <div className="text-center mb-8 md:mb-12">
+            <span className="inline-block bg-green-500 text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1 rounded-full mb-4">
               LOWER FEES THAN SWAPPA & EBAY
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
               Keep More Money From Every Sale
             </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto">
               We charge just 1% platform fee + ~3% Stripe = ~4% total.
               That's 33% less than Swappa and 70% less than eBay.
             </p>
           </div>
 
           {/* Main competitor comparison - Swappa & eBay focus */}
-          <div className="max-w-4xl mx-auto mb-12">
-            <div className="grid md:grid-cols-3 gap-6">
+          <div className="max-w-4xl mx-auto mb-8 md:mb-12">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
               {/* eBay */}
-              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <div className="bg-gray-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 border border-gray-700">
                 <div className="text-center">
-                  <h3 className="text-xl font-bold text-red-400 mb-2">eBay</h3>
-                  <div className="text-5xl font-bold text-red-400 mb-2">13.25%</div>
-                  <p className="text-sm text-gray-400 mb-1">Final value fee</p>
-                  <p className="text-sm text-gray-500 mb-4">(includes payment processing)</p>
-                  <div className="bg-red-900/30 rounded-lg p-3 text-sm">
+                  <h3 className="text-sm sm:text-lg md:text-xl font-bold text-red-400 mb-1 sm:mb-2">eBay</h3>
+                  <div className="text-2xl sm:text-4xl md:text-5xl font-bold text-red-400 mb-1 sm:mb-2">13.25%</div>
+                  <p className="text-xs sm:text-sm text-gray-400 mb-0.5 sm:mb-1">Final value fee</p>
+                  <p className="hidden sm:block text-sm text-gray-500 mb-2 sm:mb-4">(includes payment processing)</p>
+                  <div className="hidden sm:block bg-red-900/30 rounded-lg p-2 sm:p-3 text-sm">
                     <p className="text-gray-300">On $800 sale:</p>
-                    <p className="text-red-400 font-bold text-lg">-$106 in fees</p>
+                    <p className="text-red-400 font-bold text-base sm:text-lg">-$106 in fees</p>
                     <p className="text-gray-500">You keep: $694</p>
                   </div>
                 </div>
               </div>
 
               {/* Swappa */}
-              <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <div className="bg-gray-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 border border-gray-700">
                 <div className="text-center">
-                  <h3 className="text-xl font-bold text-gray-300 mb-2">Swappa</h3>
-                  <div className="text-5xl font-bold text-gray-300 mb-2">~6%</div>
-                  <p className="text-sm text-gray-400 mb-1">3% platform fee</p>
-                  <p className="text-sm text-gray-500 mb-4">+ ~3% Stripe</p>
-                  <div className="bg-gray-700/50 rounded-lg p-3 text-sm">
+                  <h3 className="text-sm sm:text-lg md:text-xl font-bold text-gray-300 mb-1 sm:mb-2">Swappa</h3>
+                  <div className="text-2xl sm:text-4xl md:text-5xl font-bold text-gray-300 mb-1 sm:mb-2">~6%</div>
+                  <p className="text-xs sm:text-sm text-gray-400 mb-0.5 sm:mb-1">3% platform fee</p>
+                  <p className="hidden sm:block text-sm text-gray-500 mb-2 sm:mb-4">+ ~3% Stripe</p>
+                  <div className="hidden sm:block bg-gray-700/50 rounded-lg p-2 sm:p-3 text-sm">
                     <p className="text-gray-300">On $800 sale:</p>
-                    <p className="text-gray-300 font-bold text-lg">-$48 in fees</p>
+                    <p className="text-gray-300 font-bold text-base sm:text-lg">-$48 in fees</p>
                     <p className="text-gray-500">You keep: $752</p>
                   </div>
                 </div>
               </div>
 
               {/* GadgetSwap */}
-              <div className="bg-gradient-to-b from-green-900/50 to-green-900/30 rounded-2xl p-6 border-2 border-green-500 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  LOWEST FEES
+              <div className="bg-gradient-to-b from-green-900/50 to-green-900/30 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 border-2 border-green-500 relative">
+                <div className="absolute -top-2.5 sm:-top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
+                  LOWEST
                 </div>
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-green-400 mb-2">GadgetSwap</h3>
-                  <div className="text-5xl font-bold text-green-400 mb-2">~4%</div>
-                  <p className="text-sm text-green-300 mb-1">1% platform fee</p>
-                  <p className="text-sm text-gray-400 mb-4">+ ~3% Stripe</p>
-                  <div className="bg-green-900/50 rounded-lg p-3 text-sm">
+                <div className="text-center pt-1 sm:pt-0">
+                  <h3 className="text-sm sm:text-lg md:text-xl font-bold text-green-400 mb-1 sm:mb-2">GadgetSwap</h3>
+                  <div className="text-2xl sm:text-4xl md:text-5xl font-bold text-green-400 mb-1 sm:mb-2">~4%</div>
+                  <p className="text-xs sm:text-sm text-green-300 mb-0.5 sm:mb-1">1% platform fee</p>
+                  <p className="hidden sm:block text-sm text-gray-400 mb-2 sm:mb-4">+ ~3% Stripe</p>
+                  <div className="hidden sm:block bg-green-900/50 rounded-lg p-2 sm:p-3 text-sm">
                     <p className="text-gray-300">On $800 sale:</p>
-                    <p className="text-green-400 font-bold text-lg">-$32 in fees</p>
+                    <p className="text-green-400 font-bold text-base sm:text-lg">-$32 in fees</p>
                     <p className="text-white font-medium">You keep: $768</p>
                   </div>
                 </div>
@@ -374,49 +374,49 @@ export default async function HomePage() {
 
           {/* Savings highlight */}
           <div className="max-w-3xl mx-auto">
-            <div className="bg-green-900/30 rounded-2xl p-6 border border-green-700">
-              <div className="grid md:grid-cols-2 gap-6 text-center">
+            <div className="bg-green-900/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-green-700">
+              <div className="grid grid-cols-2 gap-4 sm:gap-6 text-center">
                 <div>
-                  <p className="text-gray-400 mb-1">Save vs Swappa</p>
-                  <p className="text-3xl font-bold text-green-400">$16</p>
-                  <p className="text-sm text-gray-500">per $800 sale</p>
+                  <p className="text-gray-400 text-sm sm:text-base mb-1">Save vs Swappa</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-green-400">$16</p>
+                  <p className="text-xs sm:text-sm text-gray-500">per $800 sale</p>
                 </div>
                 <div>
-                  <p className="text-gray-400 mb-1">Save vs eBay</p>
-                  <p className="text-3xl font-bold text-green-400">$74</p>
-                  <p className="text-sm text-gray-500">per $800 sale</p>
+                  <p className="text-gray-400 text-sm sm:text-base mb-1">Save vs eBay</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-green-400">$74</p>
+                  <p className="text-xs sm:text-sm text-gray-500">per $800 sale</p>
                 </div>
               </div>
-              <p className="text-center text-gray-400 mt-4 text-sm">
+              <p className="text-center text-gray-400 mt-3 sm:mt-4 text-xs sm:text-sm">
                 Sell 10 devices a month? That's <span className="text-green-400 font-bold">$160+ more</span> in your pocket vs Swappa.
               </p>
             </div>
           </div>
 
-          {/* Visual bar comparison */}
-          <div className="max-w-3xl mx-auto mt-12">
-            <h3 className="text-center text-lg font-semibold mb-6 text-gray-300">Total Seller Fees Comparison</h3>
-            <div className="space-y-3">
+          {/* Visual bar comparison - hidden on mobile, shown on tablet+ */}
+          <div className="hidden sm:block max-w-3xl mx-auto mt-8 md:mt-12">
+            <h3 className="text-center text-base sm:text-lg font-semibold mb-4 sm:mb-6 text-gray-300">Total Seller Fees Comparison</h3>
+            <div className="space-y-2 sm:space-y-3">
               {competitorFees.map((competitor) => (
-                <div key={competitor.name} className="flex items-center gap-4">
-                  <div className={`w-28 text-right text-sm ${competitor.highlight ? 'text-white font-bold' : 'text-gray-400'}`}>
+                <div key={competitor.name} className="flex items-center gap-2 sm:gap-4">
+                  <div className={`w-20 sm:w-28 text-right text-xs sm:text-sm ${competitor.highlight ? 'text-white font-bold' : 'text-gray-400'}`}>
                     {competitor.name}
                   </div>
-                  <div className="flex-1 bg-gray-700 rounded-full h-8 overflow-hidden">
+                  <div className="flex-1 bg-gray-700 rounded-full h-6 sm:h-8 overflow-hidden">
                     <div
-                      className={`h-full ${competitor.color} flex items-center justify-end pr-3 transition-all`}
+                      className={`h-full ${competitor.color} flex items-center justify-end pr-2 sm:pr-3 transition-all`}
                       style={{ width: `${(competitor.fee / 15) * 100}%` }}
                     >
-                      <span className="font-bold text-sm text-white">
+                      <span className="font-bold text-xs sm:text-sm text-white">
                         {competitor.fee}%
                       </span>
                     </div>
                   </div>
                   {competitor.highlight && (
-                    <span className="text-green-400 font-bold text-xs w-20">BEST</span>
+                    <span className="text-green-400 font-bold text-xs w-12 sm:w-20">BEST</span>
                   )}
                   {!competitor.highlight && (
-                    <span className="w-20"></span>
+                    <span className="w-12 sm:w-20"></span>
                   )}
                 </div>
               ))}
@@ -424,12 +424,12 @@ export default async function HomePage() {
           </div>
 
           {/* Pro upsell */}
-          <div className="text-center mt-12">
-            <div className="inline-block bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <p className="text-gray-300 mb-2">Power sellers: Go Pro for</p>
-              <p className="text-4xl font-bold text-green-400 mb-2">0% fees</p>
-              <p className="text-gray-400 text-sm mb-4">Unlimited listings, premium features</p>
-              <Link href="/subscription" className="btn bg-green-500 text-white hover:bg-green-600 px-8 py-3 font-semibold">
+          <div className="text-center mt-8 sm:mt-12">
+            <div className="inline-block bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-700">
+              <p className="text-gray-300 text-sm sm:text-base mb-1 sm:mb-2">Power sellers: Go Pro for</p>
+              <p className="text-3xl sm:text-4xl font-bold text-green-400 mb-1 sm:mb-2">0% fees</p>
+              <p className="text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4">Unlimited listings, premium features</p>
+              <Link href="/subscription" className="btn bg-green-500 text-white hover:bg-green-600 px-6 sm:px-8 py-2.5 sm:py-3 font-semibold text-sm sm:text-base">
                 See Pro Plans →
               </Link>
             </div>
@@ -438,27 +438,27 @@ export default async function HomePage() {
       </section>
 
       {/* Trust & Safety Section - Trade With Confidence */}
-      <section className="py-16 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-y border-green-100 dark:border-green-900">
+      <section className="py-10 md:py-16 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-y border-green-100 dark:border-green-900">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-4 py-2 rounded-full text-sm font-semibold mb-4">
-              <Shield className="w-4 h-4" />
+          <div className="text-center mb-8 md:mb-12">
+            <div className="inline-flex items-center gap-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold mb-3 sm:mb-4">
+              <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Your Safety is Our Priority
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4">
               Trade With Confidence
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               GadgetSwap is built with multiple layers of protection to ensure every transaction is safe and secure.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-5xl mx-auto">
             {/* IMEI Verification Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-green-200 dark:border-green-800 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 dark:bg-green-900/50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
+            <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 shadow-lg border border-green-200 dark:border-green-800 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-green-100 dark:bg-green-900/50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
               <div className="relative">
-                <div className="w-14 h-14 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center mb-6">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center mb-4 sm:mb-6">
                   <Fingerprint className="w-7 h-7 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex items-center gap-2 mb-2">
@@ -493,10 +493,10 @@ export default async function HomePage() {
             </div>
 
             {/* Escrow Protection Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-green-200 dark:border-green-800 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 dark:bg-green-900/50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
+            <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 shadow-lg border border-green-200 dark:border-green-800 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-green-100 dark:bg-green-900/50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
               <div className="relative">
-                <div className="w-14 h-14 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center mb-6">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center mb-4 sm:mb-6">
                   <Lock className="w-7 h-7 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex items-center gap-2 mb-2">
@@ -532,7 +532,7 @@ export default async function HomePage() {
           </div>
 
           {/* Trust indicators */}
-          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12 mt-12 pt-8 border-t border-green-200 dark:border-green-800">
+          <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 md:gap-12 mt-8 md:mt-12 pt-6 md:pt-8 border-t border-green-200 dark:border-green-800">
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
               <Shield className="w-5 h-5 text-green-500" />
               <span className="font-medium">Stripe Secure Payments</span>
@@ -550,11 +550,11 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Listings */}
-      <section data-tour="listings" className="py-12 bg-gray-50 dark:bg-gray-900">
+      <section data-tour="listings" className="py-8 md:py-12 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center mb-6 md:mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Featured Listings</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Featured Listings</h2>
               <p className="text-gray-600 dark:text-gray-400">Hand-picked deals from verified sellers</p>
             </div>
             <Link
@@ -583,18 +583,18 @@ export default async function HomePage() {
       </section>
 
       {/* Device Alerts Section */}
-      <section className="py-16 bg-white dark:bg-gray-800">
+      <section className="py-10 md:py-16 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 px-3 py-1 rounded-full text-sm font-medium mb-4">
-                <Bell className="w-4 h-4" />
+              <div className="inline-flex items-center gap-2 bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 px-3 py-1 rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4">
+                <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Never Miss a Deal
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
                 Device Alerts for Exact Specs
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 text-sm sm:text-base">
                 Looking for an iPhone 14 Pro on iOS 16.1.2? Set up an alert and get
                 notified instantly when someone lists exactly what you're looking for.
                 No more constantly refreshing the search page.
@@ -630,7 +630,7 @@ export default async function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
               <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Example Alert</div>
               <div className="space-y-4">
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
@@ -664,24 +664,24 @@ export default async function HomePage() {
       </section>
 
       {/* Why GadgetSwap */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-900">
+      <section className="py-10 md:py-16 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Why GadgetSwap?</h2>
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">Why GadgetSwap?</h2>
+            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">
               We built the marketplace we wished existed. Lower fees, better
               search, and features designed for Apple enthusiasts.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {features.map((feature) => (
               <div key={feature.title} className="text-center">
-                <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-                  <feature.icon className="w-6 h-6 text-primary-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-sm">
+                  <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1 sm:mb-2 text-sm sm:text-base">{feature.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -689,17 +689,17 @@ export default async function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-gray-900 text-white">
+      <section className="py-10 md:py-16 bg-gray-900 text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Start Trading?</h2>
-          <p className="text-gray-400 mb-8 text-lg">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Ready to Start Trading?</h2>
+          <p className="text-gray-400 mb-6 sm:mb-8 text-base sm:text-lg">
             Join thousands of Apple enthusiasts buying and selling on GadgetSwap.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth/signup" className="btn-primary px-8 py-3 text-lg">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <Link href="/auth/signup" className="btn-primary px-6 sm:px-8 py-2.5 sm:py-3 text-base sm:text-lg">
               Create Free Account
             </Link>
-            <Link href="/search" className="btn-outline border-gray-600 text-white hover:bg-gray-800 px-8 py-3 text-lg">
+            <Link href="/search" className="btn-outline border-gray-600 text-white hover:bg-gray-800 px-6 sm:px-8 py-2.5 sm:py-3 text-base sm:text-lg">
               Browse Listings
             </Link>
           </div>

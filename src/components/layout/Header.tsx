@@ -101,14 +101,14 @@ export function Header() {
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
       {/* Main header */}
-      <div className="max-w-7xl mx-auto px-4 py-3">
-        <div className="flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
             <img
               src="/logo.png"
               alt="GadgetSwap"
-              className="w-10 h-10 rounded-xl"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl"
             />
             <span className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
               GadgetSwap
@@ -118,13 +118,13 @@ export function Header() {
           {/* Search bar */}
           <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
+              <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
-                placeholder="Search devices, iOS versions, models..."
+                placeholder="Search devices..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
           </form>
@@ -333,19 +333,19 @@ export function Header() {
 
             {/* Auth buttons */}
             {isLoggedIn ? (
-              <div className="space-y-2">
-                <Link href="/listings/new" className="btn-primary w-full justify-center">
+              <div className="space-y-3">
+                <Link href="/listings/new" className="btn-primary w-full justify-center text-sm py-2.5">
                   <Plus className="w-4 h-4 mr-2" />
                   Sell a Device
                 </Link>
-                <div className="grid grid-cols-4 gap-2">
-                  <Link href="/messages" className="btn-secondary justify-center p-2 relative">
+                <div className="flex justify-center gap-3">
+                  <Link href="/messages" className="btn-secondary justify-center p-2.5 relative">
                     <MessageSquare className="w-5 h-5" />
                     {unreadMessageCount > 0 && (
                       <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                     )}
                   </Link>
-                  <Link href="/notifications" className="btn-secondary justify-center p-2 relative">
+                  <Link href="/notifications" className="btn-secondary justify-center p-2.5 relative">
                     <Bell className={`w-5 h-5 ${notificationPulse ? 'animate-bounce' : ''}`} />
                     {unreadNotificationCount > 0 && (
                       <>
@@ -354,20 +354,20 @@ export function Header() {
                       </>
                     )}
                   </Link>
-                  <Link href="/watchlist" className="btn-secondary justify-center p-2">
+                  <Link href="/watchlist" className="btn-secondary justify-center p-2.5">
                     <Heart className="w-5 h-5" />
                   </Link>
-                  <Link href="/account" className="btn-secondary justify-center p-2">
+                  <Link href="/account" className="btn-secondary justify-center p-2.5">
                     <User className="w-5 h-5" />
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <Link href="/auth/signin" className="btn-secondary flex-1 justify-center">
+              <div className="flex gap-3">
+                <Link href="/auth/signin" className="btn-secondary flex-1 justify-center text-sm py-2.5">
                   Sign In
                 </Link>
-                <Link href="/auth/signup" className="btn-primary flex-1 justify-center">
+                <Link href="/auth/signup" className="btn-primary flex-1 justify-center text-sm py-2.5">
                   Sign Up
                 </Link>
               </div>
