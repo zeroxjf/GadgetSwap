@@ -58,27 +58,39 @@ export async function POST(request: NextRequest) {
 
         if (session.mode === 'subscription' && session.subscription) {
           const userId = session.metadata?.userId
-          const tier = session.metadata?.tier as 'PLUS' | 'PRO'
 
-          if (userId && tier) {
-            // Retrieve the subscription to get the current period end
+          if (userId) {
+            // Retrieve the subscription to get the current period end and price
             const subscription = await stripe.subscriptions.retrieve(
               session.subscription as string
             ) as Stripe.Subscription
 
             const periodEnd = (subscription as any).current_period_end
+            const priceId = subscription.items.data[0]?.price?.id
 
-            await prisma.user.update({
-              where: { id: userId },
-              data: {
-                subscriptionTier: tier,
-                subscriptionId: subscription.id,
-                subscriptionEnd: periodEnd ? new Date(periodEnd * 1000) : null,
-                stripeCustomerId: session.customer as string,
-              },
-            })
+            // Get tier from metadata, fallback to detecting from priceId
+            let tier = session.metadata?.tier as 'PLUS' | 'PRO' | undefined
+            if (!tier) {
+              tier = getTierFromPriceId(priceId) as 'PLUS' | 'PRO'
+            }
 
-            console.log(`User ${userId} subscribed to ${tier}`)
+            // Only update if we have a valid tier (not FREE)
+            if (tier === 'PLUS' || tier === 'PRO') {
+              await prisma.user.update({
+                where: { id: userId },
+                data: {
+                  subscriptionTier: tier,
+                  subscriptionId: subscription.id,
+                  subscriptionEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+                  stripeCustomerId: session.customer as string,
+                  subscriptionStatus: 'active',
+                },
+              })
+
+              console.log(`User ${userId} subscribed to ${tier}`)
+            } else {
+              console.error(`Could not determine tier for user ${userId}, priceId: ${priceId}`)
+            }
           }
         }
         break

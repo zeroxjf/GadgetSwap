@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
     const checkoutSession = await createSubscriptionCheckout(
       priceId,
       session.user.id,
+      tier as 'PLUS' | 'PRO',
       customerEmail
     )
 
