@@ -83,9 +83,13 @@ export async function POST(
     }
 
     // If not already disputed, open a dispute first
+    // SECURITY: Use updateMany with status condition to prevent race conditions
     if (transaction.status !== 'DISPUTED') {
-      await prisma.transaction.update({
-        where: { id },
+      const updateResult = await prisma.transaction.updateMany({
+        where: {
+          id,
+          status: transaction.status, // Only update if status hasn't changed
+        },
         data: {
           status: 'DISPUTED',
           disputeStatus: 'OPEN',
@@ -93,6 +97,12 @@ export async function POST(
           escrowReleaseAt: null,
         },
       })
+      if (updateResult.count === 0) {
+        return NextResponse.json(
+          { error: 'Transaction state has changed. Please refresh and try again.' },
+          { status: 409 }
+        )
+      }
     }
 
     // For automatic refund (if funds haven't been released yet)
@@ -102,8 +112,11 @@ export async function POST(
         const refundAmount = amount || Number(transaction.totalAmount)
 
         // SECURITY: Validate refund amount doesn't exceed transaction total
+        // Use integer cents for comparison to avoid float precision issues
         const maxRefundable = Number(transaction.totalAmount)
-        if (typeof amount === 'number' && (amount <= 0 || amount > maxRefundable)) {
+        const refundCents = Math.round(refundAmount * 100)
+        const maxCents = Math.round(maxRefundable * 100)
+        if (typeof amount === 'number' && (refundCents <= 0 || refundCents > maxCents)) {
           return NextResponse.json(
             { error: `Invalid refund amount. Must be between $0.01 and $${maxRefundable.toFixed(2)}` },
             { status: 400 }
@@ -116,14 +129,24 @@ export async function POST(
         )
 
         // Update transaction
-        await prisma.transaction.update({
-          where: { id },
+        // SECURITY: Use updateMany with status condition to prevent race conditions
+        const txUpdateResult = await prisma.transaction.updateMany({
+          where: {
+            id,
+            status: 'DISPUTED', // Only update if still in DISPUTED status
+          },
           data: {
             status: 'REFUNDED',
             disputeStatus: 'RESOLVED_BUYER',
             fundsHeld: false,
           },
         })
+        if (txUpdateResult.count === 0) {
+          return NextResponse.json(
+            { error: 'Transaction state has changed during refund processing. Please check the transaction status.' },
+            { status: 409 }
+          )
+        }
 
         // Notify both parties
         await prisma.notification.createMany({

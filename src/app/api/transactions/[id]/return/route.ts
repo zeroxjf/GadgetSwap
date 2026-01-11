@@ -86,10 +86,11 @@ export async function POST(
           )
         }
 
-        // Check if funds are still held - can't return if funds already released
+        // SECURITY: Check if funds are still held - can't process return if funds already released
+        // This prevents return requests after the escrow period has ended
         if (!transaction.fundsHeld) {
           return NextResponse.json(
-            { error: 'Return window has passed. Funds have already been released to the seller.' },
+            { error: 'Return window has closed. Funds have already been released to the seller. Please contact support if you need assistance.' },
             { status: 400 }
           )
         }
@@ -425,7 +426,7 @@ export async function GET(
     ) {
       returnDeadline = new Date(transaction.deliveredAt)
       returnDeadline.setDate(returnDeadline.getDate() + transaction.listing.returnWindowDays)
-      canRequestReturn = new Date() <= returnDeadline
+      canRequestReturn = new Date() < returnDeadline
     }
 
     return NextResponse.json({

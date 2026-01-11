@@ -45,7 +45,10 @@ export async function PUT(
     }
 
     const address = await prisma.savedAddress.update({
-      where: { id },
+      where: {
+        id,
+        userId: session.user.id,
+      },
       data: {
         label: body.label,
         name: body.name,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { uploadImage } from '@/lib/cloudinary'
+import { isCurrentUserBanned } from '@/lib/admin'
 
 /**
  * POST /api/upload
@@ -17,6 +18,11 @@ export async function POST(request: NextRequest) {
         { error: 'Authentication required' },
         { status: 401 }
       )
+    }
+
+    // SECURITY: Check if user is banned
+    if (await isCurrentUserBanned()) {
+      return NextResponse.json({ error: 'Your account has been suspended' }, { status: 403 })
     }
 
     const body = await request.json()

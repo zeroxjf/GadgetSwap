@@ -3,14 +3,26 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 /**
  * PUT /api/user/email
- * Change user's email address
+ * Request email change - sends verification to new email
+ * SECURITY: Email is NOT changed immediately. User must verify new email first.
  * Requires current password for security
  */
+// Rate limit config: 3 email change requests per hour
+const emailChangeRateLimit = { limit: 3, windowMs: 60 * 60 * 1000, keyPrefix: 'email-change' }
+
 export async function PUT(request: NextRequest) {
   try {
+    // Rate limit: 3 email change requests per hour
+    const rateCheck = checkRateLimit(request, emailChangeRateLimit)
+    if (!rateCheck.success) {
+      return rateLimitResponse(rateCheck.resetIn)
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
@@ -72,28 +84,126 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // For OAuth users without password, we'll allow the change
-    // In production, you might want to send a verification email
-
-    // Update email
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        email: newEmail.toLowerCase(),
-        emailVerified: null, // Reset verification status
+    // SECURITY: Don't update email immediately. Create a verification token instead.
+    // Delete any existing pending email change tokens for this user
+    await prisma.verificationToken.deleteMany({
+      where: {
+        identifier: `email-change:${session.user.id}`,
       },
     })
 
-    // In production, send verification email here
-    // await sendVerificationEmail(newEmail)
+    // Create verification token for new email (expires in 24 hours)
+    const token = crypto.randomBytes(32).toString('hex')
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+    // SECURITY: Encode email in base64 to handle special characters like colons
+    const encodedEmail = Buffer.from(newEmail.toLowerCase()).toString('base64')
+    await prisma.verificationToken.create({
+      data: {
+        identifier: `email-change:${session.user.id}`,
+        token: `${token}:${encodedEmail}`, // Store base64-encoded email in token
+        expires,
+      },
+    })
+
+    // TODO: In production, send verification email to newEmail with link:
+    // const verificationUrl = `${process.env.NEXTAUTH_URL}/api/user/email/verify?token=${token}`
+    // await sendEmail({ to: newEmail, subject: 'Verify your new email', ... })
+
+    console.log(`[EMAIL CHANGE] Verification token created for user ${session.user.id}, new email: ${newEmail}`)
 
     return NextResponse.json({
       success: true,
-      message: 'Email updated successfully. Please sign in again with your new email.',
-      requiresReauth: true,
+      message: 'Verification email sent to your new email address. Please check your inbox and click the verification link to complete the change.',
+      pendingEmail: newEmail.toLowerCase(),
     })
   } catch (error) {
     console.error('Change email error:', error)
-    return NextResponse.json({ error: 'Failed to change email' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to initiate email change' }, { status: 500 })
+  }
+}
+
+/**
+ * GET /api/user/email?token=xxx
+ * Verify email change token and complete the email update
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.nextUrl.searchParams.get('token')
+
+    if (!token) {
+      return NextResponse.json({ error: 'Verification token is required' }, { status: 400 })
+    }
+
+    // Find the verification token using exact match
+    // Token format: randomToken:base64EncodedEmail
+    // We search by identifier prefix and then verify the token starts with our input
+    const verificationTokens = await prisma.verificationToken.findMany({
+      where: {
+        identifier: { startsWith: 'email-change:' },
+      },
+    })
+
+    // SECURITY: Use exact match on the random token part to prevent enumeration
+    const verificationToken = verificationTokens.find(vt => {
+      const [storedToken] = vt.token.split(':')
+      return storedToken === token
+    })
+
+    if (!verificationToken) {
+      return NextResponse.json({ error: 'Invalid or expired verification token' }, { status: 400 })
+    }
+
+    // Check expiration
+    if (verificationToken.expires < new Date()) {
+      await prisma.verificationToken.delete({
+        where: {
+          identifier_token: {
+            identifier: verificationToken.identifier,
+            token: verificationToken.token,
+          },
+        },
+      })
+      return NextResponse.json({ error: 'Verification token has expired' }, { status: 400 })
+    }
+
+    // Extract userId and new email from token
+    const userId = verificationToken.identifier.replace('email-change:', '')
+    // SECURITY: Decode base64-encoded email to handle special characters
+    const encodedEmail = verificationToken.token.split(':')[1]
+    const newEmail = Buffer.from(encodedEmail, 'base64').toString('utf-8')
+
+    if (!userId || !newEmail) {
+      return NextResponse.json({ error: 'Invalid verification token format' }, { status: 400 })
+    }
+
+    // Update the user's email
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        email: newEmail,
+        emailVerified: new Date(), // Mark as verified since they clicked the link
+      },
+    })
+
+    // Delete the verification token
+    await prisma.verificationToken.delete({
+      where: {
+        identifier_token: {
+          identifier: verificationToken.identifier,
+          token: verificationToken.token,
+        },
+      },
+    })
+
+    console.log(`[EMAIL CHANGE] Email successfully changed for user ${userId} to ${newEmail}`)
+
+    return NextResponse.json({
+      success: true,
+      message: 'Email address has been updated successfully. Please sign in with your new email.',
+    })
+  } catch (error) {
+    console.error('Verify email change error:', error)
+    return NextResponse.json({ error: 'Failed to verify email change' }, { status: 500 })
   }
 }

@@ -25,18 +25,52 @@ export async function getCurrentUserRole(): Promise<UserRole | null> {
 
 /**
  * Check if the current user is an admin
+ * SECURITY: Always checks database for fresh role/ban status, not stale session token
  */
 export async function isAdmin(): Promise<boolean> {
-  const role = await getCurrentUserRole()
-  return role === 'ADMIN'
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.id) {
+    return false
+  }
+
+  // Always fetch fresh from database to prevent stale session bypass
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, banned: true },
+  })
+
+  // Banned users cannot have admin access
+  if (user?.banned) {
+    return false
+  }
+
+  return user?.role === 'ADMIN'
 }
 
 /**
  * Check if the current user is a moderator or admin
+ * SECURITY: Always checks database for fresh role/ban status, not stale session token
  */
 export async function isModeratorOrAdmin(): Promise<boolean> {
-  const role = await getCurrentUserRole()
-  return role === 'ADMIN' || role === 'MODERATOR'
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.id) {
+    return false
+  }
+
+  // Always fetch fresh from database to prevent stale session bypass
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, banned: true },
+  })
+
+  // Banned users cannot have moderator/admin access
+  if (user?.banned) {
+    return false
+  }
+
+  return user?.role === 'ADMIN' || user?.role === 'MODERATOR'
 }
 
 /**
@@ -217,10 +251,11 @@ export async function setUserRole(
 /**
  * List of admin email addresses for initial setup
  * These users will automatically be granted admin role on first login
+ * SECURITY: Read from ADMIN_EMAILS environment variable (comma-separated) with fallback
  */
-export const ADMIN_EMAILS = [
-  'jf.tech.team@gmail.com',
-]
+export const ADMIN_EMAILS = process.env.ADMIN_EMAILS
+  ? process.env.ADMIN_EMAILS.split(',').map(email => email.trim()).filter(Boolean)
+  : ['jf.tech.team@gmail.com']
 
 /**
  * Normalize email to prevent bypass via aliases

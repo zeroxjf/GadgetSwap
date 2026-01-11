@@ -5,6 +5,8 @@ import { authOptions } from '@/lib/auth'
 import crypto from 'crypto'
 import { createNotification } from '@/lib/notifications'
 import { logActivity } from '@/lib/activity'
+import { validateVerificationCode } from '@/lib/verification'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 // AI detection threshold for flagging
 const AI_FLAG_THRESHOLD = 0.5
@@ -20,8 +22,17 @@ const LISTING_LIMITS = {
  * POST /api/listings
  * Create a new listing (goes to review queue)
  */
+// Rate limit config: 10 listings per minute
+const listingsRateLimit = { limit: 10, windowMs: 60 * 1000, keyPrefix: 'listings' }
+
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 10 listings per minute
+    const rateCheck = checkRateLimit(request, listingsRateLimit)
+    if (!rateCheck.success) {
+      return rateLimitResponse(rateCheck.resetIn)
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
@@ -109,10 +120,53 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate returnWindowDays if acceptsReturns is true
+    let parsedReturnWindowDays: number | null = null
+    if (acceptsReturns) {
+      const windowDays = parseInt(returnWindowDays, 10)
+      if (isNaN(windowDays) || !Number.isInteger(windowDays) || windowDays < 1 || windowDays > 90) {
+        return NextResponse.json(
+          { error: 'Return window must be an integer between 1 and 90 days' },
+          { status: 400 }
+        )
+      }
+      parsedReturnWindowDays = windowDays
+    }
+
+    // Validate storageGB if provided
+    if (storageGB !== undefined && storageGB !== null && storageGB !== '') {
+      const parsedStorageGB = parseInt(storageGB, 10)
+      if (isNaN(parsedStorageGB) || !Number.isInteger(parsedStorageGB) || parsedStorageGB < 1 || parsedStorageGB > 2048) {
+        return NextResponse.json(
+          { error: 'Storage must be an integer between 1 and 2048 GB' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Validate batteryHealth if provided
+    if (batteryHealth !== undefined && batteryHealth !== null && batteryHealth !== '') {
+      const parsedBatteryHealth = parseInt(batteryHealth, 10)
+      if (isNaN(parsedBatteryHealth) || !Number.isInteger(parsedBatteryHealth) || parsedBatteryHealth < 0 || parsedBatteryHealth > 100) {
+        return NextResponse.json(
+          { error: 'Battery health must be an integer between 0 and 100' },
+          { status: 400 }
+        )
+      }
+    }
+
     // Require verification code and photo
     if (!verificationCode || !verificationPhotoUrl) {
       return NextResponse.json(
         { error: 'Verification code and photo are required' },
+        { status: 400 }
+      )
+    }
+
+    // SECURITY: Validate verification code belongs to this user and hasn't expired
+    if (!validateVerificationCode(verificationCode, session.user.id)) {
+      return NextResponse.json(
+        { error: 'Invalid or expired verification code. Please generate a new code.' },
         { status: 400 }
       )
     }
@@ -191,7 +245,7 @@ export async function POST(request: NextRequest) {
         imeiClean: imeiClean ?? true,
         icloudUnlocked: icloudUnlocked ?? true,
         acceptsReturns: acceptsReturns ?? false,
-        returnWindowDays: acceptsReturns ? (returnWindowDays || 14) : null,
+        returnWindowDays: acceptsReturns ? parsedReturnWindowDays : null,
         // IMEI verification data
         ...imeiData,
         // Listing status - pending review
@@ -338,11 +392,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Text search
+    // SECURITY: Limit search query length to prevent ReDoS attacks
     if (q) {
+      const sanitizedQuery = q.slice(0, 100)
       where.OR = [
-        { title: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-        { deviceModel: { contains: q, mode: 'insensitive' } },
+        { title: { contains: sanitizedQuery, mode: 'insensitive' } },
+        { description: { contains: sanitizedQuery, mode: 'insensitive' } },
+        { deviceModel: { contains: sanitizedQuery, mode: 'insensitive' } },
       ]
     }
 

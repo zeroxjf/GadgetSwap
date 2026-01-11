@@ -6,6 +6,7 @@ import { stripe, calculateFees, STRIPE_FEE_PERCENT, STRIPE_FEE_FIXED, PLATFORM_F
 import { calculateTax } from '@/lib/tax'
 import { getDefaultShippingCost, qualifiesForFreeShipping } from '@/lib/shipping'
 import { checkRateLimit, rateLimitResponse, rateLimits } from '@/lib/rate-limit'
+import { isCurrentUserBanned } from '@/lib/admin'
 
 /**
  * POST /api/checkout
@@ -26,6 +27,11 @@ export async function POST(request: NextRequest) {
         { error: 'Please sign in to make a purchase' },
         { status: 401 }
       )
+    }
+
+    // SECURITY: Check if user is banned
+    if (await isCurrentUserBanned()) {
+      return NextResponse.json({ error: 'Your account has been suspended' }, { status: 403 })
     }
 
     const body = await request.json()

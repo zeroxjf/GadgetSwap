@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+
+// Rate limit config: 60 requests per minute
+const conversationRateLimit = { limit: 60, windowMs: 60 * 1000, keyPrefix: 'conversation' }
 
 /**
  * GET /api/messages/conversation?userId=xxx&listingId=xxx
@@ -9,6 +13,12 @@ import { authOptions } from '@/lib/auth'
  */
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 60 requests per minute
+    const rateCheck = checkRateLimit(request, conversationRateLimit)
+    if (!rateCheck.success) {
+      return rateLimitResponse(rateCheck.resetIn)
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
@@ -51,8 +61,16 @@ export async function GET(request: NextRequest) {
 
     // Pagination - get messages before a certain ID
     if (before) {
+      const beforeDate = new Date(before)
+      // SECURITY: Validate date is valid before using
+      if (isNaN(beforeDate.getTime())) {
+        return NextResponse.json(
+          { error: 'Invalid date format for "before" parameter' },
+          { status: 400 }
+        )
+      }
       whereConditions.createdAt = {
-        lt: new Date(before),
+        lt: beforeDate,
       }
     }
 
@@ -100,6 +118,14 @@ export async function GET(request: NextRequest) {
         totalSales: true,
       },
     })
+
+    // SECURITY: Return generic error to prevent user enumeration
+    if (!otherUser) {
+      return NextResponse.json(
+        { error: 'Conversation not found' },
+        { status: 404 }
+      )
+    }
 
     // Get listing info if applicable
     let listing = null

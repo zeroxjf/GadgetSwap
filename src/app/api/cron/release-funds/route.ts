@@ -19,8 +19,9 @@ export async function POST(request: NextRequest) {
   try {
     // CRON_SECRET is required - reject if not configured
     if (!CRON_SECRET) {
-      console.error('CRON_SECRET not configured')
-      return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+      console.error('CRON_SECRET not configured - cron job cannot run securely')
+      console.warn('[SECURITY] Cron endpoint accessed without CRON_SECRET configured')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Verify request has valid Bearer token
@@ -29,7 +30,8 @@ export async function POST(request: NextRequest) {
     const hasValidToken = authHeader === `Bearer ${CRON_SECRET}`
 
     if (!hasValidToken) {
-      console.warn('Cron request rejected - invalid or missing authorization')
+      console.warn('[SECURITY] Cron request rejected - invalid or missing authorization')
+      console.warn(`[SECURITY] Failed cron auth attempt from IP: ${request.headers.get('x-forwarded-for') || 'unknown'}`)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -83,9 +85,15 @@ export async function POST(request: NextRequest) {
         // Since we're using destination charges with automatic transfers,
         // we just need to update our records.
 
-        // Update transaction as completed
-        await prisma.transaction.update({
-          where: { id: transaction.id },
+        // Update transaction as completed using updateMany with state check
+        // SECURITY: This prevents race conditions where multiple workers
+        // could process the same transaction simultaneously
+        const updateResult = await prisma.transaction.updateMany({
+          where: {
+            id: transaction.id,
+            status: 'DELIVERED',  // Only update if still in DELIVERED state
+            fundsHeld: true,      // Only if funds are still held
+          },
           data: {
             status: 'COMPLETED',
             fundsHeld: false,
@@ -93,6 +101,12 @@ export async function POST(request: NextRequest) {
             completedAt: new Date(),
           },
         })
+
+        // Check if update was successful (count > 0 means we won the race)
+        if (updateResult.count === 0) {
+          console.log(`Transaction ${transaction.id} already processed by another worker, skipping`)
+          continue // Skip to next transaction
+        }
 
         // Update listing status to SOLD
         await prisma.listing.update({
