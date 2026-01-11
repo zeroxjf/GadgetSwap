@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import {
   Search,
@@ -34,6 +34,9 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [unreadMessageCount, setUnreadMessageCount] = useState(0)
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
+  const [notificationPulse, setNotificationPulse] = useState(false)
+  const prevNotificationCountRef = useRef(0)
 
   const isLoggedIn = !!session?.user
 
@@ -56,6 +59,35 @@ export function Header() {
     fetchUnreadCount()
     // Refresh every 30 seconds
     const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [isLoggedIn])
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (!isLoggedIn) return
+
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await fetch('/api/notifications/unread-count')
+        if (response.ok) {
+          const data = await response.json()
+          const newCount = data.count
+          // Trigger pulse animation if count increased from previous
+          if (newCount > prevNotificationCountRef.current && prevNotificationCountRef.current > 0) {
+            setNotificationPulse(true)
+            setTimeout(() => setNotificationPulse(false), 1000)
+          }
+          prevNotificationCountRef.current = newCount
+          setUnreadNotificationCount(newCount)
+        }
+      } catch (error) {
+        console.error('Failed to fetch notification count:', error)
+      }
+    }
+
+    fetchNotificationCount()
+    // Refresh every 15 seconds for notifications
+    const interval = setInterval(fetchNotificationCount, 15000)
     return () => clearInterval(interval)
   }, [isLoggedIn])
 
@@ -126,8 +158,14 @@ export function Header() {
                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                   )}
                 </Link>
-                <Link href="/notifications" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-                  <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <Link href="/notifications" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative">
+                  <Bell className={`w-5 h-5 text-gray-600 dark:text-gray-400 ${notificationPulse ? 'animate-bounce' : ''}`} />
+                  {unreadNotificationCount > 0 && (
+                    <>
+                      <span className={`absolute top-1 right-1 min-w-[8px] h-2 bg-red-500 rounded-full ${notificationPulse ? 'animate-ping' : ''}`}></span>
+                      <span className="absolute top-1 right-1 min-w-[8px] h-2 bg-red-500 rounded-full"></span>
+                    </>
+                  )}
                 </Link>
                 <Link href="/watchlist" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
                   <Heart className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -319,8 +357,14 @@ export function Header() {
                       <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                     )}
                   </Link>
-                  <Link href="/notifications" className="btn-secondary justify-center p-2">
-                    <Bell className="w-5 h-5" />
+                  <Link href="/notifications" className="btn-secondary justify-center p-2 relative">
+                    <Bell className={`w-5 h-5 ${notificationPulse ? 'animate-bounce' : ''}`} />
+                    {unreadNotificationCount > 0 && (
+                      <>
+                        <span className={`absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ${notificationPulse ? 'animate-ping' : ''}`}></span>
+                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                      </>
+                    )}
                   </Link>
                   <Link href="/watchlist" className="btn-secondary justify-center p-2">
                     <Heart className="w-5 h-5" />
