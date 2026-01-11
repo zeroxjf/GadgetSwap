@@ -155,22 +155,6 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white pt-8 pb-16 md:pt-12 md:pb-24">
         <div className="max-w-7xl mx-auto px-4">
-          {/* Alert Feature Callout Banner */}
-          <div className="flex justify-center mb-8">
-            <Link
-              href="/alerts"
-              className="inline-flex items-center gap-3 bg-white/15 backdrop-blur-sm border border-white/30 rounded-full px-5 py-2.5 hover:bg-white/25 transition-colors group"
-            >
-              <span className="flex items-center justify-center w-8 h-8 bg-yellow-400 rounded-full">
-                <Bell className="w-4 h-4 text-yellow-900" />
-              </span>
-              <span className="text-white font-medium">
-                New: Set alerts for specific iOS versions & specs — get notified instantly
-              </span>
-              <ArrowRight className="w-4 h-4 text-white/70 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold mb-6">
