@@ -132,30 +132,21 @@ export function ListingCard({ listing }: ListingCardProps) {
             </button>
           </div>
 
-          {/* Bottom gradient overlay with iOS version & Jailbreak status */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2.5 pt-10">
-            <div className="flex items-center justify-between">
+          {/* Bottom gradient overlay with iOS version */}
+          {listing.osVersion && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-2.5 pt-8">
               <div className="flex items-center gap-1.5">
-                {listing.osVersion && (
-                  <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-2 py-0.5 rounded">
-                    iOS {listing.osVersion}
-                  </span>
-                )}
+                <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-2 py-0.5 rounded">
+                  iOS {listing.osVersion}
+                </span>
                 {listing.bootromExploit && (
                   <span className="bg-amber-500/90 text-white text-xs font-medium px-2 py-0.5 rounded">
                     checkm8
                   </span>
                 )}
               </div>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                canJailbreak
-                  ? 'bg-purple-500/90 text-white'
-                  : 'bg-white/20 backdrop-blur-sm text-white/80'
-              }`}>
-                {canJailbreak ? 'JB: Yes' : 'JB: No'}
-              </span>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Content */}
@@ -179,11 +170,19 @@ export function ListingCard({ listing }: ListingCardProps) {
             {listing.title}
           </h3>
 
-          {/* Condition badge */}
+          {/* Condition & Jailbreak badges */}
           <div className="flex items-center gap-2 mb-3">
             <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md ${condition.bg} ${condition.text}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${condition.dot}`}></span>
               {condition.label}
+            </span>
+            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md ${
+              canJailbreak
+                ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${canJailbreak ? 'bg-purple-500' : 'bg-gray-400'}`}></span>
+              {canJailbreak ? 'JB: Yes' : 'JB: No'}
             </span>
           </div>
 
