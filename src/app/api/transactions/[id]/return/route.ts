@@ -35,8 +35,8 @@ export async function POST(
             returnWindowDays: true,
           },
         },
-        buyer: { select: { id: true, name: true } },
-        seller: { select: { id: true, name: true } },
+        buyer: { select: { id: true, name: true, email: true } },
+        seller: { select: { id: true, name: true, email: true } },
       },
     })
 
@@ -82,6 +82,14 @@ export async function POST(
         if (!['DELIVERED', 'COMPLETED'].includes(transaction.status)) {
           return NextResponse.json(
             { error: 'Returns can only be requested after delivery' },
+            { status: 400 }
+          )
+        }
+
+        // Check if funds are still held - can't return if funds already released
+        if (!transaction.fundsHeld) {
+          return NextResponse.json(
+            { error: 'Return window has passed. Funds have already been released to the seller.' },
             { status: 400 }
           )
         }
@@ -286,64 +294,63 @@ export async function POST(
           )
         }
 
-        // Update status to received
-        await prisma.transaction.update({
-          where: { id },
-          data: {
-            returnStatus: 'RECEIVED',
-            returnReceivedAt: new Date(),
-          },
-        })
-
-        // Process refund
-        if (transaction.stripePaymentIntentId) {
-          try {
-            await issueRefund(
-              transaction.stripePaymentIntentId,
-              undefined, // Full refund
-              'requested_by_customer'
-            )
-
-            // Update to refunded
-            await prisma.transaction.update({
-              where: { id },
-              data: {
-                returnStatus: 'REFUNDED',
-                returnRefundedAt: new Date(),
-                status: 'REFUNDED',
-                fundsHeld: false,
-              },
-            })
-
-            // Notify buyer
-            await prisma.notification.create({
-              data: {
-                userId: transaction.buyerId,
-                type: 'TRANSACTION_UPDATE',
-                title: 'Return Complete - Refund Issued',
-                message: `Your return for "${transaction.listing.title}" is complete. A refund of $${transaction.totalAmount.toFixed(2)} has been issued.`,
-                link: `/transactions/${transaction.id}`,
-              },
-            })
-
-            return NextResponse.json({
-              success: true,
-              returnStatus: 'REFUNDED',
-              message: 'Return received and refund issued to buyer.',
-            })
-          } catch (refundError: any) {
-            console.error('Refund error:', refundError)
-            return NextResponse.json(
-              { error: `Return received but refund failed: ${refundError.message}` },
-              { status: 500 }
-            )
-          }
-        } else {
+        if (!transaction.stripePaymentIntentId) {
           return NextResponse.json(
             { error: 'No payment found to refund' },
             { status: 400 }
           )
         }
+
+        // Process refund FIRST before updating status
+        // This prevents leaving transaction in inconsistent state
+        try {
+          await issueRefund(
+            transaction.stripePaymentIntentId,
+            undefined, // Full refund
+            'requested_by_customer'
+          )
+        } catch (refundError: any) {
+          console.error('Refund error:', refundError)
+
+          // Check if it's a Stripe-specific error
+          const errorMessage = refundError.type === 'StripeInvalidRequestError'
+            ? 'Payment cannot be refunded. It may have already been refunded or the payment method is no longer valid.'
+            : refundError.message || 'Unknown refund error'
+
+          return NextResponse.json(
+            { error: `Refund failed: ${errorMessage}. Return not confirmed.` },
+            { status: 500 }
+          )
+        }
+
+        // Refund succeeded - now update transaction status atomically
+        await prisma.transaction.update({
+          where: { id },
+          data: {
+            returnStatus: 'REFUNDED',
+            returnReceivedAt: new Date(),
+            returnRefundedAt: new Date(),
+            status: 'REFUNDED',
+            fundsHeld: false,
+          },
+        })
+
+        // Notify buyer
+        await prisma.notification.create({
+          data: {
+            userId: transaction.buyerId,
+            type: 'TRANSACTION_UPDATE',
+            title: 'Return Complete - Refund Issued',
+            message: `Your return for "${transaction.listing.title}" is complete. A refund of $${Number(transaction.totalAmount).toFixed(2)} has been issued.`,
+            link: `/transactions/${transaction.id}`,
+          },
+        })
+
+        return NextResponse.json({
+          success: true,
+          returnStatus: 'REFUNDED',
+          message: 'Return received and refund issued to buyer.',
+        })
       }
 
       default:

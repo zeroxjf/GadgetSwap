@@ -3,11 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { issueRefund } from '@/lib/stripe'
-
-// Admin emails that can resolve disputes
-const ADMIN_EMAILS = [
-  'jf.tech.team@gmail.com',
-]
+import { isAdmin } from '@/lib/admin'
 
 /**
  * POST /api/transactions/[id]/resolve
@@ -21,13 +17,12 @@ export async function POST(
     const session = await getServerSession(authOptions)
     const { id } = await params
 
-    if (!session?.user?.id || !session.user.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is admin
-    const isAdmin = ADMIN_EMAILS.includes(session.user.email.toLowerCase())
-    if (!isAdmin) {
+    // Check if user is admin using database role
+    if (!(await isAdmin())) {
       return NextResponse.json(
         { error: 'Only administrators can resolve disputes' },
         { status: 403 }
@@ -89,10 +84,11 @@ export async function POST(
         finalStatus = 'REFUNDED'
         disputeStatus = 'RESOLVED_BUYER'
       } else if (resolution === 'split' && refundAmount) {
-        // Partial refund
-        if (refundAmount > transaction.totalAmount || refundAmount <= 0) {
+        // Partial refund - validate against salePrice (item price only, not tax/shipping)
+        // This prevents platform loss on split resolutions
+        if (refundAmount > Number(transaction.salePrice) || refundAmount <= 0) {
           return NextResponse.json(
-            { error: 'Invalid refund amount' },
+            { error: `Invalid refund amount. Maximum refundable is $${Number(transaction.salePrice).toFixed(2)} (item price)` },
             { status: 400 }
           )
         }
@@ -102,8 +98,8 @@ export async function POST(
           'requested_by_customer'
         )
         refundedAmount = refundAmount
-        // If more than 50% refunded, consider it buyer win
-        disputeStatus = refundAmount > transaction.totalAmount / 2 ? 'RESOLVED_BUYER' : 'RESOLVED_SELLER'
+        // If more than 50% of sale price refunded, consider it buyer win
+        disputeStatus = refundAmount > Number(transaction.salePrice) / 2 ? 'RESOLVED_BUYER' : 'RESOLVED_SELLER'
         finalStatus = 'COMPLETED' // Partial refund means transaction still "completed"
       }
       // resolution === 'seller' means no refund, just release funds to seller

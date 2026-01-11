@@ -10,6 +10,11 @@ import { checkRateLimit, rateLimitResponse, rateLimits } from '@/lib/rate-limit'
 /**
  * GET /api/messages
  * Get conversations for current user
+ *
+ * Optimized to:
+ * 1. Limit messages fetched (latest 500 per user max)
+ * 2. Use distinct to get unique conversations first
+ * 3. Only fetch detailed data for active conversations
  */
 export async function GET(request: NextRequest) {
   try {
@@ -24,79 +29,109 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id
 
-    // Get all messages where user is sender or receiver, grouped by conversation
-    // Exclude blocked messages from the conversation list
-    const messages = await prisma.message.findMany({
+    // Step 1: Get distinct conversation partners with latest message timestamp
+    // This is more efficient than loading all messages
+    const recentMessages = await prisma.message.findMany({
       where: {
         OR: [
           { senderId: userId },
           { receiverId: userId },
         ],
-        blocked: false,  // Don't show blocked messages
+        blocked: false,
       },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-          },
-        },
-        receiver: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-          },
-        },
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            images: {
-              take: 1,
-              orderBy: { order: 'asc' },
-            },
-          },
-        },
+      select: {
+        id: true,
+        senderId: true,
+        receiverId: true,
+        listingId: true,
+        content: true,
+        read: true,
+        createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
+      take: 500, // Limit to last 500 messages to prevent memory issues
     })
 
-    // Group messages into conversations
-    const conversationsMap = new Map<string, any>()
+    // Group to find unique conversations and their latest message
+    const conversationLatest = new Map<string, typeof recentMessages[0]>()
+    const unreadCounts = new Map<string, number>()
 
-    for (const message of messages) {
-      const otherUserId = message.senderId === userId ? message.receiverId : message.senderId
-      const otherUser = message.senderId === userId ? message.receiver : message.sender
-      const conversationKey = `${[userId, otherUserId].sort().join('-')}-${message.listingId || 'general'}`
+    for (const msg of recentMessages) {
+      const otherUserId = msg.senderId === userId ? msg.receiverId : msg.senderId
+      const conversationKey = `${[userId, otherUserId].sort().join('-')}-${msg.listingId || 'general'}`
 
-      if (!conversationsMap.has(conversationKey)) {
-        conversationsMap.set(conversationKey, {
-          id: conversationKey,
-          otherUser,
-          listing: message.listing,
-          lastMessage: {
-            content: message.content,
-            timestamp: message.createdAt,
-            isRead: message.read,
-            fromMe: message.senderId === userId,
-          },
-          unreadCount: 0,
-        })
+      // Track latest message per conversation
+      if (!conversationLatest.has(conversationKey)) {
+        conversationLatest.set(conversationKey, msg)
+        unreadCounts.set(conversationKey, 0)
       }
 
-      // Count unread messages
-      if (!message.read && message.receiverId === userId) {
-        const conv = conversationsMap.get(conversationKey)
-        conv.unreadCount++
+      // Count unread
+      if (!msg.read && msg.receiverId === userId) {
+        unreadCounts.set(conversationKey, (unreadCounts.get(conversationKey) || 0) + 1)
       }
     }
 
-    const conversations = Array.from(conversationsMap.values())
+    // Step 2: Fetch user and listing details only for unique conversations
+    const conversationKeys = Array.from(conversationLatest.keys())
+    const otherUserIds = new Set<string>()
+    const listingIds = new Set<string>()
+
+    for (const msg of conversationLatest.values()) {
+      otherUserIds.add(msg.senderId === userId ? msg.receiverId : msg.senderId)
+      if (msg.listingId) listingIds.add(msg.listingId)
+    }
+
+    // Batch fetch users and listings (2 queries instead of N)
+    const [users, listings] = await Promise.all([
+      prisma.user.findMany({
+        where: { id: { in: Array.from(otherUserIds) } },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+        },
+      }),
+      prisma.listing.findMany({
+        where: { id: { in: Array.from(listingIds) } },
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          images: {
+            take: 1,
+            orderBy: { order: 'asc' },
+          },
+        },
+      }),
+    ])
+
+    // Build lookup maps
+    const userMap = new Map(users.map(u => [u.id, u]))
+    const listingMap = new Map(listings.map(l => [l.id, l]))
+
+    // Step 3: Build final conversation list
+    const conversations = Array.from(conversationLatest.entries()).map(([key, msg]) => {
+      const otherUserId = msg.senderId === userId ? msg.receiverId : msg.senderId
+      return {
+        id: key,
+        otherUser: userMap.get(otherUserId) || null,
+        listing: msg.listingId ? listingMap.get(msg.listingId) || null : null,
+        lastMessage: {
+          content: msg.content,
+          timestamp: msg.createdAt,
+          isRead: msg.read,
+          fromMe: msg.senderId === userId,
+        },
+        unreadCount: unreadCounts.get(key) || 0,
+      }
+    })
+
+    // Sort by most recent first
+    conversations.sort((a, b) =>
+      new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime()
+    )
 
     return NextResponse.json({ conversations })
   } catch (error) {

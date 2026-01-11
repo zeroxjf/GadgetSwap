@@ -439,6 +439,8 @@ model Transaction {
   @@index([sellerId])
   @@index([status])
   @@index([stripePaymentIntentId])
+  @@index([fundsHeld, escrowReleaseAt]) // For cron fund release queries
+  @@index([status, createdAt])          // For filtered status queries with date sorting
 }
 
 enum TransactionStatus {
@@ -521,6 +523,9 @@ model Message {
   @@index([senderId, receiverId])
   @@index([listingId])
   @@index([flagged])
+  @@index([createdAt])              // For message sorting
+  @@index([senderId, createdAt])    // For user message timeline
+  @@index([receiverId, createdAt])  // For user inbox queries
 }
 
 // Message moderation flags for tracking off-platform transaction attempts

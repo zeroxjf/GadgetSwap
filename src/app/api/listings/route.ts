@@ -166,7 +166,10 @@ export async function POST(request: NextRequest) {
       (safeSearchResults?.violence === 'LIKELY' || safeSearchResults?.violence === 'VERY_LIKELY')
 
     // Create the listing with PENDING status and PENDING_REVIEW reviewStatus
-    const listing = await prisma.listing.create({
+    // Uses unique constraint on imeiHash to prevent race conditions
+    let listing
+    try {
+      listing = await prisma.listing.create({
       data: {
         title,
         description,
@@ -235,6 +238,16 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+    } catch (createError: any) {
+      // Handle unique constraint violation on imeiHash (race condition)
+      if (createError.code === 'P2002' && createError.meta?.target?.includes('imeiHash')) {
+        return NextResponse.json(
+          { error: 'This device is already listed. Another listing with the same IMEI was just created.' },
+          { status: 409 }
+        )
+      }
+      throw createError // Re-throw other errors
+    }
 
     // Notify admins of new listing to review (especially if flagged)
     if (shouldFlag) {

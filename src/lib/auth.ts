@@ -71,7 +71,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
       }
 
-      // Fetch additional user data from database
+      // Fetch additional user data from database (including ban status)
       if (token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
@@ -86,10 +86,17 @@ export const authOptions: NextAuthOptions = {
             rating: true,
             totalSales: true,
             onboardingComplete: true,
+            banned: true,
           },
         })
 
         if (dbUser) {
+          // Check if user is banned - invalidate their session
+          if (dbUser.banned) {
+            token.banned = true
+          } else {
+            token.banned = false
+          }
           token.username = dbUser.username
           token.role = dbUser.role
           token.subscriptionTier = dbUser.subscriptionTier
@@ -110,6 +117,7 @@ export const authOptions: NextAuthOptions = {
         session.user.rating = token.rating as number
         session.user.totalSales = token.totalSales as number
         session.user.onboardingComplete = token.onboardingComplete as boolean
+        session.user.banned = token.banned as boolean
       }
       return session
     },
@@ -166,6 +174,7 @@ declare module 'next-auth' {
       rating: number
       totalSales: number
       onboardingComplete: boolean
+      banned: boolean
     }
   }
 }
@@ -179,5 +188,6 @@ declare module 'next-auth/jwt' {
     rating: number
     totalSales: number
     onboardingComplete: boolean
+    banned: boolean
   }
 }
