@@ -1,29 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Sun, Moon } from 'lucide-react'
 
 export function ThemeToggle() {
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
 
+  // Sync state with DOM on mount
   useEffect(() => {
     setMounted(true)
-    // Check localStorage for saved preference, default to light
-    const saved = localStorage.getItem('theme')
-    const prefersDark = saved === 'dark'
-    setIsDark(prefersDark)
-
-    if (prefersDark) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
+    const isDarkMode = document.documentElement.classList.contains('dark')
+    setIsDark(isDarkMode)
   }, [])
 
-  const toggleTheme = () => {
-    const newIsDark = !isDark
-    setIsDark(newIsDark)
+  const toggleTheme = useCallback(() => {
+    // Read current state directly from DOM (source of truth)
+    const currentlyDark = document.documentElement.classList.contains('dark')
+    const newIsDark = !currentlyDark
 
     if (newIsDark) {
       document.documentElement.classList.add('dark')
@@ -32,9 +26,10 @@ export function ThemeToggle() {
       document.documentElement.classList.remove('dark')
       localStorage.setItem('theme', 'light')
     }
-  }
 
-  // Don't render until mounted to avoid hydration mismatch
+    setIsDark(newIsDark)
+  }, [])
+
   if (!mounted) return null
 
   return (
