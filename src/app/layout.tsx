@@ -34,10 +34,11 @@ export default function RootLayout({
             __html: `
               (function() {
                 var theme = localStorage.getItem('theme');
-                document.documentElement.classList.remove('dark');
-                if (theme === 'dark') {
-                  document.documentElement.classList.add('dark');
+                if (!theme) {
+                  theme = 'light';
+                  localStorage.setItem('theme', 'light');
                 }
+                document.documentElement.className = theme === 'dark' ? 'dark' : '';
               })();
             `,
           }}
