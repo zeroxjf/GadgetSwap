@@ -67,7 +67,7 @@ function shouldBeDark(): boolean {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [preference, setPreferenceState] = useState<ThemePreference>('auto')
+  const [preference, setPreferenceState] = useState<ThemePreference>('light')
   const [theme, setTheme] = useState<Theme>('light')
   const [mounted, setMounted] = useState(false)
 
