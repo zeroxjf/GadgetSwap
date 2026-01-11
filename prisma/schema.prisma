@@ -233,7 +233,7 @@ model Listing {
 
   // IMEI Verification (for iPhones and cellular iPads)
   imeiLast4         String?         // Last 4 digits of IMEI for display
-  imeiHash          String?         // SHA256 hash of full IMEI for duplicate detection
+  imeiHash          String?         @unique // SHA256 hash of full IMEI - UNIQUE to prevent duplicate listings
   imeiVerified      Boolean         @default(false)
   imeiVerifiedAt    DateTime?
   imeiVerifiedModel String?         // Model returned by IMEI verification API
@@ -289,7 +289,6 @@ model Listing {
   @@index([osVersion])
   @@index([jailbreakStatus])
   @@index([status, createdAt])
-  @@index([imeiHash])
   @@index([reviewStatus])
   @@index([verificationCode])
 }
@@ -834,4 +833,16 @@ model SupportTicket {
   @@index([status])
   @@index([userId])
   @@index([createdAt])
+}
+
+// ============================================
+// STRIPE WEBHOOK EVENTS (Idempotency)
+// ============================================
+
+model StripeWebhookEvent {
+  id          String   @id // Use Stripe event ID directly
+  eventType   String   // e.g., 'checkout.session.completed'
+  processedAt DateTime @default(now())
+
+  @@index([eventType])
 }

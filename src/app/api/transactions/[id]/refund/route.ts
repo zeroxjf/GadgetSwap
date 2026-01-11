@@ -99,7 +99,16 @@ export async function POST(
     if (transaction.fundsHeld) {
       try {
         // Issue refund via Stripe
-        const refundAmount = amount || transaction.totalAmount
+        const refundAmount = amount || Number(transaction.totalAmount)
+
+        // SECURITY: Validate refund amount doesn't exceed transaction total
+        const maxRefundable = Number(transaction.totalAmount)
+        if (typeof amount === 'number' && (amount <= 0 || amount > maxRefundable)) {
+          return NextResponse.json(
+            { error: `Invalid refund amount. Must be between $0.01 and $${maxRefundable.toFixed(2)}` },
+            { status: 400 }
+          )
+        }
         const refund = await issueRefund(
           transaction.stripePaymentIntentId,
           refundAmount,

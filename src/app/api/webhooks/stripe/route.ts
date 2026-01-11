@@ -33,6 +33,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // IDEMPOTENCY: Check if we've already processed this event
+    const existingEvent = await prisma.stripeWebhookEvent.findUnique({
+      where: { id: event.id },
+    })
+
+    if (existingEvent) {
+      console.log(`Webhook event ${event.id} already processed, skipping`)
+      return NextResponse.json({ received: true, duplicate: true })
+    }
+
+    // Record the event before processing
+    await prisma.stripeWebhookEvent.create({
+      data: {
+        id: event.id,
+        eventType: event.type,
+      },
+    })
+
     // Handle different event types
     switch (event.type) {
       case 'payment_intent.succeeded': {
