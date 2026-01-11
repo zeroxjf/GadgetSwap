@@ -21,11 +21,13 @@ import {
   Wallet,
   ArrowRight
 } from 'lucide-react'
+import { useSubscriptionTier } from '@/hooks/useSubscriptionTier'
 
 export default function AccountPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [payoutsSetup, setPayoutsSetup] = useState<boolean | null>(null)
+  const { tier } = useSubscriptionTier()
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -136,7 +138,7 @@ export default function AccountPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Current Plan</p>
-                  <p className="font-semibold dark:text-white">{(user as any).subscriptionTier || 'Free'}</p>
+                  <p className="font-semibold dark:text-white">{tier}</p>
                 </div>
                 <Link href="/subscription" className="btn-secondary text-sm">
                   Upgrade

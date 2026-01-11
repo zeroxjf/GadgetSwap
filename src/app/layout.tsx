@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/Footer'
 import { Providers } from '@/components/Providers'
 import { FeedbackWidget } from '@/components/FeedbackWidget'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { SimulationBanner } from '@/components/admin/SimulationBanner'
 import { Analytics } from '@vercel/analytics/react'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -66,6 +67,7 @@ export default function RootLayout({
           </div>
           <FeedbackWidget />
           <ThemeToggle />
+          <SimulationBanner />
         </Providers>
         <Analytics />
       </body>
