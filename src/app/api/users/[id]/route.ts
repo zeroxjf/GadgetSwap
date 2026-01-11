@@ -39,7 +39,7 @@ export async function GET(
                 reviewStatus: 'APPROVED',
               },
             },
-            reviewsReceived: true,
+            receivedReviews: true,
           },
         },
       },
@@ -62,7 +62,7 @@ export async function GET(
       ratingCount: user.ratingCount,
       totalSales: user.totalSales,
       activeListings: user._count.listings,
-      totalReviews: user._count.reviewsReceived,
+      totalReviews: user._count.receivedReviews,
     }
 
     return NextResponse.json(publicProfile)
