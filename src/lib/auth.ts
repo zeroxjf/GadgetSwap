@@ -1,9 +1,10 @@
-import { NextAuthOptions } from 'next-auth'
+import { NextAuthOptions, getServerSession } from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 import AppleProvider from 'next-auth/providers/apple'
 import bcrypt from 'bcryptjs'
+import { cookies } from 'next/headers'
 import { prisma } from './prisma'
 import { logActivity } from './activity'
 
@@ -189,5 +190,77 @@ declare module 'next-auth/jwt' {
     totalSales: number
     onboardingComplete: boolean
     banned: boolean
+  }
+}
+
+/**
+ * Get authenticated user from either NextAuth JWT session or mobile session token.
+ * This supports both web (JWT) and mobile (database session) authentication.
+ */
+export async function getAuthenticatedUser() {
+  // First try NextAuth session (for web clients)
+  const nextAuthSession = await getServerSession(authOptions)
+  if (nextAuthSession?.user?.id) {
+    return {
+      user: nextAuthSession.user,
+      source: 'nextauth' as const,
+    }
+  }
+
+  // Fall back to mobile session token (from cookie)
+  const cookieStore = await cookies()
+  const sessionToken = cookieStore.get('next-auth.session-token')?.value
+
+  if (!sessionToken) {
+    return null
+  }
+
+  // Look up the session in the database
+  const session = await prisma.session.findUnique({
+    where: { sessionToken },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          image: true,
+          username: true,
+          role: true,
+          subscriptionTier: true,
+          rating: true,
+          totalSales: true,
+          onboardingComplete: true,
+          banned: true,
+        },
+      },
+    },
+  })
+
+  // Check if session exists and hasn't expired
+  if (!session || session.expires < new Date()) {
+    return null
+  }
+
+  // Check if user is banned
+  if (session.user.banned) {
+    return null
+  }
+
+  return {
+    user: {
+      id: session.user.id,
+      email: session.user.email!,
+      name: session.user.name,
+      image: session.user.image,
+      username: session.user.username,
+      role: session.user.role as 'USER' | 'MODERATOR' | 'ADMIN',
+      subscriptionTier: session.user.subscriptionTier,
+      rating: session.user.rating,
+      totalSales: session.user.totalSales,
+      onboardingComplete: session.user.onboardingComplete,
+      banned: false,
+    },
+    source: 'mobile' as const,
   }
 }

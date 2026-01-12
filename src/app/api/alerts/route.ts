@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 
 /**
  * GET /api/alerts
@@ -9,14 +8,16 @@ import { authOptions } from '@/lib/auth'
  */
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     const alerts = await prisma.deviceAlert.findMany({
       where: { userId: session.user.id },
@@ -46,14 +47,16 @@ const ALERT_LIMITS = {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     // Check subscription tier alert limit
     const user = await prisma.user.findUnique({
