@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 
 /**
  * GET /api/messages/unread-count
@@ -9,15 +8,15 @@ import { authOptions } from '@/lib/auth'
  */
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json({ count: 0 })
     }
 
     const count = await prisma.message.count({
       where: {
-        receiverId: session.user.id,
+        receiverId: auth.user.id,
         read: false,
         blocked: false,
       },

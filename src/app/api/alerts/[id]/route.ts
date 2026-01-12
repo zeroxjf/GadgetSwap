@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 
 /**
  * GET /api/alerts/[id]
@@ -12,9 +11,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -28,7 +27,7 @@ export async function GET(
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 })
     }
 
-    if (alert.userId !== session.user.id) {
+    if (alert.userId !== auth.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
@@ -48,9 +47,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -66,7 +65,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 })
     }
 
-    if (existingAlert.userId !== session.user.id) {
+    if (existingAlert.userId !== auth.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
@@ -132,9 +131,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -150,7 +149,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 })
     }
 
-    if (alert.userId !== session.user.id) {
+    if (alert.userId !== auth.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 
 /**
  * GET /api/notifications
@@ -9,9 +8,9 @@ import { authOptions } from '@/lib/auth'
  */
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
@@ -19,7 +18,7 @@ export async function GET() {
     }
 
     const notifications = await prisma.notification.findMany({
-      where: { userId: session.user.id },
+      where: { userId: auth.user.id },
       orderBy: { createdAt: 'desc' },
       take: 50,
     })

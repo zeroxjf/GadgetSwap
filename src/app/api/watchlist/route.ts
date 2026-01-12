@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { isCurrentUserBanned } from '@/lib/admin'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
@@ -21,14 +20,16 @@ export async function GET(request: NextRequest) {
       return rateLimitResponse(rateCheck.resetIn)
     }
 
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     const watchlist = await prisma.watchlist.findMany({
       where: { userId: session.user.id },
@@ -78,14 +79,16 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse(rateCheck.resetIn)
     }
 
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     // Check if user is banned
     if (await isCurrentUserBanned()) {
