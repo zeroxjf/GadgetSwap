@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 
 /**
  * GET /api/user/purchases
@@ -9,14 +8,16 @@ import { authOptions } from '@/lib/auth'
  */
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     const purchases = await prisma.transaction.findMany({
       where: { buyerId: session.user.id },

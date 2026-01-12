@@ -9,9 +9,12 @@ export interface SendEmailOptions {
   subject: string
   html: string
   text?: string
+  cc?: string | string[]
+  bcc?: string | string[]
+  replyTo?: string
 }
 
-export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
+export async function sendEmail({ to, subject, html, text, cc, bcc, replyTo }: SendEmailOptions) {
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -19,6 +22,9 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
       subject,
       html,
       text,
+      ...(cc && { cc: Array.isArray(cc) ? cc : [cc] }),
+      ...(bcc && { bcc: Array.isArray(bcc) ? bcc : [bcc] }),
+      ...(replyTo && { reply_to: replyTo }),
     })
 
     if (error) {

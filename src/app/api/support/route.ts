@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit, rateLimitResponse, rateLimits } from '@/lib/rate-limit'
 
@@ -16,7 +15,8 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse(rateCheck.resetIn)
     }
 
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
+    const session = auth?.user ? { user: auth.user } : null
     const body = await request.json()
     const { type, message, email, pageUrl } = body
 

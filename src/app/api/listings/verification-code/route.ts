@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { createUniqueVerificationCode } from '@/lib/verification'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
@@ -16,13 +15,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Check authentication
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const auth = await getAuthenticatedUser()
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     // Generate a unique verification code with user binding and 1-hour expiration
     // SECURITY: Code is tied to this user and expires after 1 hour

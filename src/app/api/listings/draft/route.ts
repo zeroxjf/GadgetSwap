@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // Get user's current draft
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const auth = await getAuthenticatedUser()
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const session = { user: auth.user }
 
     // Find the user's most recent draft
     const draft = await prisma.listing.findFirst({
@@ -37,10 +38,12 @@ export async function GET(request: NextRequest) {
 // Create or update a draft
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const auth = await getAuthenticatedUser()
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const session = { user: auth.user }
 
     const body = await request.json()
     const { draftId, formData, images, verificationCode, verificationPhotoUrl } = body
@@ -159,10 +162,12 @@ export async function POST(request: NextRequest) {
 // Delete a draft
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const auth = await getAuthenticatedUser()
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const session = { user: auth.user }
 
     const { searchParams } = new URL(request.url)
     const draftId = searchParams.get('id')

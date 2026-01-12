@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { issueRefund } from '@/lib/stripe'
 import { isAdmin } from '@/lib/admin'
@@ -14,12 +13,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
     const { id } = await params
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const session = { user: auth.user }
 
     // Check if user is admin using database role
     if (!(await isAdmin())) {

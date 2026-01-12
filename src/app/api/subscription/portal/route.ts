@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { stripeClient, createBillingPortalSession } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 
@@ -17,14 +16,16 @@ import { prisma } from '@/lib/prisma'
  */
 export async function POST() {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     // Get user's Stripe account ID (V2) or customer ID (legacy)
     const user = await prisma.user.findUnique({

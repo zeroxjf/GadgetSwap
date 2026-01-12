@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // Early adopter lifetime Pro offer - ENDED
@@ -9,10 +8,12 @@ const EARLY_ADOPTER_ENABLED = false
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const auth = await getAuthenticatedUser()
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const session = { user: auth.user }
 
     // Check if early adopter offer is still active
     if (!EARLY_ADOPTER_ENABLED) {
@@ -56,10 +57,12 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const auth = await getAuthenticatedUser()
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const session = { user: auth.user }
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },

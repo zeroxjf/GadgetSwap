@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createExpressDashboardLink } from '@/lib/stripe'
 
@@ -10,14 +9,16 @@ import { createExpressDashboardLink } from '@/lib/stripe'
  */
 export async function POST() {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },

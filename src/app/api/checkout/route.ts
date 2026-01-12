@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { stripe, calculateFees, STRIPE_FEE_PERCENT, STRIPE_FEE_FIXED, PLATFORM_FEES } from '@/lib/stripe'
 import { calculateTax } from '@/lib/tax'
@@ -20,14 +19,16 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse(rateCheck.resetIn)
     }
 
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'Please sign in to make a purchase' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     // SECURITY: Check if user is banned
     if (await isCurrentUserBanned()) {

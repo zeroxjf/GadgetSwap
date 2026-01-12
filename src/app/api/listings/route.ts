@@ -348,7 +348,8 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
+    const session = auth?.user ? { user: auth.user } : null
     const searchParams = request.nextUrl.searchParams
 
     // Pagination

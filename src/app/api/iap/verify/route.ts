@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { verifyReceipt, updateUserSubscriptionFromIAP, IAP_PRODUCTS } from '@/lib/apple-iap'
 
 /**
@@ -9,11 +8,13 @@ import { verifyReceipt, updateUserSubscriptionFromIAP, IAP_PRODUCTS } from '@/li
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const session = { user: auth.user }
 
     const { receiptData } = await request.json()
 

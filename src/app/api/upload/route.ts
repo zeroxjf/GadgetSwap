@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { uploadImage } from '@/lib/cloudinary'
 import { isCurrentUserBanned } from '@/lib/admin'
 
@@ -12,13 +11,15 @@ import { isCurrentUserBanned } from '@/lib/admin'
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
+    const auth = await getAuthenticatedUser()
+    if (!auth?.user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     // SECURITY: Check if user is banned
     if (await isCurrentUserBanned()) {

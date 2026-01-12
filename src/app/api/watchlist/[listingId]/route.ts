@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 
 /**
  * DELETE /api/watchlist/[listingId]
@@ -12,14 +11,16 @@ export async function DELETE(
   { params }: { params: Promise<{ listingId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     const { listingId } = await params
 

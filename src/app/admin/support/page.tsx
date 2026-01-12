@@ -17,7 +17,16 @@ import {
   XCircle,
   ExternalLink,
   Mail,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react'
+
+interface Toast {
+  type: 'success' | 'error' | 'info'
+  title: string
+  message: string
+  details?: string[]
+}
 
 interface Ticket {
   id: string
@@ -52,6 +61,15 @@ export default function AdminSupportPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [responseText, setResponseText] = useState('')
   const [updating, setUpdating] = useState<string | null>(null)
+  const [toast, setToast] = useState<Toast | null>(null)
+
+  // Auto-dismiss toast after 8 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 8000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
 
   const fetchTickets = async () => {
     setLoading(true)
@@ -86,6 +104,8 @@ export default function AdminSupportPage() {
         }),
       })
 
+      const data = await res.json()
+
       if (res.ok) {
         setTickets((prev) =>
           prev.map((t) =>
@@ -95,11 +115,51 @@ export default function AdminSupportPage() {
           )
         )
         setResponseText('')
+
+        // Show success toast with email delivery details
+        if (response) {
+          if (data.emailSent) {
+            setToast({
+              type: 'success',
+              title: 'Response Sent Successfully',
+              message: 'Your response has been saved and emailed to the user.',
+              details: [
+                `Email sent to: ${data.emailRecipient}`,
+                `CC copy sent to: ${data.emailCc}`,
+              ],
+            })
+          } else {
+            setToast({
+              type: 'info',
+              title: 'Response Saved (Email Not Sent)',
+              message: data.emailError || 'Response saved but email could not be sent.',
+              details: data.emailError ? [`Reason: ${data.emailError}`] : undefined,
+            })
+          }
+        } else {
+          setToast({
+            type: 'success',
+            title: 'Ticket Updated',
+            message: `Ticket status changed to ${newStatus.replace('_', ' ').toLowerCase()}.`,
+          })
+        }
+
         // Update stats
         fetchTickets()
+      } else {
+        setToast({
+          type: 'error',
+          title: 'Update Failed',
+          message: data.error || 'Failed to update ticket.',
+        })
       }
     } catch (error) {
       console.error('Failed to update ticket:', error)
+      setToast({
+        type: 'error',
+        title: 'Error',
+        message: 'An unexpected error occurred.',
+      })
     } finally {
       setUpdating(null)
     }
@@ -152,6 +212,63 @@ export default function AdminSupportPage() {
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg border animate-in slide-in-from-right-5 ${
+          toast.type === 'success' ? 'bg-green-50 dark:bg-green-900/50 border-green-200 dark:border-green-700' :
+          toast.type === 'error' ? 'bg-red-50 dark:bg-red-900/50 border-red-200 dark:border-red-700' :
+          'bg-blue-50 dark:bg-blue-900/50 border-blue-200 dark:border-blue-700'
+        }`}>
+          <div className="flex items-start gap-3">
+            <div className={`flex-shrink-0 ${
+              toast.type === 'success' ? 'text-green-600 dark:text-green-400' :
+              toast.type === 'error' ? 'text-red-600 dark:text-red-400' :
+              'text-blue-600 dark:text-blue-400'
+            }`}>
+              {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> :
+               toast.type === 'error' ? <XCircle className="w-5 h-5" /> :
+               <AlertCircle className="w-5 h-5" />}
+            </div>
+            <div className="flex-1">
+              <p className={`font-semibold ${
+                toast.type === 'success' ? 'text-green-800 dark:text-green-200' :
+                toast.type === 'error' ? 'text-red-800 dark:text-red-200' :
+                'text-blue-800 dark:text-blue-200'
+              }`}>{toast.title}</p>
+              <p className={`text-sm mt-1 ${
+                toast.type === 'success' ? 'text-green-700 dark:text-green-300' :
+                toast.type === 'error' ? 'text-red-700 dark:text-red-300' :
+                'text-blue-700 dark:text-blue-300'
+              }`}>{toast.message}</p>
+              {toast.details && toast.details.length > 0 && (
+                <ul className={`mt-2 text-xs space-y-1 ${
+                  toast.type === 'success' ? 'text-green-600 dark:text-green-400' :
+                  toast.type === 'error' ? 'text-red-600 dark:text-red-400' :
+                  'text-blue-600 dark:text-blue-400'
+                }`}>
+                  {toast.details.map((detail, i) => (
+                    <li key={i} className="flex items-center gap-1">
+                      <Mail className="w-3 h-3" />
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className={`flex-shrink-0 ${
+                toast.type === 'success' ? 'text-green-500 hover:text-green-700' :
+                toast.type === 'error' ? 'text-red-500 hover:text-red-700' :
+                'text-blue-500 hover:text-blue-700'
+              }`}
+            >
+              <XCircle className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Support Tickets</h1>
         <button
