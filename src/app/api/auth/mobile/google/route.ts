@@ -158,6 +158,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      sessionToken, // Return token for mobile apps to store
       user: {
         id: user.id,
         email: user.email,
