@@ -38,12 +38,18 @@ model User {
   // Role for admin access
   role          UserRole  @default(USER)
 
-  // Subscription
+  // Subscription (Stripe)
   subscriptionTier   SubscriptionTier @default(FREE)
   subscriptionId     String?           // Stripe subscription ID
   subscriptionStatus String?           // Subscription status: active, canceled, past_due, etc.
   subscriptionEnd    DateTime?
   stripeCustomerId   String?           // Stripe customer ID for subscriptions
+
+  // Apple In-App Purchase
+  iapOriginalTransactionId String?     @unique  // Apple's original transaction ID
+  iapProductId             String?              // e.g., "com.JFTech.GadgetSwap.plus.monthly"
+  iapExpiresAt             DateTime?            // When IAP subscription expires
+  iapEnvironment           String?              // "Production" or "Sandbox"
 
   // Onboarding
   onboardingComplete    Boolean   @default(false) // Has seen/completed initial setup flow
