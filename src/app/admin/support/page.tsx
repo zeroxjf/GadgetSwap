@@ -427,7 +427,11 @@ export default function AdminSupportPage() {
                         {getStatusBadge(ticket.status)}
                         {getPriorityBadge(ticket.priority)}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
+                        <span className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+                          #{ticket.id.slice(0, 8)}
+                        </span>
+                        <span>•</span>
                         {ticket.user ? (
                           <span className="flex items-center gap-1">
                             <User className="w-3 h-3" />

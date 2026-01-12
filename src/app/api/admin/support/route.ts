@@ -167,8 +167,11 @@ export async function PATCH(request: NextRequest) {
         emailRecipient = recipientEmail
 
         try {
+          const ticketRef = ticketId.slice(0, 8).toUpperCase()
+
           const emailContent = wrapEmailTemplate(`
             <h2 style="color:#1f2937;margin:0 0 16px;">Support Ticket Update</h2>
+            <p style="color:#6b7280;margin:0 0 8px;font-size:12px;">Reference: <strong style="font-family:monospace;">#${ticketRef}</strong></p>
             <p style="color:#4b5563;margin:0 0 16px;">Hi ${recipientName},</p>
             <p style="color:#4b5563;margin:0 0 16px;">We've responded to your support ticket.</p>
 
@@ -182,13 +185,13 @@ export async function PATCH(request: NextRequest) {
               <p style="color:#374151;margin:0;white-space:pre-wrap;">${adminResponse}</p>
             </div>
 
-            <p style="color:#4b5563;margin:24px 0 0;">If you have any more questions, feel free to reply to this email or submit a new support request.</p>
+            <p style="color:#4b5563;margin:24px 0 0;">If you have any more questions, feel free to reply to this email and reference ticket <strong>#${ticketRef}</strong>.</p>
             <p style="color:#4b5563;margin:16px 0 0;">Best regards,<br>The GadgetSwap Team</p>
           `, 'Your support ticket has been answered')
 
           await sendEmail({
             to: recipientEmail,
-            subject: `Re: Your GadgetSwap Support Request`,
+            subject: `Re: Support Ticket #${ticketRef} - GadgetSwap`,
             html: emailContent,
             cc: ADMIN_CC_EMAIL,
             replyTo: ADMIN_CC_EMAIL,
