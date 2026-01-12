@@ -174,6 +174,9 @@ function NewListingContent() {
   // Auto-detected jailbreak compatibility
   const [jailbreakCompat, setJailbreakCompat] = useState<JailbreakResult | null>(null)
 
+  // Cellular capability (for iPads - WiFi only vs WiFi + Cellular)
+  const [hasCellular, setHasCellular] = useState(false)
+
   // IMEI verification state
   const [imeiVerification, setImeiVerification] = useState<IMEIVerification>({
     imei: '',
@@ -367,7 +370,8 @@ function NewListingContent() {
       if (field === 'deviceType') {
         newData.deviceModel = ''
         newData.storageGB = ''
-        // Reset IMEI verification when device type changes
+        // Reset cellular toggle and IMEI verification when device type changes
+        setHasCellular(false)
         setImeiVerification({
           imei: '',
           isVerifying: false,
@@ -389,7 +393,8 @@ function NewListingContent() {
   }
 
   // Check if current device type requires IMEI
-  const requiresIMEI = ['IPHONE', 'IPAD'].includes(formData.deviceType)
+  // iPhones always have cellular, iPads only if user selects cellular model
+  const requiresIMEI = formData.deviceType === 'IPHONE' || (formData.deviceType === 'IPAD' && hasCellular)
 
   // Verify IMEI
   const verifyIMEI = async () => {
@@ -1102,6 +1107,56 @@ function NewListingContent() {
                       <p className="text-sm text-gray-500 mt-1">Select a device type first</p>
                     )}
                   </div>
+
+                  {/* WiFi/Cellular Toggle for iPads */}
+                  {formData.deviceType === 'IPAD' && (
+                    <div className="mt-4">
+                      <label className="label mb-2 block">Connectivity</label>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHasCellular(false)
+                            // Reset IMEI when switching to WiFi only
+                            setImeiVerification({
+                              imei: '',
+                              isVerifying: false,
+                              verified: false,
+                              error: null,
+                              rateLimited: false,
+                              waitTime: 0,
+                              verifiedModel: null,
+                            })
+                          }}
+                          className={`flex-1 p-3 rounded-lg border text-center transition-colors ${
+                            !hasCellular
+                              ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/50'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className={`font-medium ${!hasCellular ? 'text-primary-700 dark:text-primary-300' : ''}`}>
+                            WiFi Only
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setHasCellular(true)}
+                          className={`flex-1 p-3 rounded-lg border text-center transition-colors ${
+                            hasCellular
+                              ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/50'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className={`font-medium ${hasCellular ? 'text-primary-700 dark:text-primary-300' : ''}`}>
+                            WiFi + Cellular
+                          </span>
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {hasCellular ? 'IMEI verification required for cellular models' : 'No IMEI required for WiFi-only models'}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right column - Condition */}
@@ -1427,15 +1482,18 @@ function NewListingContent() {
                   {/* Hardware attestation */}
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-x-6 gap-y-2">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.imeiClean}
-                          onChange={(e) => updateFormData('imeiClean', e.target.checked)}
-                          className="rounded border-gray-300 text-primary-600"
-                        />
-                        <span className="text-sm">Clean IMEI</span>
-                      </label>
+                      {/* Only show Clean IMEI for cellular devices */}
+                      {requiresIMEI && (
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.imeiClean}
+                            onChange={(e) => updateFormData('imeiClean', e.target.checked)}
+                            className="rounded border-gray-300 text-primary-600"
+                          />
+                          <span className="text-sm">Clean IMEI</span>
+                        </label>
+                      )}
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
