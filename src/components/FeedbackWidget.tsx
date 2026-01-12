@@ -25,7 +25,7 @@ export function FeedbackWidget() {
   const pathname = usePathname()
 
   const [isOpen, setIsOpen] = useState(false)
-  const [type, setType] = useState<TicketType>('feedback')
+  const [type, setType] = useState<TicketType>('bug')
   const [priority, setPriority] = useState<Priority>('normal')
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
