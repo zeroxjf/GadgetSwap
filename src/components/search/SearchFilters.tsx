@@ -42,10 +42,7 @@ function FilterSection({ title, children, defaultOpen = true }: FilterSectionPro
 export function SearchFilters() {
   const searchParams = useSearchParams()
 
-  // Initialize from URL params
-  const initialDeviceType = searchParams.get('deviceType')?.split(',') || []
-
-  const [selectedDeviceTypes, setSelectedDeviceTypes] = useState<string[]>(initialDeviceType)
+  const [selectedDeviceTypes, setSelectedDeviceTypes] = useState<string[]>([])
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [selectedConditions, setSelectedConditions] = useState<string[]>([])
   const [selectedJBStatus, setSelectedJBStatus] = useState<string[]>([])
@@ -54,6 +51,25 @@ export function SearchFilters() {
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [bootromOnly, setBootromOnly] = useState(false)
+
+  // Sync state with URL params when they change
+  useEffect(() => {
+    const deviceTypeParam = searchParams.get('deviceType')
+    const newDeviceTypes = deviceTypeParam ? deviceTypeParam.split(',') : []
+    setSelectedDeviceTypes(newDeviceTypes)
+
+    // Also sync other params
+    const jbStatus = searchParams.get('jailbreakStatus')
+    setSelectedJBStatus(jbStatus ? jbStatus.split(',') : [])
+
+    const conditionParam = searchParams.get('condition')
+    setSelectedConditions(conditionParam ? conditionParam.split(',') : [])
+
+    setSelectediOSVersion(searchParams.get('osVersion') || '')
+    setMinPrice(searchParams.get('priceMin') || searchParams.get('minPrice') || '')
+    setMaxPrice(searchParams.get('priceMax') || searchParams.get('maxPrice') || '')
+    setBootromOnly(searchParams.get('bootromExploit') === 'true')
+  }, [searchParams])
 
   // Get available models based on selected device type
   const availableModels = selectedDeviceTypes.length === 1
