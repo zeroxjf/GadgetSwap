@@ -517,6 +517,7 @@ export async function GET(request: NextRequest) {
               username: true,
               image: true,
               rating: true,
+              ratingCount: true,
               totalSales: true,
             },
           },
