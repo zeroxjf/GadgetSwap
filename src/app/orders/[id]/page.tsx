@@ -419,7 +419,7 @@ export default function OrderDetailPage() {
 
                 {/* Open Dispute (either party, before funds released) */}
                 {transaction.fundsHeld &&
-                  !['PENDING', 'DISPUTED', 'REFUNDED', 'CANCELLED'].includes(transaction.status) && (
+                  !['PENDING', 'COMPLETED', 'DISPUTED', 'REFUNDED', 'CANCELLED'].includes(transaction.status) && (
                     <button
                       onClick={() => {
                         const reason = prompt('Please describe the issue:')
