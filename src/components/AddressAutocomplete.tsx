@@ -14,6 +14,9 @@ declare global {
             options?: google.maps.places.AutocompleteOptions
           ) => google.maps.places.Autocomplete
         }
+        event: {
+          clearInstanceListeners: (instance: unknown) => void
+        }
       }
     }
     initGooglePlaces: () => void
