@@ -86,7 +86,7 @@ interface MarketStats {
 
 function ProUpsellOverlay() {
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center">
+    <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/20">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md mx-4 text-center">
         <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-500 rounded-full flex items-center justify-center mx-auto mb-6">
           <Crown className="w-8 h-8 text-white" />
