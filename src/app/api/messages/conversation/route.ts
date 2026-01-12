@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 // Rate limit config: 60 requests per minute
@@ -19,9 +18,9 @@ export async function GET(request: NextRequest) {
       return rateLimitResponse(rateCheck.resetIn)
     }
 
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const currentUserId = session.user.id
+    const currentUserId = auth.user.id
 
     // Build query conditions
     const whereConditions: any = {

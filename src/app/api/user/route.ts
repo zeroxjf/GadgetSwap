@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // System user ID for deleted users - used to maintain referential integrity
@@ -37,13 +36,13 @@ async function ensureDeletedUserExists(tx: any): Promise<string> {
  */
 export async function DELETE() {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    const userId = auth.user.id
 
     // Check for active transactions (can't delete if pending sales/purchases)
     const activeTransactions = await prisma.transaction.findFirst({

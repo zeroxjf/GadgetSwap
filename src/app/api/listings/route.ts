@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import crypto from 'crypto'
 import { createNotification } from '@/lib/notifications'
 import { logActivity } from '@/lib/activity'
@@ -33,18 +32,20 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse(rateCheck.resetIn)
     }
 
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in to create a listing' },
         { status: 401 }
       )
     }
 
+    const session = { user: auth.user }
+
     // Check subscription tier listing limit
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: auth.user.id },
       select: { subscriptionTier: true, role: true },
     })
 

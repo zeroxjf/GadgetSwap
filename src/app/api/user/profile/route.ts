@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 /**
@@ -9,14 +8,14 @@ import { prisma } from '@/lib/prisma'
  */
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: auth.user.id },
       select: {
         id: true,
         email: true,
@@ -54,50 +53,46 @@ export async function GET() {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
-    const { name, username, bio, location, image } = body
+    const { name, username, bio, location } = body
 
     // Validate username if provided
-    if (username !== undefined) {
-      // Check username format
-      if (username && !/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-        return NextResponse.json({
-          error: 'Username must be 3-20 characters and contain only letters, numbers, and underscores',
-        }, { status: 400 })
+    if (username) {
+      // Check username format (alphanumeric and underscores only)
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        return NextResponse.json(
+          { error: 'Username can only contain letters, numbers, and underscores' },
+          { status: 400 }
+        )
       }
 
-      // Check if username is taken (by another user)
-      if (username) {
-        const existingUser = await prisma.user.findFirst({
-          where: {
-            username,
-            NOT: { id: session.user.id },
-          },
-        })
+      // Check if username is taken by another user
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          username,
+          id: { not: auth.user.id },
+        },
+      })
 
-        if (existingUser) {
-          return NextResponse.json({ error: 'Username is already taken' }, { status: 400 })
-        }
+      if (existingUser) {
+        return NextResponse.json({ error: 'Username is already taken' }, { status: 400 })
       }
     }
 
-    // Build update data
-    const updateData: any = {}
-    if (name !== undefined) updateData.name = name
-    if (username !== undefined) updateData.username = username || null
-    if (bio !== undefined) updateData.bio = bio || null
-    if (location !== undefined) updateData.location = location || null
-    if (image !== undefined) updateData.image = image || null
-
     const user = await prisma.user.update({
-      where: { id: session.user.id },
-      data: updateData,
+      where: { id: auth.user.id },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(username !== undefined && { username }),
+        ...(bio !== undefined && { bio }),
+        ...(location !== undefined && { location }),
+      },
       select: {
         id: true,
         email: true,
@@ -109,7 +104,7 @@ export async function PUT(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ user, message: 'Profile updated successfully' })
+    return NextResponse.json({ user })
   } catch (error) {
     console.error('Update profile error:', error)
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })

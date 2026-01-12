@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/auth'
 import { moderateMessage, getFlagExplanation } from '@/lib/message-moderation'
 import { createNotification } from '@/lib/notifications'
 import { logActivity } from '@/lib/activity'
@@ -26,16 +25,16 @@ import { isCurrentUserBanned } from '@/lib/admin'
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
       )
     }
 
-    const userId = session.user.id
+    const userId = auth.user.id
 
     // Step 1: Get distinct conversation partners with latest message timestamp
     // This is more efficient than loading all messages
@@ -163,14 +162,16 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse(rateCheck.resetIn)
     }
 
-    const session = await getServerSession(authOptions)
+    const auth = await getAuthenticatedUser()
 
-    if (!session?.user?.id) {
+    if (!auth?.user?.id) {
       return NextResponse.json(
         { error: 'You must be signed in' },
         { status: 401 }
       )
     }
+
+    const session = { user: auth.user }
 
     // SECURITY: Check if user is banned
     if (await isCurrentUserBanned()) {
