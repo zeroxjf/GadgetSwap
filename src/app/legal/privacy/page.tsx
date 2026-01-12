@@ -17,7 +17,7 @@ export default function PrivacyPage() {
 
         <div className="card p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
-          <p className="text-gray-500 mb-8">Last updated: January 10, 2025</p>
+          <p className="text-gray-500 mb-8">Last updated: January 11, 2025</p>
 
           <div className="prose prose-gray max-w-none">
             <section className="mb-8">
@@ -37,8 +37,9 @@ export default function PrivacyPage() {
                 <li>Name and email address</li>
                 <li>Username and profile information (bio, location)</li>
                 <li>Profile photo (optional)</li>
-                <li>Authentication data from Google Sign-In (if used)</li>
+                <li>Authentication data from Google Sign-In or Apple Sign-In (if used)</li>
                 <li>Notification preferences</li>
+                <li>Anonymous device tokens for push notifications (iOS app)</li>
               </ul>
 
               <h3 className="text-lg font-medium text-gray-900 mt-4 mb-2">Listing Information</h3>
@@ -115,6 +116,7 @@ export default function PrivacyPage() {
                 <li><strong>Cloudinary</strong> - Image hosting and storage for listing photos</li>
                 <li><strong>Google OAuth</strong> - Optional sign-in with Google</li>
                 <li><strong>Apple Sign-In</strong> - Optional sign-in with Apple</li>
+                <li><strong>Apple Push Notification service (APNs)</strong> - Push notifications for the iOS app</li>
                 <li><strong>Shipping carriers</strong> (UPS, FedEx, USPS) - Package tracking via their APIs</li>
                 <li><strong>Vercel</strong> - Website hosting and analytics</li>
                 <li><strong>PostgreSQL database</strong> - Data storage (hosted securely)</li>
@@ -170,7 +172,23 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">7. Cookies and Tracking</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">7. Mobile App</h2>
+              <p className="text-gray-600 mb-4">
+                When you use our iOS app, we collect additional information:
+              </p>
+              <ul className="list-disc pl-6 text-gray-600 space-y-2">
+                <li><strong>Device tokens</strong> - Anonymous identifiers assigned by Apple for sending push notifications (these do not personally identify you)</li>
+                <li><strong>App usage data</strong> - Listing views, app interactions, and feature usage</li>
+                <li><strong>In-App Purchase data</strong> - Subscription status and transaction IDs (processed by Apple)</li>
+              </ul>
+              <p className="text-gray-600 mt-4">
+                Push notification tokens are stored on our servers and used solely for delivering notifications
+                you have opted into. You can disable push notifications in your device settings at any time.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">8. Cookies and Tracking</h2>
               <p className="text-gray-600 mb-4">
                 We use cookies and similar technologies to:
               </p>
@@ -187,7 +205,7 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">8. Data Retention</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">9. Data Retention</h2>
               <p className="text-gray-600 mb-4">
                 We retain your information for as long as your account is active or as needed to provide services.
                 After account deletion, we may retain certain information as required by law or for legitimate
@@ -205,7 +223,7 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">9. Children's Privacy</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">10. Children's Privacy</h2>
               <p className="text-gray-600 mb-4">
                 GadgetSwap is not intended for users under 18 years of age. We do not knowingly collect
                 information from children under 18. If you believe a child has provided us with personal
@@ -214,7 +232,7 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">10. International Users</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">11. International Users</h2>
               <p className="text-gray-600 mb-4">
                 GadgetSwap is based in the United States. If you access our services from outside the US,
                 your information may be transferred to and processed in the US, where data protection laws
@@ -223,7 +241,7 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">11. Changes to This Policy</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">12. Changes to This Policy</h2>
               <p className="text-gray-600 mb-4">
                 We may update this Privacy Policy from time to time. We will notify you of significant
                 changes by email or through the Service. Your continued use after changes indicates
@@ -232,7 +250,7 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">12. Contact Us</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">13. Contact Us</h2>
               <p className="text-gray-600">
                 For questions or concerns about this Privacy Policy or our data practices, contact us at:
               </p>
