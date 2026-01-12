@@ -1,7 +1,8 @@
 /**
  * Jailbreak Compatibility Checker
  * Uses comprehensive device database from apple-devices.ts
- * Data sourced from ios.cfw.guide
+ * Data sourced from The Apple Wiki and ios.cfw.guide
+ * Last updated: January 2026
  */
 
 import {
@@ -157,23 +158,35 @@ export function checkJailbreakCompatibility(
   const hasBootromExploit = checkm8Chips.includes(chip)
   const tools: JailbreakTool[] = []
 
-  // Check palera1n (A11 and earlier, iOS 15.0+)
-  // Source: https://ios.cfw.guide/installing-palera1n/
-  if (isChipAtOrBefore(chip, 'A11') && compareVersions(iosVersion, '15.0') >= 0) {
-    tools.push({
-      name: 'palera1n',
-      type: 'semi-tethered',
-      website: 'https://palera.in',
-      notes: chip === 'A11' ? 'A11 devices must disable passcode' : undefined,
-    })
+  // Check palera1n (A8-A11 checkm8 devices)
+  // Source: The Apple Wiki - palera1n
+  // Supports: iOS 15.0-15.8.5, 16.0-16.7.12, 17.0-17.7.10, 18.0-18.7.1
+  const palera1nChips = ['A8', 'A8X', 'A9', 'A9X', 'A10', 'A10X', 'A11']
+  if (palera1nChips.includes(chip)) {
+    const palera1nSupported =
+      isVersionInRange(iosVersion, '15.0', '15.8.5') ||
+      isVersionInRange(iosVersion, '16.0', '16.7.12') ||
+      isVersionInRange(iosVersion, '17.0', '17.7.10') ||
+      isVersionInRange(iosVersion, '18.0', '18.7.1')
+
+    if (palera1nSupported) {
+      tools.push({
+        name: 'palera1n',
+        type: 'semi-tethered',
+        website: 'https://palera.in',
+        notes: chip === 'A11' ? 'A11 devices must disable passcode' : undefined,
+      })
+    }
   }
 
-  // Check Dopamine 2.0
-  // Source: https://ios.cfw.guide/installing-dopamine/ and https://ellekit.space/dopamine/
-  // - A8-A14: iOS 15.0 - 16.6.1
-  // - A15-A16: iOS 15.0 - 16.5 ONLY (NOT 16.5.1-16.6.1 due to PPL bypass)
-  // - M1: iOS 15.0 - 16.5.1
-  // - M2: iOS 15.0 - 16.5
+  // Check Dopamine 2.x
+  // Source: The Apple Wiki - Dopamine
+  // Precise version support:
+  // - A8-A11: iOS 15.0-15.8.5, 16.0-16.6.1
+  // - A12-A14: iOS 15.0-15.8.5, 16.0-16.6.1
+  // - A15-A16: iOS 15.0-15.8.5, 16.0-16.5 ONLY (NOT 16.5.1+ due to PPL bypass)
+  // - M1: iOS 15.0-15.8.5, 16.0-16.5.1
+  // - M2: iOS 15.0-15.8.5, 16.0-16.5
   const isA8toA11 = ['A8', 'A8X', 'A9', 'A9X', 'A10', 'A10X', 'A11'].includes(chip)
   const isA12toA14 = ['A12', 'A12X', 'A12Z', 'A13', 'A14'].includes(chip)
   const isA15orA16 = ['A15', 'A16'].includes(chip)
@@ -181,8 +194,11 @@ export function checkJailbreakCompatibility(
   const isM2 = chip === 'M2'
 
   if (isA8toA11 || isA12toA14) {
-    // A8-A14: Full iOS 15.0 - 16.6.1 support
-    if (isVersionInRange(iosVersion, '15.0', '16.6.1')) {
+    // A8-A14: iOS 15.0-15.8.5 and 16.0-16.6.1
+    const dopamineSupported =
+      isVersionInRange(iosVersion, '15.0', '15.8.5') ||
+      isVersionInRange(iosVersion, '16.0', '16.6.1')
+    if (dopamineSupported) {
       tools.push({
         name: 'Dopamine',
         type: 'semi-untethered',
@@ -190,8 +206,11 @@ export function checkJailbreakCompatibility(
       })
     }
   } else if (isA15orA16 || isM2) {
-    // A15-A16/M2: iOS 15.0 - 16.5 only (PPL bypass limitation)
-    if (isVersionInRange(iosVersion, '15.0', '16.5')) {
+    // A15-A16/M2: iOS 15.0-15.8.5 and 16.0-16.5 only (PPL bypass limitation)
+    const dopamineSupported =
+      isVersionInRange(iosVersion, '15.0', '15.8.5') ||
+      isVersionInRange(iosVersion, '16.0', '16.5')
+    if (dopamineSupported) {
       tools.push({
         name: 'Dopamine',
         type: 'semi-untethered',
@@ -199,8 +218,11 @@ export function checkJailbreakCompatibility(
       })
     }
   } else if (isM1) {
-    // M1: iOS 15.0 - 16.5.1
-    if (isVersionInRange(iosVersion, '15.0', '16.5.1')) {
+    // M1: iOS 15.0-15.8.5 and 16.0-16.5.1
+    const dopamineSupported =
+      isVersionInRange(iosVersion, '15.0', '15.8.5') ||
+      isVersionInRange(iosVersion, '16.0', '16.5.1')
+    if (dopamineSupported) {
       tools.push({
         name: 'Dopamine',
         type: 'semi-untethered',
@@ -226,18 +248,18 @@ export function checkJailbreakCompatibility(
     }
   }
 
-  // Check NathanLR (A12+ on iOS 16.5.1-16.6.1, 16.7 RC, and 17.0 ONLY)
-  // Source: https://theapplewiki.com/wiki/NathanLR
+  // Check NathanLR (A12+ on iOS 16.5.1-16.7 RC, and 17.0 ONLY)
+  // Source: The Apple Wiki - NathanLR
   // Note: iOS 17.0.1+ patches the exploit
   const isA12Plus = ['A12', 'A12X', 'A12Z', 'A13', 'A14', 'A15', 'A16', 'A17'].includes(chip)
   if (isA12Plus) {
-    // iOS 16.5.1-16.6.1 or exactly 17.0
-    if (isVersionInRange(iosVersion, '16.5.1', '16.6.1') || iosVersion === '17.0') {
+    // iOS 16.5.1-16.7 or exactly 17.0
+    if (isVersionInRange(iosVersion, '16.5.1', '16.7') || iosVersion === '17.0') {
       tools.push({
         name: 'NathanLR',
         type: 'semi-untethered',
         website: 'https://github.com/NathanLR/NathanLR',
-        notes: iosVersion === '17.0' ? 'iOS 17.0 only - 17.0.1+ not supported' : undefined,
+        notes: iosVersion === '17.0' ? 'iOS 17.0 only - 17.0.1+ not supported' : 'Semi-jailbreak',
       })
     }
   }
@@ -252,23 +274,51 @@ export function checkJailbreakCompatibility(
     })
   }
 
-  // Check unc0ver (iOS 11.0-14.3, or 14.6-14.8 for A12/A13)
-  if (isVersionInRange(iosVersion, '11.0', '14.3')) {
+  // Check XinaA15 (A12+ on iOS 15.0-15.1.1 ONLY)
+  // Source: The Apple Wiki - XinaA15
+  const xinaChips = ['A12', 'A12X', 'A12Z', 'A13', 'A14', 'A15', 'A16', 'M1', 'M2']
+  if (xinaChips.includes(chip) && isVersionInRange(iosVersion, '15.0', '15.1.1')) {
+    tools.push({
+      name: 'XinaA15',
+      type: 'semi-untethered',
+      website: 'https://github.com/jacksight/xina520_official_jailbreak',
+      notes: 'iOS 15.0-15.1.1 only',
+    })
+  }
+
+  // Check unc0ver
+  // Source: The Apple Wiki - unc0ver
+  // v8.0.2: iOS 14.0-14.3 (all), 14.6-14.8 (A12-A14 only)
+  // v6.2.0: iOS 11.0-14.3 (excluding 13.5.1 for some devices)
+  // Note: 13.5.1 patches the Sock Puppet exploit
+  const isUnc0verA12toA14 = ['A12', 'A12X', 'A12Z', 'A13', 'A14'].includes(chip)
+
+  // iOS 11.0-13.5 (13.5.1 excluded - patches Sock Puppet)
+  if (isVersionInRange(iosVersion, '11.0', '13.5') && iosVersion !== '13.5.1') {
     tools.push({
       name: 'unc0ver',
       type: 'semi-untethered',
       website: 'https://unc0ver.dev',
     })
-  } else if (isVersionInRange(iosVersion, '14.6', '14.8') && ['A12', 'A12X', 'A12Z', 'A13'].includes(chip)) {
+  } else if (isVersionInRange(iosVersion, '13.5.5', '14.3')) {
+    // iOS 13.5.5 beta through 14.3
     tools.push({
       name: 'unc0ver',
       type: 'semi-untethered',
       website: 'https://unc0ver.dev',
-      notes: 'A12/A13 only for iOS 14.6-14.8',
+    })
+  } else if (isVersionInRange(iosVersion, '14.6', '14.8') && isUnc0verA12toA14) {
+    // iOS 14.6-14.8 for A12-A14 only (Fugu14 based)
+    tools.push({
+      name: 'unc0ver',
+      type: 'semi-untethered',
+      website: 'https://unc0ver.dev',
+      notes: 'A12-A14 only for iOS 14.6-14.8',
     })
   }
 
   // Check Taurine (iOS 14.0-14.8.1)
+  // Source: The Apple Wiki - Taurine
   if (isVersionInRange(iosVersion, '14.0', '14.8.1') && isChipAtOrBefore(chip, 'A14')) {
     tools.push({
       name: 'Taurine',
@@ -277,7 +327,19 @@ export function checkJailbreakCompatibility(
     })
   }
 
-  // Check checkra1n (A11 and earlier, iOS 12.0-14.8.1)
+  // Check Odyssey (iOS 13.0-13.7, A9-A13)
+  // Source: The Apple Wiki - Odyssey
+  const odysseyChips = ['A9', 'A9X', 'A10', 'A10X', 'A11', 'A12', 'A12X', 'A12Z', 'A13']
+  if (odysseyChips.includes(chip) && isVersionInRange(iosVersion, '13.0', '13.7')) {
+    tools.push({
+      name: 'Odyssey',
+      type: 'semi-untethered',
+      website: 'https://theodyssey.dev',
+    })
+  }
+
+  // Check checkra1n (A5-A11, iOS 12.0-14.8.1)
+  // Source: The Apple Wiki - checkra1n
   if (hasBootromExploit && isVersionInRange(iosVersion, '12.0', '14.8.1')) {
     tools.push({
       name: 'checkra1n',
@@ -288,6 +350,7 @@ export function checkJailbreakCompatibility(
   }
 
   // Legacy: Chimera (iOS 12.0-12.5.7)
+  // Source: The Apple Wiki - Chimera
   if (isVersionInRange(iosVersion, '12.0', '12.5.7') && isChipAtOrBefore(chip, 'A12')) {
     tools.push({
       name: 'Chimera',
@@ -297,23 +360,73 @@ export function checkJailbreakCompatibility(
   }
 
   // Legacy: Electra (iOS 11.0-11.4.1)
+  // Source: The Apple Wiki - Electra
   if (isVersionInRange(iosVersion, '11.0', '11.4.1') && isChipAtOrBefore(chip, 'A11')) {
     tools.push({
       name: 'Electra',
       type: 'semi-untethered',
+      website: 'https://coolstar.org/electra/',
+    })
+  }
+
+  // Legacy: H3lix (iOS 10.0-10.3.4, 32-bit only)
+  // Source: The Apple Wiki - H3lix
+  const h3lixChips = ['A5', 'A5X', 'A6', 'A6X'] // 32-bit devices
+  if (h3lixChips.includes(chip) && isVersionInRange(iosVersion, '10.0', '10.3.4')) {
+    tools.push({
+      name: 'H3lix',
+      type: 'semi-untethered',
+      website: 'https://h3lix.tihmstar.net',
+      notes: '32-bit devices only',
+    })
+  }
+
+  // Legacy: socket (iOS 10.0.1-10.3.3, 64-bit)
+  // Source: The Apple Wiki - socket
+  const socketChips = ['A7', 'A8', 'A8X', 'A9', 'A9X', 'A10', 'A10X'] // 64-bit checkm8 devices
+  if (socketChips.includes(chip) && isVersionInRange(iosVersion, '10.0.1', '10.3.3')) {
+    tools.push({
+      name: 'socket',
+      type: 'semi-untethered',
+      website: 'https://github.com/nickcano/socket',
+      notes: '64-bit devices only',
+    })
+  }
+
+  // Legacy: doubleH3lix (iOS 10.0-10.3.4, 64-bit A7-A9)
+  // Source: The Apple Wiki - doubleH3lix
+  const dh3lixChips = ['A7', 'A8', 'A8X', 'A9', 'A9X']
+  if (dh3lixChips.includes(chip) && isVersionInRange(iosVersion, '10.0', '10.3.4')) {
+    tools.push({
+      name: 'doubleH3lix',
+      type: 'semi-untethered',
+      notes: 'A7-A9 64-bit devices',
+    })
+  }
+
+  // Legacy: Meridian (iOS 10.0-10.3.3)
+  // Source: The Apple Wiki - Meridian
+  if (isChipAtOrBefore(chip, 'A10X') && isVersionInRange(iosVersion, '10.0', '10.3.3')) {
+    tools.push({
+      name: 'Meridian',
+      type: 'semi-untethered',
+      website: 'https://meridian.sparkes.zone',
     })
   }
 
   // Legacy: Phoenix (iOS 9.3.5-9.3.6, 32-bit only)
+  // Source: The Apple Wiki - Phoenix
   if (isVersionInRange(iosVersion, '9.3.5', '9.3.6') && ['A5', 'A5X', 'A6', 'A6X'].includes(chip)) {
     tools.push({
       name: 'Phoenix',
       type: 'semi-untethered',
+      website: 'https://phoenixpwn.com',
       notes: '32-bit devices only',
     })
   }
 
   // Legacy: Home Depot (iOS 9.1-9.3.4, 32-bit only)
+  // Source: The Apple Wiki - Home Depot
   if (isVersionInRange(iosVersion, '9.1', '9.3.4') && ['A5', 'A5X', 'A6', 'A6X'].includes(chip)) {
     tools.push({
       name: 'Home Depot',
