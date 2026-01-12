@@ -31,15 +31,21 @@ export async function GET(request: NextRequest) {
 
     // Filters
     const status = searchParams.get('status') || 'PENDING_REVIEW'
+    const listingStatus = searchParams.get('listingStatus') // 'DRAFT' to show drafts
     const flaggedOnly = searchParams.get('flagged') === 'true'
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
     // Build where clause
-    // Exclude drafts - only show submitted listings in review queue
-    const where: any = {
-      reviewStatus: status,
-      status: { not: 'DRAFT' },
+    const where: any = {}
+
+    if (listingStatus === 'DRAFT') {
+      // Show drafts only
+      where.status = 'DRAFT'
+    } else {
+      // Normal review queue - exclude drafts
+      where.reviewStatus = status
+      where.status = { not: 'DRAFT' }
     }
 
     if (flaggedOnly) {
@@ -75,7 +81,7 @@ export async function GET(request: NextRequest) {
         skip: offset,
       }),
       prisma.listing.count({ where }),
-      // Get stats for dashboard (exclude drafts from all counts)
+      // Get stats for dashboard
       Promise.all([
         prisma.listing.count({ where: { reviewStatus: 'PENDING_REVIEW', status: { not: 'DRAFT' } } }),
         prisma.listing.count({
@@ -97,10 +103,12 @@ export async function GET(request: NextRequest) {
             },
           },
         }),
+        // Draft count
+        prisma.listing.count({ where: { status: 'DRAFT' } }),
       ]),
     ])
 
-    const [pendingCount, flaggedCount, approvedToday, rejectedToday] = stats
+    const [pendingCount, flaggedCount, approvedToday, rejectedToday, draftCount] = stats
 
     return NextResponse.json({
       listings: listings.map((listing) => ({
@@ -118,6 +126,7 @@ export async function GET(request: NextRequest) {
         flagged: flaggedCount,
         approvedToday,
         rejectedToday,
+        drafts: draftCount,
       },
     })
   } catch (error) {

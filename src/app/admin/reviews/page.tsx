@@ -22,6 +22,7 @@ import {
   Image as ImageIcon,
   Fingerprint,
   AlertOctagon,
+  FileEdit,
 } from 'lucide-react'
 
 interface ReviewListing {
@@ -59,7 +60,10 @@ interface Stats {
   flagged: number
   approvedToday: number
   rejectedToday: number
+  drafts: number
 }
+
+type ViewTab = 'pending' | 'drafts'
 
 export default function AdminReviewsPage() {
   const [listings, setListings] = useState<ReviewListing[]>([])
@@ -71,14 +75,21 @@ export default function AdminReviewsPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectModal, setShowRejectModal] = useState<string | null>(null)
   const [actionType, setActionType] = useState<'REJECTED' | 'NEEDS_INFO'>('REJECTED')
+  const [activeTab, setActiveTab] = useState<ViewTab>('pending')
 
   const fetchListings = async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({
-        status: 'PENDING_REVIEW',
-        ...(showFlaggedOnly && { flagged: 'true' }),
-      })
+      const params = new URLSearchParams()
+
+      if (activeTab === 'drafts') {
+        params.set('listingStatus', 'DRAFT')
+      } else {
+        params.set('status', 'PENDING_REVIEW')
+        if (showFlaggedOnly) {
+          params.set('flagged', 'true')
+        }
+      }
 
       const res = await fetch(`/api/admin/reviews?${params}`)
       const data = await res.json()
@@ -96,7 +107,7 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     fetchListings()
-  }, [showFlaggedOnly])
+  }, [showFlaggedOnly, activeTab])
 
   const handleAction = async (listingId: string, action: string, reason?: string) => {
     setActionLoading(listingId)
@@ -164,7 +175,7 @@ export default function AdminReviewsPage() {
     <div>
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-5 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
@@ -212,22 +223,64 @@ export default function AdminReviewsPage() {
               </div>
             </div>
           </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                <FileEdit className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.drafts}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">User Drafts</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* Tabs */}
+      <div className="flex items-center gap-1 mb-6 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
+        <button
+          onClick={() => setActiveTab('pending')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'pending'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          }`}
+        >
+          <Clock className="w-4 h-4 inline mr-2" />
+          Pending Review {stats?.pending ? `(${stats.pending})` : ''}
+        </button>
+        <button
+          onClick={() => setActiveTab('drafts')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'drafts'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          }`}
+        >
+          <FileEdit className="w-4 h-4 inline mr-2" />
+          User Drafts {stats?.drafts ? `(${stats.drafts})` : ''}
+        </button>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Review Queue</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          {activeTab === 'drafts' ? 'User Drafts' : 'Review Queue'}
+        </h2>
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={showFlaggedOnly}
-              onChange={(e) => setShowFlaggedOnly(e.target.checked)}
-              className="rounded border-gray-300"
-            />
-            <span className="text-gray-600 dark:text-gray-300">Flagged only</span>
-          </label>
+          {activeTab === 'pending' && (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={showFlaggedOnly}
+                onChange={(e) => setShowFlaggedOnly(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <span className="text-gray-600 dark:text-gray-300">Flagged only</span>
+            </label>
+          )}
           <button
             onClick={fetchListings}
             className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -241,13 +294,27 @@ export default function AdminReviewsPage() {
       {/* Listings */}
       {listings.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-12 text-center border border-gray-200 dark:border-gray-700">
-          <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            All caught up!
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400">
-            No listings pending review at the moment.
-          </p>
+          {activeTab === 'drafts' ? (
+            <>
+              <FileEdit className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                No drafts
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                No users have saved listing drafts at the moment.
+              </p>
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                All caught up!
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                No listings pending review at the moment.
+              </p>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -333,40 +400,48 @@ export default function AdminReviewsPage() {
 
                   {/* Quick Actions */}
                   <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => handleAction(listing.id, 'APPROVED')}
-                      disabled={actionLoading === listing.id}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                    >
-                      {actionLoading === listing.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4" />
-                      )}
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowRejectModal(listing.id)
-                        setActionType('REJECTED')
-                      }}
-                      disabled={actionLoading === listing.id}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-                    >
-                      <XCircle className="w-4 h-4" />
-                      Reject
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowRejectModal(listing.id)
-                        setActionType('NEEDS_INFO')
-                      }}
-                      disabled={actionLoading === listing.id}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      Info
-                    </button>
+                    {activeTab === 'drafts' ? (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-lg">
+                        Draft - View Only
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleAction(listing.id, 'APPROVED')}
+                          disabled={actionLoading === listing.id}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {actionLoading === listing.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <CheckCircle className="w-4 h-4" />
+                          )}
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowRejectModal(listing.id)
+                            setActionType('REJECTED')
+                          }}
+                          disabled={actionLoading === listing.id}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          Reject
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowRejectModal(listing.id)
+                            setActionType('NEEDS_INFO')
+                          }}
+                          disabled={actionLoading === listing.id}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          Info
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
