@@ -19,6 +19,9 @@ import {
   Mail,
   AlertCircle,
   CheckCircle2,
+  RotateCcw,
+  Flag,
+  AlertTriangle,
 } from 'lucide-react'
 
 interface Toast {
@@ -91,7 +94,7 @@ export default function AdminSupportPage() {
     fetchTickets()
   }, [statusFilter])
 
-  const handleUpdateStatus = async (ticketId: string, newStatus: string, response?: string) => {
+  const handleUpdateTicket = async (ticketId: string, updates: { status?: string; priority?: string; adminResponse?: string }) => {
     setUpdating(ticketId)
     try {
       const res = await fetch('/api/admin/support', {
@@ -99,8 +102,7 @@ export default function AdminSupportPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ticketId,
-          status: newStatus,
-          adminResponse: response,
+          ...updates,
         }),
       })
 
@@ -110,14 +112,19 @@ export default function AdminSupportPage() {
         setTickets((prev) =>
           prev.map((t) =>
             t.id === ticketId
-              ? { ...t, status: newStatus, adminResponse: response || t.adminResponse }
+              ? {
+                  ...t,
+                  status: updates.status || t.status,
+                  priority: updates.priority || t.priority,
+                  adminResponse: updates.adminResponse || t.adminResponse
+                }
               : t
           )
         )
         setResponseText('')
 
         // Show success toast with email delivery details
-        if (response) {
+        if (updates.adminResponse) {
           if (data.emailSent) {
             setToast({
               type: 'success',
@@ -136,11 +143,17 @@ export default function AdminSupportPage() {
               details: data.emailError ? [`Reason: ${data.emailError}`] : undefined,
             })
           }
-        } else {
+        } else if (updates.priority) {
+          setToast({
+            type: 'success',
+            title: 'Priority Updated',
+            message: `Ticket priority changed to ${updates.priority}.`,
+          })
+        } else if (updates.status) {
           setToast({
             type: 'success',
             title: 'Ticket Updated',
-            message: `Ticket status changed to ${newStatus.replace('_', ' ').toLowerCase()}.`,
+            message: `Ticket status changed to ${updates.status.replace('_', ' ').toLowerCase()}.`,
           })
         }
 
@@ -163,6 +176,16 @@ export default function AdminSupportPage() {
     } finally {
       setUpdating(null)
     }
+  }
+
+  // Wrapper for status updates
+  const handleUpdateStatus = (ticketId: string, newStatus: string, response?: string) => {
+    handleUpdateTicket(ticketId, { status: newStatus, adminResponse: response })
+  }
+
+  // Wrapper for priority updates
+  const handleUpdatePriority = (ticketId: string, newPriority: string) => {
+    handleUpdateTicket(ticketId, { priority: newPriority })
   }
 
   const getStatusBadge = (status: string) => {
@@ -199,15 +222,27 @@ export default function AdminSupportPage() {
     )
   }
 
-  const getPriorityBadge = (priority: string) => {
-    if (priority === 'high' || priority === 'urgent') {
-      return (
-        <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded">
-          {priority.toUpperCase()}
-        </span>
-      )
+  const getPriorityBadge = (priority: string, showAll = false) => {
+    const configs: Record<string, { color: string; icon?: React.ReactNode }> = {
+      low: { color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
+      normal: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' },
+      high: { color: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300', icon: <Flag className="w-3 h-3" /> },
+      urgent: { color: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300', icon: <AlertTriangle className="w-3 h-3" /> },
     }
-    return null
+
+    const config = configs[priority] || configs.normal
+
+    // Only show badge for high/urgent unless showAll is true
+    if (!showAll && priority !== 'high' && priority !== 'urgent') {
+      return null
+    }
+
+    return (
+      <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded ${config.color}`}>
+        {config.icon}
+        {priority.toUpperCase()}
+      </span>
+    )
   }
 
   return (
@@ -456,7 +491,48 @@ export default function AdminSupportPage() {
                     {/* Actions */}
                     <div>
                       <h4 className="font-medium text-gray-900 dark:text-white mb-3">Actions</h4>
+
+                      {/* Priority Selector */}
+                      <div className="mb-4">
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Priority</label>
+                        <div className="flex gap-1">
+                          {['low', 'normal', 'high', 'urgent'].map((p) => (
+                            <button
+                              key={p}
+                              onClick={() => handleUpdatePriority(ticket.id, p)}
+                              disabled={updating === ticket.id || ticket.priority === p}
+                              className={`flex-1 px-2 py-1.5 text-xs rounded-lg border transition-colors disabled:opacity-50 ${
+                                ticket.priority === p
+                                  ? p === 'urgent'
+                                    ? 'bg-red-600 text-white border-red-600'
+                                    : p === 'high'
+                                    ? 'bg-orange-500 text-white border-orange-500'
+                                    : p === 'normal'
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-gray-500 text-white border-gray-500'
+                                  : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                              }`}
+                            >
+                              {p.charAt(0).toUpperCase() + p.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Status Actions */}
                       <div className="space-y-2">
+                        {/* Reopen button for resolved/closed tickets */}
+                        {(ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') && (
+                          <button
+                            onClick={() => handleUpdateStatus(ticket.id, 'OPEN')}
+                            disabled={updating === ticket.id}
+                            className="w-full px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                          >
+                            {updating === ticket.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                            Reopen Ticket
+                          </button>
+                        )}
+
                         {ticket.status === 'OPEN' && (
                           <button
                             onClick={() => handleUpdateStatus(ticket.id, 'IN_PROGRESS')}
@@ -467,7 +543,19 @@ export default function AdminSupportPage() {
                             Mark In Progress
                           </button>
                         )}
-                        {ticket.status !== 'RESOLVED' && (
+
+                        {ticket.status === 'IN_PROGRESS' && (
+                          <button
+                            onClick={() => handleUpdateStatus(ticket.id, 'OPEN')}
+                            disabled={updating === ticket.id}
+                            className="w-full px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                          >
+                            {updating === ticket.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                            Move Back to Open
+                          </button>
+                        )}
+
+                        {ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && (
                           <button
                             onClick={() => handleUpdateStatus(ticket.id, 'RESOLVED')}
                             disabled={updating === ticket.id}
@@ -477,6 +565,7 @@ export default function AdminSupportPage() {
                             Mark Resolved
                           </button>
                         )}
+
                         {ticket.status !== 'CLOSED' && (
                           <button
                             onClick={() => handleUpdateStatus(ticket.id, 'CLOSED')}
@@ -490,10 +579,10 @@ export default function AdminSupportPage() {
                       </div>
 
                       {/* Response */}
-                      {!ticket.adminResponse && ticket.status !== 'CLOSED' && (
+                      {ticket.status !== 'CLOSED' && (
                         <div className="mt-4">
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Add Response (optional)
+                            {ticket.adminResponse ? 'Add Another Response' : 'Add Response'}
                           </label>
                           <textarea
                             value={responseText}

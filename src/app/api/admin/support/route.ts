@@ -109,7 +109,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { ticketId, status, adminResponse } = body
+    const { ticketId, status, priority, adminResponse } = body
 
     if (!ticketId) {
       return NextResponse.json({ error: 'Ticket ID required' }, { status: 400 })
@@ -119,6 +119,15 @@ export async function PATCH(request: NextRequest) {
 
     if (status) {
       updateData.status = status
+    }
+
+    if (priority) {
+      // Validate priority value
+      const validPriorities = ['low', 'normal', 'high', 'urgent']
+      if (!validPriorities.includes(priority)) {
+        return NextResponse.json({ error: 'Invalid priority value' }, { status: 400 })
+      }
+      updateData.priority = priority
     }
 
     if (adminResponse) {

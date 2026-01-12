@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const auth = await getAuthenticatedUser()
     const session = auth?.user ? { user: auth.user } : null
     const body = await request.json()
-    const { type, message, email, pageUrl } = body
+    const { type, priority, message, email, pageUrl } = body
 
     if (!message || message.trim().length < 10) {
       return NextResponse.json(
@@ -35,6 +35,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate priority if provided
+    const validPriorities = ['low', 'normal', 'high', 'urgent']
+    const ticketPriority = priority && validPriorities.includes(priority)
+      ? priority
+      : (type === 'bug' ? 'high' : 'normal')
+
     // Get user agent
     const userAgent = request.headers.get('user-agent') || undefined
 
@@ -47,7 +53,7 @@ export async function POST(request: NextRequest) {
         pageUrl,
         userAgent,
         status: 'OPEN',
-        priority: type === 'bug' ? 'high' : 'normal',
+        priority: ticketPriority,
       },
     })
 

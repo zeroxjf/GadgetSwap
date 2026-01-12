@@ -13,9 +13,12 @@ import {
   MessageSquare,
   HelpCircle,
   Sparkles,
+  Flag,
+  AlertTriangle,
 } from 'lucide-react'
 
 type TicketType = 'bug' | 'feedback' | 'question' | 'other'
+type Priority = 'low' | 'normal' | 'high' | 'urgent'
 
 export function FeedbackWidget() {
   const { data: session } = useSession()
@@ -23,6 +26,7 @@ export function FeedbackWidget() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [type, setType] = useState<TicketType>('feedback')
+  const [priority, setPriority] = useState<Priority>('normal')
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -73,6 +77,7 @@ export function FeedbackWidget() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type,
+          priority,
           message: message.trim(),
           email: session?.user?.email || email,
           pageUrl: window.location.href,
@@ -87,6 +92,7 @@ export function FeedbackWidget() {
       setSubmitted(true)
       setMessage('')
       setEmail('')
+      setPriority('normal')
 
       // Auto close after 3 seconds
       setTimeout(() => {
@@ -105,6 +111,13 @@ export function FeedbackWidget() {
     { value: 'feedback', label: 'Feedback', icon: MessageSquare, color: 'text-blue-500' },
     { value: 'question', label: 'Question', icon: HelpCircle, color: 'text-purple-500' },
     { value: 'other', label: 'Other', icon: MessageCircle, color: 'text-gray-500' },
+  ]
+
+  const priorityOptions = [
+    { value: 'low', label: 'Low', color: 'border-gray-300 bg-gray-50 text-gray-600', activeColor: 'border-gray-500 bg-gray-500 text-white' },
+    { value: 'normal', label: 'Normal', color: 'border-blue-300 bg-blue-50 text-blue-600', activeColor: 'border-blue-500 bg-blue-500 text-white' },
+    { value: 'high', label: 'High', icon: Flag, color: 'border-orange-300 bg-orange-50 text-orange-600', activeColor: 'border-orange-500 bg-orange-500 text-white' },
+    { value: 'urgent', label: 'Urgent', icon: AlertTriangle, color: 'border-red-300 bg-red-50 text-red-600', activeColor: 'border-red-500 bg-red-500 text-white' },
   ]
 
   return (
@@ -188,6 +201,30 @@ export function FeedbackWidget() {
                         }`}
                       >
                         <opt.icon className={`w-4 h-4 ${type === opt.value ? 'text-primary-500' : opt.color}`} />
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Priority Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Priority
+                  </label>
+                  <div className="flex gap-1">
+                    {priorityOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setPriority(opt.value as Priority)}
+                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                          priority === opt.value
+                            ? opt.activeColor
+                            : `${opt.color} hover:opacity-80`
+                        }`}
+                      >
+                        {opt.icon && <opt.icon className="w-3 h-3" />}
                         {opt.label}
                       </button>
                     ))}
