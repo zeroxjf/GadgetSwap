@@ -6,8 +6,39 @@ import { MapPin, Loader2 } from 'lucide-react'
 // Extend window to include Google Maps types
 declare global {
   interface Window {
-    google: typeof google
+    google: {
+      maps: {
+        places: {
+          Autocomplete: new (
+            input: HTMLInputElement,
+            options?: google.maps.places.AutocompleteOptions
+          ) => google.maps.places.Autocomplete
+        }
+      }
+    }
     initGooglePlaces: () => void
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace google.maps.places {
+  interface Autocomplete {
+    addListener(event: string, handler: () => void): void
+    getPlace(): PlaceResult
+  }
+  interface AutocompleteOptions {
+    types?: string[]
+    componentRestrictions?: { country: string | string[] }
+    fields?: string[]
+  }
+  interface PlaceResult {
+    address_components?: AddressComponent[]
+    formatted_address?: string
+  }
+  interface AddressComponent {
+    long_name: string
+    short_name: string
+    types: string[]
   }
 }
 
