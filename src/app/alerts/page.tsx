@@ -45,6 +45,9 @@ export default function AlertsPage() {
   const [alerts, setAlerts] = useState<DeviceAlert[]>([])
   const [loading, setLoading] = useState(true)
 
+  // MUST call hooks before any conditional returns
+  const { tier } = useSubscriptionTier()
+
   useEffect(() => {
     if (session?.user) {
       fetchAlerts()
@@ -214,7 +217,6 @@ export default function AlertsPage() {
     )
   }
 
-  const { tier } = useSubscriptionTier()
   const maxAlerts = tier === 'PRO' ? Infinity : tier === 'PLUS' ? 3 : 1
 
   return (
