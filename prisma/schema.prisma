@@ -85,6 +85,7 @@ model User {
   watchlist     Watchlist[]
   notifications Notification[]
   deviceAlerts  DeviceAlert[]
+  pushTokens    PushToken[]
   savedAddresses SavedAddress[]
   // Admin review relations
   reviewedListings Listing[] @relation("ReviewedListings")
@@ -624,6 +625,22 @@ model DeviceAlert {
   @@index([userId, active])
   @@index([deviceType, deviceModel])
   @@index([osVersionMin, osVersionMax])
+}
+
+// ============================================
+// PUSH TOKENS (APNs for iOS)
+// ============================================
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique  // APNs device token
+  platform  String   @default("ios")  // 'ios' or 'android' for future
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 // ============================================

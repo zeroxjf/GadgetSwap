@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { sendEmail, wrapEmailTemplate } from '@/lib/email'
 import { createNotification } from '@/lib/notifications'
+import { sendAlertMatchPush } from '@/lib/push'
 
 /**
  * Parse a version string into numeric components
@@ -256,7 +257,11 @@ export async function matchAndNotifyAlerts(listingId: string): Promise<{
     const alerts = await prisma.deviceAlert.findMany({
       where: {
         active: true,
-        emailNotify: true,
+        // Include alerts with either email or push enabled
+        OR: [
+          { emailNotify: true },
+          { pushNotify: true },
+        ],
         // Exclude alerts from the listing's seller
         userId: { not: listing.sellerId },
       },
@@ -306,7 +311,7 @@ export async function matchAndNotifyAlerts(listingId: string): Promise<{
         })
 
         // Send email notification
-        if (alert.user.email) {
+        if (alert.emailNotify && alert.user.email) {
           try {
             await sendEmail({
               to: alert.user.email,
@@ -331,6 +336,21 @@ export async function matchAndNotifyAlerts(listingId: string): Promise<{
             results.notificationsSent++
           } catch (emailError: any) {
             results.errors.push(`Failed to email ${alert.user.email}: ${emailError.message}`)
+          }
+        }
+
+        // Send push notification
+        if (alert.pushNotify) {
+          try {
+            await sendAlertMatchPush(
+              alert.userId,
+              alert.name,
+              listing.title,
+              listing.price,
+              listing.id
+            )
+          } catch (pushError: any) {
+            results.errors.push(`Failed to send push to ${alert.userId}: ${pushError.message}`)
           }
         }
       }
