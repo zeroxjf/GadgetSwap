@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
       transactionsWeek,
       transactionsMonth,
       openReports,
+      unresolvedDisputes,
       recentListings,
       recentTransactions,
       recentUsers,
@@ -73,8 +74,15 @@ export async function GET(request: NextRequest) {
         _sum: { platformFee: true },
       }),
 
-      // Support (using a simple count, you may have a Report model)
+      // Support - flagged listings for reports
       prisma.listing.count({ where: { flaggedForReview: true } }),
+
+      // Actual unresolved disputes (transactions with dispute status OPEN, UNDER_REVIEW, or ESCALATED)
+      prisma.transaction.count({
+        where: {
+          disputeStatus: { in: ['OPEN', 'UNDER_REVIEW', 'ESCALATED'] },
+        },
+      }),
 
       // Recent activity
       prisma.listing.findMany({
@@ -219,7 +227,7 @@ export async function GET(request: NextRequest) {
 
       // Support
       openReports,
-      unresolvedDisputes: pendingTransactions, // Simplified
+      unresolvedDisputes,
     }
 
     // Get Vercel Analytics data
