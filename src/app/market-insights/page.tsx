@@ -125,7 +125,7 @@ function ProUpsellOverlay() {
           Upgrade to Pro - $12/mo
         </Link>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-          Cancel anytime. 7-day free trial available.
+          Cancel anytime.
         </p>
       </div>
     </div>
