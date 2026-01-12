@@ -222,6 +222,19 @@ export default function AccountPage() {
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </Link>
 
+              <Link href="/account/addresses" className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                    <MapPin className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium dark:text-white">Saved Addresses</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Manage your shipping addresses</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </Link>
+
               <Link href="/alerts" className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">

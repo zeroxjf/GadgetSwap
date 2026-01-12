@@ -17,7 +17,10 @@ import {
   Loader2,
   AlertCircle,
   ChevronDown,
+  User,
+  Phone,
 } from 'lucide-react'
+import AddressAutocomplete, { AddressComponents } from '@/components/AddressAutocomplete'
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
@@ -38,6 +41,7 @@ interface Listing {
     image: string | null
     rating: number
     stripeOnboardingComplete: boolean
+    role: string
   }
 }
 
@@ -305,7 +309,10 @@ export default function CheckoutPage() {
 
   // Create payment intent
   const handleProceedToPayment = async () => {
-    if (!isAddressValid() || !listing) return
+    if (!isAddressValid() || !listing) {
+      console.log('Address validation failed or no listing', { isAddressValid: isAddressValid(), listing })
+      return
+    }
 
     setIsCreatingPayment(true)
     setError(null)
@@ -335,16 +342,26 @@ export default function CheckoutPage() {
         }),
       })
 
-      const data = await res.json()
+      let data
+      try {
+        data = await res.json()
+      } catch (parseError) {
+        throw new Error(`Server returned invalid response (status ${res.status})`)
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to create checkout')
+        throw new Error(data.error || `Checkout failed (status ${res.status})`)
+      }
+
+      if (!data.clientSecret) {
+        throw new Error('Payment session could not be created. Please try again.')
       }
 
       setClientSecret(data.clientSecret)
       setBreakdown(data.breakdown)
     } catch (err: any) {
-      setError(err.message)
+      console.error('Checkout error:', err)
+      setError(err.message || 'An unexpected error occurred. Please try again.')
     } finally {
       setIsCreatingPayment(false)
     }
@@ -397,9 +414,26 @@ export default function CheckoutPage() {
 
   const totalEstimate = listing.price + (taxInfo?.taxAmount || 0)
 
+  // Check if seller can receive payments (has Stripe set up or is admin)
+  const isAdminSeller = listing.seller.role === 'ADMIN'
+  const sellerCanReceivePayment = isAdminSeller || listing.seller.stripeOnboardingComplete
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
+        {/* Seller Payment Warning */}
+        {!sellerCanReceivePayment && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-yellow-800">Seller Payment Setup Incomplete</h3>
+              <p className="text-sm text-yellow-700 mt-1">
+                This seller has not completed their payment setup. You won&apos;t be able to purchase this item until they set up their payout method.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <Link href={`/listings/${listingId}`} className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4">
@@ -546,88 +580,55 @@ export default function CheckoutPage() {
                     </button>
                   )}
 
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="sm:col-span-2">
-                      <label className="label mb-1.5 block">Full Name *</label>
+                  {/* Full Name */}
+                  <div>
+                    <label className="label mb-1.5 block">Full Name *</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <input
                         type="text"
                         value={shippingAddress.name}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, name: e.target.value })}
                         placeholder="John Doe"
-                        className="input"
+                        className="input pl-10"
                         required
                       />
                     </div>
+                  </div>
 
-                    <div className="sm:col-span-2">
-                      <label className="label mb-1.5 block">Address Line 1 *</label>
-                      <input
-                        type="text"
-                        value={shippingAddress.line1}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, line1: e.target.value })}
-                        placeholder="123 Main Street"
-                        className="input"
-                        required
-                      />
-                    </div>
+                  {/* Address Autocomplete */}
+                  <div>
+                    <label className="label mb-1.5 block">Address *</label>
+                    <AddressAutocomplete
+                      value={{
+                        line1: shippingAddress.line1,
+                        line2: shippingAddress.line2,
+                        city: shippingAddress.city,
+                        state: shippingAddress.state,
+                        zipCode: shippingAddress.zipCode,
+                        country: shippingAddress.country,
+                      }}
+                      onChange={(address: AddressComponents) => {
+                        setShippingAddress({
+                          ...shippingAddress,
+                          ...address,
+                        })
+                      }}
+                      placeholder="Start typing your address..."
+                    />
+                  </div>
 
-                    <div className="sm:col-span-2">
-                      <label className="label mb-1.5 block">Address Line 2</label>
-                      <input
-                        type="text"
-                        value={shippingAddress.line2}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, line2: e.target.value })}
-                        placeholder="Apt, suite, unit, etc. (optional)"
-                        className="input"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="label mb-1.5 block">City *</label>
-                      <input
-                        type="text"
-                        value={shippingAddress.city}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
-                        placeholder="New York"
-                        className="input"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="label mb-1.5 block">State *</label>
-                      <input
-                        type="text"
-                        value={shippingAddress.state}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
-                        placeholder="NY"
-                        className="input"
-                        maxLength={2}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="label mb-1.5 block">ZIP Code *</label>
-                      <input
-                        type="text"
-                        value={shippingAddress.zipCode}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, zipCode: e.target.value })}
-                        placeholder="10001"
-                        className="input"
-                        maxLength={10}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="label mb-1.5 block">Phone</label>
+                  {/* Phone */}
+                  <div>
+                    <label className="label mb-1.5 block">Phone (optional)</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <input
                         type="tel"
                         value={shippingAddress.phone}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
                         placeholder="(555) 123-4567"
-                        className="input"
+                        className="input pl-10"
                       />
                     </div>
                   </div>

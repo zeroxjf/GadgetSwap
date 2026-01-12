@@ -27,14 +27,35 @@ const jailbreakStatuses = [
   { value: 'NOT_JAILBROKEN', label: 'Stock (Not Jailbreakable)' },
 ]
 
+const versionFilterTypes = [
+  { value: 'any', label: 'Any version' },
+  { value: 'atOrBelow', label: 'At or below' },
+  { value: 'atOrAbove', label: 'At or above' },
+  { value: 'exact', label: 'Exact version' },
+  { value: 'range', label: 'Version range' },
+]
+
+// Granular versions for jailbreak targeting
 const iosVersions = [
-  { value: '', label: 'Any iOS version' },
-  { value: '18', label: 'iOS 18' },
-  { value: '17', label: 'iOS 17' },
-  { value: '16', label: 'iOS 16' },
-  { value: '15', label: 'iOS 15' },
-  { value: '14', label: 'iOS 14' },
-  { value: '13', label: 'iOS 13 & below' },
+  '18.2', '18.1', '18.0',
+  '17.7', '17.6', '17.5', '17.4', '17.3', '17.2', '17.1', '17.0',
+  '16.7', '16.6', '16.5', '16.4', '16.3', '16.2', '16.1', '16.0',
+  '15.8', '15.7', '15.6', '15.5', '15.4', '15.3', '15.2', '15.1', '15.0',
+  '14.8', '14.7', '14.6', '14.5', '14.4', '14.3', '14.2', '14.1', '14.0',
+  '13.7', '13.5', '13.0', '12.5', '12.4', '12.0', '11.0', '10.0',
+]
+
+const macosVersions = [
+  '15.2', '15.1', '15.0',
+  '14.7', '14.6', '14.5', '14.4', '14.3', '14.2', '14.1', '14.0',
+  '13.6', '13.5', '13.4', '13.3', '13.2', '13.1', '13.0',
+  '12.7', '12.6', '12.5', '12.0', '11.0',
+]
+
+const watchosVersions = [
+  '11.2', '11.1', '11.0',
+  '10.6', '10.5', '10.4', '10.3', '10.2', '10.1', '10.0',
+  '9.6', '9.5', '9.4', '9.0', '8.7', '8.5', '8.0', '7.0',
 ]
 
 export default function NewAlertPage() {
@@ -47,7 +68,11 @@ export default function NewAlertPage() {
     name: '',
     deviceType: '',
     deviceModel: '',
-    osVersion: '',
+    versionFilterType: 'any',
+    osVersionMin: '',
+    osVersionMax: '',
+    osVersionExact: '',
+    conditionMin: '',
     jailbreakStatus: '',
     bootromExploitOnly: false,
     storageMinGB: '',
@@ -56,6 +81,19 @@ export default function NewAlertPage() {
     priceMax: '',
     emailNotify: true,
   })
+
+  // Get versions based on device type
+  const getVersionsForDevice = () => {
+    if (formData.deviceType === 'MACBOOK') return macosVersions
+    if (formData.deviceType === 'APPLE_WATCH') return watchosVersions
+    return iosVersions
+  }
+
+  const getOsName = () => {
+    if (formData.deviceType === 'MACBOOK') return 'macOS'
+    if (formData.deviceType === 'APPLE_WATCH') return 'watchOS'
+    return 'iOS'
+  }
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -79,15 +117,45 @@ export default function NewAlertPage() {
     }
 
     try {
+      // Build version parameters based on filter type
+      let osVersionMin: string | null = null
+      let osVersionMax: string | null = null
+      let osVersionExact: string | null = null
+
+      switch (formData.versionFilterType) {
+        case 'atOrBelow':
+          osVersionMax = formData.osVersionMax || null
+          break
+        case 'atOrAbove':
+          osVersionMin = formData.osVersionMin || null
+          break
+        case 'exact':
+          osVersionExact = formData.osVersionExact || null
+          break
+        case 'range':
+          osVersionMin = formData.osVersionMin || null
+          osVersionMax = formData.osVersionMax || null
+          break
+      }
+
       const response = await fetch('/api/alerts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
+          deviceType: formData.deviceType || null,
+          deviceModel: formData.deviceModel || null,
+          osVersionMin,
+          osVersionMax,
+          osVersionExact,
+          conditionMin: formData.conditionMin || null,
+          jailbreakStatus: formData.jailbreakStatus || null,
+          bootromExploitOnly: formData.bootromExploitOnly,
           storageMinGB: formData.storageMinGB ? parseInt(formData.storageMinGB) : null,
           storageMaxGB: formData.storageMaxGB ? parseInt(formData.storageMaxGB) : null,
           priceMin: formData.priceMin ? parseFloat(formData.priceMin) : null,
           priceMax: formData.priceMax ? parseFloat(formData.priceMax) : null,
+          emailNotify: formData.emailNotify,
         }),
       })
 
@@ -211,23 +279,116 @@ export default function NewAlertPage() {
             </div>
           </div>
 
-          {/* iOS Version */}
+          {/* Software Version */}
           <div className="card p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">iOS/iPadOS Version</h2>
-            <div>
-              <label className="label mb-1 block">Version</label>
-              <select
-                value={formData.osVersion}
-                onChange={(e) => setFormData({ ...formData, osVersion: e.target.value })}
-                className="input"
-              >
-                {iosVersions.map((version) => (
-                  <option key={version.value} value={version.value}>{version.label}</option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Select a major iOS version to filter listings
-              </p>
+            <h2 className="font-semibold text-gray-900 mb-4">{getOsName()} Version</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="label mb-1 block">Filter Type</label>
+                <select
+                  value={formData.versionFilterType}
+                  onChange={(e) => setFormData({ ...formData, versionFilterType: e.target.value })}
+                  className="input"
+                >
+                  {versionFilterTypes.map((type) => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {formData.versionFilterType === 'atOrBelow' && (
+                <div>
+                  <label className="label mb-1 block">{getOsName()} Version (or below)</label>
+                  <select
+                    value={formData.osVersionMax}
+                    onChange={(e) => setFormData({ ...formData, osVersionMax: e.target.value })}
+                    className="input"
+                  >
+                    <option value="">Select version</option>
+                    {getVersionsForDevice().map((version) => (
+                      <option key={version} value={version}>{getOsName()} {version}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Great for finding jailbreakable devices on older firmware
+                  </p>
+                </div>
+              )}
+
+              {formData.versionFilterType === 'atOrAbove' && (
+                <div>
+                  <label className="label mb-1 block">{getOsName()} Version (or above)</label>
+                  <select
+                    value={formData.osVersionMin}
+                    onChange={(e) => setFormData({ ...formData, osVersionMin: e.target.value })}
+                    className="input"
+                  >
+                    <option value="">Select version</option>
+                    {getVersionsForDevice().map((version) => (
+                      <option key={version} value={version}>{getOsName()} {version}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Find devices with newer software
+                  </p>
+                </div>
+              )}
+
+              {formData.versionFilterType === 'exact' && (
+                <div>
+                  <label className="label mb-1 block">Exact {getOsName()} Version</label>
+                  <select
+                    value={formData.osVersionExact}
+                    onChange={(e) => setFormData({ ...formData, osVersionExact: e.target.value })}
+                    className="input"
+                  >
+                    <option value="">Select version</option>
+                    {getVersionsForDevice().map((version) => (
+                      <option key={version} value={version}>{getOsName()} {version}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Match only this specific version
+                  </p>
+                </div>
+              )}
+
+              {formData.versionFilterType === 'range' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label mb-1 block">Minimum Version</label>
+                    <select
+                      value={formData.osVersionMin}
+                      onChange={(e) => setFormData({ ...formData, osVersionMin: e.target.value })}
+                      className="input"
+                    >
+                      <option value="">Select version</option>
+                      {getVersionsForDevice().map((version) => (
+                        <option key={version} value={version}>{getOsName()} {version}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label mb-1 block">Maximum Version</label>
+                    <select
+                      value={formData.osVersionMax}
+                      onChange={(e) => setFormData({ ...formData, osVersionMax: e.target.value })}
+                      className="input"
+                    >
+                      <option value="">Select version</option>
+                      {getVersionsForDevice().map((version) => (
+                        <option key={version} value={version}>{getOsName()} {version}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {formData.versionFilterType === 'any' && (
+                <p className="text-sm text-gray-500">
+                  Match devices on any {getOsName()} version
+                </p>
+              )}
             </div>
           </div>
 
@@ -289,6 +450,29 @@ export default function NewAlertPage() {
                   min="0"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Minimum Condition */}
+          <div className="card p-6">
+            <h2 className="font-semibold text-gray-900 mb-4">Minimum Condition</h2>
+            <div>
+              <select
+                value={formData.conditionMin}
+                onChange={(e) => setFormData({ ...formData, conditionMin: e.target.value })}
+                className="input"
+              >
+                <option value="">Any condition</option>
+                <option value="NEW">New or better</option>
+                <option value="LIKE_NEW">Like New or better</option>
+                <option value="EXCELLENT">Excellent or better</option>
+                <option value="GOOD">Good or better</option>
+                <option value="FAIR">Fair or better</option>
+                <option value="POOR">Poor or better</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Only match devices at or above this condition level
+              </p>
             </div>
           </div>
 
