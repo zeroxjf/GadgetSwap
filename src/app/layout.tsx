@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
+import { Suspense } from 'react'
 import './globals.css'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
@@ -8,6 +9,7 @@ import { Providers } from '@/components/Providers'
 import { FeedbackWidget } from '@/components/FeedbackWidget'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { SimulationBanner } from '@/components/admin/SimulationBanner'
+import { SmartAppBanner } from '@/components/SmartAppBanner'
 import { Analytics } from '@vercel/analytics/react'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -30,8 +32,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Smart App Banner - shows "OPEN" or "GET" on iOS Safari */}
-        <meta name="apple-itunes-app" content="app-id=6757683814" />
+        {/* Smart App Banner with deep linking support */}
+        <Suspense fallback={<meta name="apple-itunes-app" content="app-id=6757683814" />}>
+          <SmartAppBanner />
+        </Suspense>
         <script
           dangerouslySetInnerHTML={{
             __html: `
