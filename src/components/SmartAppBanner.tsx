@@ -1,47 +1,37 @@
 'use client'
 
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 /**
  * Dynamic Smart App Banner that passes current URL for deep linking
- * Maps web routes to iOS app screens where applicable
+ * Maps web routes to iOS app deep link format: gadgetswap://[host]/[path]
  */
 export function SmartAppBanner() {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
   const [appArgument, setAppArgument] = useState<string | null>(null)
 
   useEffect(() => {
-    // Build the full URL path with query params
-    const query = searchParams.toString()
-    const fullPath = query ? `${pathname}?${query}` : pathname
+    // Map web routes to iOS app deep link format
+    // App expects: gadgetswap://[type]/[id]
 
-    // Map web routes to app-supported deep links
-    // Only include routes that exist in the iOS app
-    const supportedRoutes = [
-      '/listings/',      // Listing detail: /listings/[id]
-      '/search',         // Search page
-      '/messages',       // Messages
-      '/notifications',  // Notifications
-      '/watchlist',      // Watchlist
-      '/account',        // Account settings
-      '/orders/',        // Order detail: /orders/[id]
-      '/profile',        // User profile
-      '/subscription',   // Subscription page
-      '/alerts',         // Price alerts
-    ]
-
-    const isSupported = supportedRoutes.some(route => pathname.startsWith(route))
-
-    if (isSupported) {
-      // Pass the path as app-argument for deep linking
-      setAppArgument(`gadgetswap:/${fullPath}`)
-    } else {
-      // For unsupported routes, just open the app to home
-      setAppArgument(null)
+    // Listing detail: /listings/[id] -> gadgetswap://listing/[id]
+    const listingMatch = pathname.match(/^\/listings\/([^/]+)$/)
+    if (listingMatch) {
+      setAppArgument(`gadgetswap://listing/${listingMatch[1]}`)
+      return
     }
-  }, [pathname, searchParams])
+
+    // Order detail: /orders/[id] -> gadgetswap://order/[id]
+    const orderMatch = pathname.match(/^\/orders\/([^/]+)$/)
+    if (orderMatch) {
+      setAppArgument(`gadgetswap://order/${orderMatch[1]}`)
+      return
+    }
+
+    // For other routes, no deep link (app opens to home)
+    setAppArgument(null)
+  }, [pathname])
 
   return (
     <meta

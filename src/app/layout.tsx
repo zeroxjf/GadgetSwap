@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
-import { Suspense } from 'react'
 import './globals.css'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
@@ -33,9 +32,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Smart App Banner with deep linking support */}
-        <Suspense fallback={<meta name="apple-itunes-app" content="app-id=6757683814" />}>
-          <SmartAppBanner />
-        </Suspense>
+        <SmartAppBanner />
         <script
           dangerouslySetInnerHTML={{
             __html: `
