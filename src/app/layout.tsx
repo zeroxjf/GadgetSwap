@@ -30,6 +30,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Smart App Banner - shows "OPEN" or "GET" on iOS Safari */}
+        <meta name="apple-itunes-app" content="app-id=6757683814" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
